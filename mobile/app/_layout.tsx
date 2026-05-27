@@ -11,19 +11,8 @@ import { AuthProvider, useAuth } from '../src/providers/AuthProvider';
 import { SocketProvider, useSocket } from '../src/providers/SocketProvider';
 import { COLORS } from '../src/lib/constants';
 
-function ConnectionBanner() {
-  const { isConnected } = useSocket();
-  const { isAuthenticated } = useAuth();
-
-  if (!isAuthenticated || isConnected) return null;
-
-  return (
-    <View style={styles.banner}>
-      <View style={styles.bannerDot} />
-      <Text style={styles.bannerText}>Sem conexao com o servidor</Text>
-    </View>
-  );
-}
+// Banner de conexão desabilitado - app usa polling via API REST
+// WebSocket não funciona com deploy na Vercel
 
 function NavigationGuard() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -56,7 +45,6 @@ function NavigationGuard() {
 
   return (
     <>
-      <ConnectionBanner />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" />

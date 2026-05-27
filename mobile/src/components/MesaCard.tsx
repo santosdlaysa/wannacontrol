@@ -6,7 +6,7 @@ import { COLORS } from '../lib/constants';
 interface MesaCardProps {
   numero: number;
   status: StatusMesa;
-  garcomNome?: string;
+  clienteNome?: string;
   onPress: () => void;
 }
 
@@ -16,7 +16,7 @@ const S: Record<StatusMesa, { color: string; bg: string; label: string }> = {
   [StatusMesa.AGUARDANDO_CONTA]: { color: '#D97706', bg: '#FFFBEB', label: 'Conta' },
 };
 
-export function MesaCard({ numero, status, garcomNome, onPress }: MesaCardProps) {
+export function MesaCard({ numero, status, clienteNome, onPress }: MesaCardProps) {
   const cfg = S[status];
 
   return (
@@ -27,8 +27,8 @@ export function MesaCard({ numero, status, garcomNome, onPress }: MesaCardProps)
         <View style={[styles.dot, { backgroundColor: cfg.color }]} />
         <Text style={[styles.pillText, { color: cfg.color }]}>{cfg.label}</Text>
       </View>
-      {garcomNome && status !== StatusMesa.LIVRE && (
-        <Text style={styles.garcom} numberOfLines={1}>{garcomNome}</Text>
+      {clienteNome && status !== StatusMesa.LIVRE && (
+        <Text style={styles.cliente} numberOfLines={1}>{clienteNome}</Text>
       )}
     </TouchableOpacity>
   );
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
-  garcom: {
+  cliente: {
     fontSize: 11,
     color: COLORS.text.secondary,
     fontWeight: '600',

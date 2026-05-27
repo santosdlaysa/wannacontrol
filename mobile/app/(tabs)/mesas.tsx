@@ -31,6 +31,7 @@ import { COLORS } from '../../src/lib/constants';
 
 interface MesaWithGarcom extends Mesa {
   garcomNome?: string;
+  clienteNome?: string;
   pedidoId?: number;
 }
 
@@ -59,7 +60,7 @@ export default function MesasScreen() {
           if (mesa.status === StatusMesa.OCUPADA || mesa.status === StatusMesa.AGUARDANDO_CONTA) {
             try {
               const pedidos = await apiClient.get<Pedido[]>(`/pedidos?mesa_id=${mesa.id}&status=ABERTO`);
-              if (pedidos.length > 0) return { ...mesa, garcomNome: pedidos[0].garcom?.nome, pedidoId: pedidos[0].id };
+              if (pedidos.length > 0) return { ...mesa, garcomNome: pedidos[0].garcom?.nome, clienteNome: pedidos[0].clienteNome ?? undefined, pedidoId: pedidos[0].id };
             } catch {}
           }
           return mesa;
@@ -191,7 +192,7 @@ export default function MesasScreen() {
           <MesaCard
             numero={item.numero}
             status={item.status}
-            garcomNome={item.garcomNome}
+            clienteNome={item.clienteNome}
             onPress={() => handlePress(item)}
           />
         )}

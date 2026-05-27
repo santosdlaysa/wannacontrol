@@ -80,6 +80,9 @@ export default function CaixaPage() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [closing, setClosing] = useState(false);
 
+  // Pedidos pagos
+  const [pedidosPagos, setPedidosPagos] = useState<Pedido[]>([]);
+
   const fetchCaixaAtual = useCallback(async () => {
     try {
       const data = await api.get<CaixaData | null>('/caixa/atual');
@@ -98,6 +101,13 @@ export default function CaixaPage() {
     } catch {}
   }, []);
 
+  const fetchPedidosPagos = useCallback(async () => {
+    try {
+      const data = await api.get<Pedido[]>('/pedidos?status=PAGO');
+      setPedidosPagos(data);
+    } catch {}
+  }, []);
+
   const fetchHistorico = useCallback(async () => {
     try {
       const data = await api.get<CaixaData[]>('/caixa/historico');
@@ -106,7 +116,7 @@ export default function CaixaPage() {
   }, []);
 
   useEffect(() => {
-    Promise.all([fetchCaixaAtual(), fetchMesas()]).finally(() => setIsLoading(false));
+    Promise.all([fetchCaixaAtual(), fetchMesas(), fetchPedidosPagos()]).finally(() => setIsLoading(false));
   }, [fetchCaixaAtual, fetchMesas]);
 
   useEffect(() => {
@@ -209,6 +219,7 @@ export default function CaixaPage() {
       setConfirmModalOpen(false);
       setSelectedMesa(null);
       fetchMesas();
+      fetchPedidosPagos();
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao fechar conta');
     } finally {
@@ -462,6 +473,54 @@ export default function CaixaPage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Pedidos Pagos */}
+              <div className="mt-8">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3">Pedidos Pagos</h2>
+                {pedidosPagos.length === 0 ? (
+                  <div className="bg-white rounded-xl border border-gray-200 p-6 text-center text-gray-400 text-sm">
+                    Nenhum pedido pago ainda
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {pedidosPagos.map((pedido) => {
+                      const total = (pedido.itens || []).reduce(
+                        (s: number, i: any) => s + Number(i.precoUnitario) * i.quantidade, 0
+                      );
+                      return (
+                        <div key={pedido.id} className="bg-white rounded-xl border border-gray-200 p-5">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <span className="text-lg font-bold text-gray-800">Mesa {pedido.mesa?.numero}</span>
+                              <Badge variant="green">Pago</Badge>
+                              {pedido.clienteNome && (
+                                <span className="text-sm text-gray-500">{pedido.clienteNome}</span>
+                              )}
+                            </div>
+                            <span className="text-lg font-bold text-green-600">{formatBRL(Number(pedido.total || total))}</span>
+                          </div>
+                          <div className="space-y-1">
+                            {(pedido.itens || []).map((item: any) => (
+                              <div key={item.id} className="flex justify-between text-sm py-1 border-b border-gray-50">
+                                <span className="text-gray-600">
+                                  {item.quantidade}x {item.produto?.nome ?? `#${item.produtoId}`}
+                                </span>
+                                <span className="font-medium text-gray-800">
+                                  {formatBRL(Number(item.precoUnitario) * item.quantidade)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex justify-between mt-3 text-xs text-gray-400">
+                            <span>Pedido #{pedido.id} - Garcom: {pedido.garcom?.nome ?? '---'}</span>
+                            <span>{formatDateTime(pedido.dataCriacao)}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
