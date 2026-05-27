@@ -146,14 +146,14 @@ export default function NovoPedidoScreen() {
       {!existingPedidoId && (
         <View style={styles.mesaSection}>
           <Text style={styles.sectionLabel}>Selecione a mesa</Text>
-          <View style={styles.mesaGrid}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mesaRow}>
             {availableMesas.map((m) => {
               const active = selectedMesaId === m.id;
               const isLivre = m.status === StatusMesa.LIVRE;
               return (
                 <TouchableOpacity
                   key={m.id}
-                  style={[styles.mesaCard, active && styles.mesaCardActive]}
+                  style={[styles.mesaChip, active && styles.mesaChipActive]}
                   onPress={() => setSelectedMesaId(m.id)}
                   activeOpacity={0.7}
                 >
@@ -166,12 +166,7 @@ export default function NovoPedidoScreen() {
                 </TouchableOpacity>
               );
             })}
-          </View>
-          {selectedMesaId && (
-            <Text style={styles.mesaSelected}>
-              Mesa {mesas.find((m) => m.id === selectedMesaId)?.numero} selecionada
-            </Text>
-          )}
+          </ScrollView>
         </View>
       )}
 
@@ -293,14 +288,13 @@ const styles = StyleSheet.create({
   },
 
   // Mesa
-  mesaSection: { paddingTop: SPACING.lg, paddingHorizontal: SPACING.xl },
-  mesaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
+  mesaSection: { paddingTop: SPACING.lg },
+  mesaRow: {
+    paddingHorizontal: SPACING.xl,
+    gap: 10,
   },
-  mesaCard: {
-    width: 60,
+  mesaChip: {
+    width: 64,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.surface,
@@ -309,13 +303,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border.light,
     ...SHADOWS.sm,
   },
-  mesaSelected: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.brand,
-    marginTop: SPACING.sm,
-  },
-  mesaCardActive: {
+  mesaChipActive: {
     borderColor: COLORS.brand,
     backgroundColor: COLORS.brandLight,
   },

@@ -70,6 +70,8 @@ export default function PerfilScreen() {
   const pedidosPagos = pedidos.filter((p) => p.statusPedido === 'PAGO').length;
   const pedidosAbertos = pedidos.filter((p) => p.statusPedido === 'ABERTO').length;
 
+  const [turnoEncerrado, setTurnoEncerrado] = useState(false);
+
   const handleEncerrarTurno = () => {
     if (pedidosAbertos > 0) {
       Alert.alert(
@@ -85,11 +87,28 @@ export default function PerfilScreen() {
       `Resumo do turno:\n\n` +
       `Pedidos fechados: ${pedidosPagos}\n` +
       `Total em vendas: ${formatBRL(totalVendas)}\n\n` +
-      `Deseja encerrar seu turno?`,
+      `Confirma o encerramento?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Encerrar',
+          text: 'Confirmar',
+          onPress: () => {
+            setTurnoEncerrado(true);
+            Alert.alert('Turno Encerrado', 'Resumo salvo. Voce pode sair quando quiser.');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Sair da conta',
+      'Deseja sair do aplicativo?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sair',
           style: 'destructive',
           onPress: async () => {
             setLoggingOut(true);
@@ -237,26 +256,45 @@ export default function PerfilScreen() {
           )}
         </View>
 
-        {/* Botão encerrar turno */}
-        <TouchableOpacity
-          style={styles.encerrarBtn}
-          onPress={handleEncerrarTurno}
-          disabled={loggingOut}
-          activeOpacity={0.8}
-        >
-          {loggingOut ? (
-            <ActivityIndicator color={COLORS.white} />
+        {/* Botões de ação */}
+        <View style={styles.section}>
+          {!turnoEncerrado ? (
+            <TouchableOpacity
+              style={styles.encerrarBtn}
+              onPress={handleEncerrarTurno}
+              activeOpacity={0.8}
+            >
+              <View>
+                <Text style={styles.encerrarTitle}>Encerrar Turno</Text>
+                <Text style={styles.encerrarSub}>
+                  {pedidosAbertos > 0
+                    ? `${pedidosAbertos} pedido(s) em aberto`
+                    : `Conferir resumo e fechar turno`}
+                </Text>
+              </View>
+            </TouchableOpacity>
           ) : (
-            <View>
-              <Text style={styles.encerrarTitle}>Encerrar Turno</Text>
-              <Text style={styles.encerrarSub}>
-                {pedidosAbertos > 0
-                  ? `${pedidosAbertos} pedido(s) em aberto`
-                  : `${pedidosPagos} pedido(s) — ${formatBRL(totalVendas)}`}
+            <View style={styles.turnoEncerradoCard}>
+              <Text style={styles.turnoEncerradoTitle}>Turno encerrado</Text>
+              <Text style={styles.turnoEncerradoSub}>
+                {pedidosPagos} pedido(s) — {formatBRL(totalVendas)}
               </Text>
             </View>
           )}
-        </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.logoutBtn}
+            onPress={handleLogout}
+            disabled={loggingOut}
+            activeOpacity={0.8}
+          >
+            {loggingOut ? (
+              <ActivityIndicator color={COLORS.danger} />
+            ) : (
+              <Text style={styles.logoutText}>Sair da conta</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.version}>CafeControl v1.0.0</Text>
       </ScrollView>
@@ -451,24 +489,52 @@ const styles = StyleSheet.create({
 
   // Encerrar turno
   encerrarBtn: {
-    backgroundColor: COLORS.danger,
+    backgroundColor: COLORS.success,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.sm,
     ...SHADOWS.md,
   },
   encerrarTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: COLORS.white,
-    textAlign: 'center',
   },
   encerrarSub: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
-    textAlign: 'center',
+    color: 'rgba(255,255,255,0.6)',
     marginTop: 2,
+  },
+  turnoEncerradoCard: {
+    backgroundColor: COLORS.successBg,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.success,
+  },
+  turnoEncerradoTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.success,
+  },
+  turnoEncerradoSub: {
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    marginTop: 2,
+  },
+  logoutBtn: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border.light,
+  },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.danger,
   },
 
   // Version

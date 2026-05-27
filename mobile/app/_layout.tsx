@@ -1,5 +1,5 @@
 import React from 'react';
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   View,
@@ -57,7 +57,19 @@ function NavigationGuard() {
   return (
     <>
       <ConnectionBanner />
-      <Slot />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="login" />
+        <Stack.Screen
+          name="pedido/[id]"
+          options={{
+            headerShown: true,
+            headerStyle: { backgroundColor: COLORS.primary },
+            headerTintColor: COLORS.white,
+            headerTitleStyle: { fontWeight: '700' },
+          }}
+        />
+      </Stack>
     </>
   );
 }

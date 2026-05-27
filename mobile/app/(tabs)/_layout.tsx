@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Tabs } from 'expo-router';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
 import { StatusPreparo, type Pedido } from '@cafecontrol/shared';
 import { COLORS, SHADOWS } from '../../src/lib/constants';
 import { useAuth } from '../../src/providers/AuthProvider';
@@ -40,6 +40,14 @@ export default function TabLayout() {
   const initials = user?.nome
     ? user.nome.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
     : '?';
+
+  const router = useRouter();
+
+  const BackButton = () => (
+    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <Text style={styles.backArrow}>{'\u2039'}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <Tabs
@@ -83,6 +91,7 @@ export default function TabLayout() {
         name="novo-pedido"
         options={{
           title: 'Novo Pedido',
+          headerLeft: () => <BackButton />,
           tabBarIcon: ({ focused }) => (
             <View style={styles.tab}>
               <View style={[styles.indicator, focused && styles.indicatorActive]} />
@@ -95,6 +104,7 @@ export default function TabLayout() {
         name="alertas"
         options={{
           title: 'Alertas',
+          headerLeft: () => <BackButton />,
           tabBarIcon: ({ focused }) => (
             <View style={styles.tab}>
               <View style={[styles.indicator, focused && styles.indicatorActive]} />
@@ -114,6 +124,7 @@ export default function TabLayout() {
         name="perfil"
         options={{
           title: 'Perfil',
+          headerLeft: () => <BackButton />,
           tabBarIcon: ({ focused }) => (
             <View style={styles.tab}>
               <View style={[styles.indicator, focused && styles.indicatorActive]} />
@@ -129,6 +140,17 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  backBtn: {
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 8,
+  },
+  backArrow: {
+    fontSize: 32,
+    color: COLORS.white,
+    fontWeight: '300',
+    lineHeight: 34,
+  },
   tab: {
     alignItems: 'center',
     justifyContent: 'center',
