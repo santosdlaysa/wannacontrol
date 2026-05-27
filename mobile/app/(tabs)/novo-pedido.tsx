@@ -127,7 +127,7 @@ export default function NovoPedidoScreen() {
         itens: cart.map((i) => ({ produtoId: i.produto.id, quantidade: i.quantidade, observacao: i.observacao || null })),
       });
       Alert.alert('Sucesso', 'Itens enviados para a cozinha!', [
-        { text: 'OK', onPress: () => { setCart([]); router.push(`/pedido/${pedidoId}`); } },
+        { text: 'OK', onPress: () => { setCart([]); router.push({ pathname: '/pedido/[id]', params: { id: String(pedidoId) } }); } },
       ]);
     } catch (err: any) {
       Alert.alert('Erro', err?.message || 'Erro ao enviar pedido');

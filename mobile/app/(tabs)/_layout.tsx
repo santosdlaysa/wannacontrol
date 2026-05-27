@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusPreparo, type Pedido } from '@cafecontrol/shared';
 import { COLORS, SHADOWS } from '../../src/lib/constants';
 import { useAuth } from '../../src/providers/AuthProvider';
@@ -42,6 +43,7 @@ export default function TabLayout() {
     : '?';
 
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const BackButton = () => (
     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -51,17 +53,24 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      sceneContainerStyle={{ backgroundColor: COLORS.background }}
       screenOptions={{
         tabBarActiveTintColor: COLORS.brand,
         tabBarInactiveTintColor: COLORS.text.tertiary,
         tabBarShowLabel: false,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: COLORS.surface,
           borderTopWidth: 0,
-          height: 64,
+          height: 64 + insets.bottom,
+          paddingBottom: insets.bottom,
           paddingHorizontal: 8,
-          ...SHADOWS.float,
+          elevation: 0,
+          shadowOpacity: 0,
         },
+        tabBarBackground: () => (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: -insets.bottom, backgroundColor: COLORS.surface }} />
+        ),
         headerStyle: {
           backgroundColor: COLORS.primary,
           ...SHADOWS.lg,

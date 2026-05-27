@@ -15,13 +15,25 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "edgeToEdgeEnabled": false
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "android": {
       "package": "com.santosdlaysa.cafecontrolmobile"
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#FFFFFF",
+      "barStyle": "dark-content"
     }
   }
 }

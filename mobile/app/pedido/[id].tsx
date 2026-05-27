@@ -13,6 +13,7 @@ import {
   Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import {
   SOCKET_EVENTS,
@@ -38,6 +39,7 @@ export default function PedidoDetailScreen() {
   const router = useRouter();
   const { socket } = useSocket();
 
+  const insets = useSafeAreaInsets();
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -197,7 +199,7 @@ export default function PedidoDetailScreen() {
       />
 
       {/* Footer */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: 20 + insets.bottom }]}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.totalValue}>{formatBRL(subtotal)}</Text>
@@ -363,7 +365,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
   noData: { fontSize: 15, color: COLORS.text.tertiary },
-  list: { padding: 20, paddingBottom: 180 },
+  list: { padding: 20, paddingBottom: 220 },
 
   headerSection: { marginBottom: 8 },
   infoCard: {

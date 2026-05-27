@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   StatusMesa,
@@ -102,11 +103,11 @@ export default function MesasScreen() {
       setClienteNome('');
       setClienteTel('');
     } else if (mesa.pedidoId) {
-      router.push(`/pedido/${mesa.pedidoId}`);
+      router.push({ pathname: '/pedido/[id]', params: { id: mesa.pedidoId!.toString() } });
     } else {
       try {
         const pedidos = await apiClient.get<Pedido[]>(`/pedidos?mesa_id=${mesa.id}&status=ABERTO`);
-        if (pedidos.length > 0) router.push(`/pedido/${pedidos[0].id}`);
+        if (pedidos.length > 0) router.push({ pathname: '/pedido/[id]', params: { id: pedidos[0].id.toString() } });
         else Alert.alert('Info', 'Nenhum pedido aberto.');
       } catch (err: any) { Alert.alert('Erro', err?.message || 'Erro'); }
     }
@@ -122,7 +123,7 @@ export default function MesasScreen() {
         clienteTelefone: clienteTel.trim() || null,
       });
       setModalMesa(null);
-      router.push(`/pedido/${pedido.id}`);
+      router.push({ pathname: '/pedido/[id]', params: { id: pedido.id.toString() } });
     } catch (err: any) {
       Alert.alert('Erro', err?.message || 'Erro ao abrir pedido');
     } finally {
@@ -144,6 +145,7 @@ export default function MesasScreen() {
   return (
     <View style={styles.container}>
       {/* Custom header */}
+      <SafeAreaView edges={['top']} style={styles.headerSafe}>
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Ola, {firstName}</Text>
@@ -161,6 +163,7 @@ export default function MesasScreen() {
           </View>
         </View>
       </View>
+      </SafeAreaView>
 
       {/* Tabs */}
       <View style={styles.tabRow}>
@@ -270,9 +273,12 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
 
   // Header
+  headerSafe: {
+    backgroundColor: COLORS.primary,
+  },
   header: {
     backgroundColor: COLORS.primary,
-    paddingTop: 16,
+    paddingTop: 8,
     paddingBottom: 20,
     paddingHorizontal: 20,
     flexDirection: 'row',
@@ -343,7 +349,7 @@ const styles = StyleSheet.create({
   },
 
   // Grid
-  grid: { paddingHorizontal: 14, paddingBottom: 20 },
+  grid: { paddingHorizontal: 14, paddingBottom: 100 },
   empty: { paddingVertical: 60, alignItems: 'center' },
   emptyText: { fontSize: 15, color: COLORS.text.tertiary, fontWeight: '500' },
 
