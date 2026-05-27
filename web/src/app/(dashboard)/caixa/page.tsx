@@ -235,6 +235,13 @@ export default function CaixaPage() {
     ?.filter((m) => m.tipo === 'SUPRIMENTO')
     .reduce((sum, m) => sum + Number(m.valor), 0) || 0;
 
+  const faturamento = pedidosPagos.reduce((sum, p) => {
+    const total = (p.itens || []).reduce((s: number, i: any) => s + Number(i.precoUnitario) * i.quantidade, 0);
+    return sum + (Number(p.total) || total);
+  }, 0);
+
+  const valorEmCaixa = Number(caixaAtual?.valorInicial || 0) + faturamento + totalSuprimentos - totalSangrias;
+
   if (isLoading) {
     return <div className="text-center py-12 text-gray-500">Carregando...</div>;
   }
@@ -332,7 +339,7 @@ export default function CaixaPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs text-gray-500">Abertura</p>
                     <p className="text-sm font-medium text-gray-800">{formatDateTime(caixaAtual.aberturaEm)}</p>
@@ -342,12 +349,21 @@ export default function CaixaPage() {
                     <p className="text-sm font-bold text-gray-900">{formatBRL(Number(caixaAtual.valorInicial))}</p>
                   </div>
                   <div className="bg-green-50 rounded-lg p-3">
-                    <p className="text-xs text-green-600">Suprimentos</p>
-                    <p className="text-sm font-bold text-green-700">+ {formatBRL(totalSuprimentos)}</p>
+                    <p className="text-xs text-green-600">Faturamento</p>
+                    <p className="text-sm font-bold text-green-700">{formatBRL(faturamento)}</p>
+                    <p className="text-xs text-green-500">{pedidosPagos.length} pedidos</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-3">
+                    <p className="text-xs text-blue-600">Suprimentos</p>
+                    <p className="text-sm font-bold text-blue-700">+ {formatBRL(totalSuprimentos)}</p>
                   </div>
                   <div className="bg-red-50 rounded-lg p-3">
                     <p className="text-xs text-red-600">Sangrias</p>
                     <p className="text-sm font-bold text-red-700">- {formatBRL(totalSangrias)}</p>
+                  </div>
+                  <div className="bg-cafe-50 rounded-lg p-3 border border-cafe-200">
+                    <p className="text-xs text-cafe-600">Valor em Caixa</p>
+                    <p className="text-lg font-bold text-cafe-800">{formatBRL(valorEmCaixa)}</p>
                   </div>
                 </div>
 
