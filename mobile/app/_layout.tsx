@@ -19,6 +19,7 @@ function ConnectionBanner() {
 
   return (
     <View style={styles.banner}>
+      <View style={styles.bannerDot} />
       <Text style={styles.bannerText}>Sem conexao com o servidor</Text>
     </View>
   );
@@ -30,13 +31,16 @@ function NavigationGuard() {
   const router = useRouter();
 
   React.useEffect(() => {
+    console.log('[NAV GUARD]', { isLoading, isAuthenticated, segments: segments.join('/') });
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'pedido';
 
     if (!isAuthenticated && inAuthGroup) {
+      console.log('[NAV GUARD] -> /login');
       router.replace('/login');
     } else if (isAuthenticated && segments[0] === 'login') {
+      console.log('[NAV GUARD] -> /(tabs)/mesas');
       router.replace('/(tabs)/mesas');
     }
   }, [isAuthenticated, isLoading, segments, router]);
@@ -44,8 +48,8 @@ function NavigationGuard() {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Carregando...</Text>
+        <Text style={styles.loadingBrand}>cafecontrol</Text>
+        <ActivityIndicator size="small" color={COLORS.brand} style={{ marginTop: 16 }} />
       </View>
     );
   }
@@ -74,18 +78,29 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
-    gap: 16,
+    backgroundColor: COLORS.primary,
   },
-  loadingText: {
-    fontSize: 16,
-    color: COLORS.primary,
+  loadingBrand: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: COLORS.brand,
+    letterSpacing: 1,
   },
   banner: {
     backgroundColor: COLORS.danger,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  bannerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.white,
+    opacity: 0.7,
   },
   bannerText: {
     color: COLORS.white,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { StatusPreparo } from '@cafecontrol/shared';
-import { COLORS, formatBRL } from '../lib/constants';
+import { COLORS, RADIUS, SHADOWS, SPACING, formatBRL } from '../lib/constants';
 import { StatusBadge } from './StatusBadge';
 
 interface ItemPedidoRowProps {
@@ -23,30 +23,20 @@ export function ItemPedidoRow({
   const isDelivered = statusPreparo === StatusPreparo.ENTREGUE;
 
   return (
-    <View
-      style={[
-        styles.row,
-        isReady && styles.readyRow,
-        isDelivered && styles.deliveredRow,
-      ]}
-    >
-      <View style={styles.mainInfo}>
-        <View style={styles.header}>
-          <Text
-            style={[styles.nome, isDelivered && styles.mutedText]}
-            numberOfLines={1}
-          >
-            {quantidade}x {produtoNome}
-          </Text>
-          <StatusBadge status={statusPreparo} size="sm" />
-        </View>
-        {observacao ? (
-          <Text style={styles.observacao} numberOfLines={2}>
-            Obs: {observacao}
-          </Text>
-        ) : null}
+    <View style={[styles.row, isReady && styles.rowReady, isDelivered && styles.rowDone]}>
+      <View style={styles.qty}>
+        <Text style={[styles.qtyText, isDelivered && styles.muted]}>{quantidade}x</Text>
       </View>
-      <Text style={[styles.preco, isDelivered && styles.mutedText]}>
+      <View style={styles.info}>
+        <Text style={[styles.nome, isDelivered && styles.muted]} numberOfLines={1}>
+          {produtoNome}
+        </Text>
+        {observacao ? (
+          <Text style={styles.obs} numberOfLines={2}>{observacao}</Text>
+        ) : null}
+        <StatusBadge status={statusPreparo} size="sm" />
+      </View>
+      <Text style={[styles.preco, isDelivered && styles.muted]}>
         {formatBRL(quantidade * precoUnitario)}
       </Text>
     </View>
@@ -55,50 +45,57 @@ export function ItemPedidoRow({
 
 const styles = StyleSheet.create({
   row: {
-    backgroundColor: COLORS.white,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  readyRow: {
-    backgroundColor: '#F0FFF4',
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.success,
-  },
-  deliveredRow: {
-    opacity: 0.6,
-  },
-  mainInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  header: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border.light,
+  },
+  rowReady: {
+    borderColor: COLORS.success,
+    backgroundColor: COLORS.successBg,
+  },
+  rowDone: {
+    opacity: 0.45,
+  },
+  qty: {
+    width: 38,
+    height: 38,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.md,
+  },
+  qtyText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.white,
+  },
+  info: {
+    flex: 1,
+    marginRight: SPACING.md,
+    gap: 4,
   },
   nome: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    color: COLORS.gray[800],
-    flex: 1,
+    color: COLORS.text.primary,
   },
-  mutedText: {
-    color: COLORS.gray[400],
-  },
-  observacao: {
+  obs: {
     fontSize: 12,
-    color: COLORS.gray[500],
+    color: COLORS.text.tertiary,
     fontStyle: 'italic',
-    marginTop: 4,
+  },
+  muted: {
+    color: COLORS.text.tertiary,
   },
   preco: {
     fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.primary,
+    fontWeight: '700',
+    color: COLORS.brand,
   },
 });

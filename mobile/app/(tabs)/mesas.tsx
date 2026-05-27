@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Alert,
   useWindowDimensions,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -19,6 +20,7 @@ import {
 } from '@cafecontrol/shared';
 import { apiClient } from '../../src/lib/api-client';
 import { useSocket } from '../../src/providers/SocketProvider';
+import { useAuth } from '../../src/providers/AuthProvider';
 import { MesaCard } from '../../src/components/MesaCard';
 import { COLORS } from '../../src/lib/constants';
 
@@ -27,11 +29,15 @@ interface MesaWithGarcom extends Mesa {
   pedidoId?: number;
 }
 
+type Filter = 'all' | 'free' | 'busy';
+
 export default function MesasScreen() {
   const [mesas, setMesas] = useState<MesaWithGarcom[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<Filter>('all');
   const { socket } = useSocket();
+  const { user } = useAuth();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const numColumns = width > 600 ? 3 : 2;
@@ -39,32 +45,18 @@ export default function MesasScreen() {
   const fetchMesas = useCallback(async () => {
     try {
       const data = await apiClient.get<Mesa[]>('/mesas');
-
-      // For occupied tables, fetch active pedidos to get waiter info
-      const mesasWithInfo: MesaWithGarcom[] = await Promise.all(
+      const result: MesaWithGarcom[] = await Promise.all(
         data.map(async (mesa) => {
           if (mesa.status === StatusMesa.OCUPADA || mesa.status === StatusMesa.AGUARDANDO_CONTA) {
             try {
-              const pedidos = await apiClient.get<Pedido[]>(
-                `/pedidos?mesa_id=${mesa.id}&status=ABERTO`,
-              );
-              if (pedidos.length > 0) {
-                const pedido = pedidos[0];
-                return {
-                  ...mesa,
-                  garcomNome: pedido.garcom?.nome,
-                  pedidoId: pedido.id,
-                };
-              }
-            } catch {
-              // Ignore error fetching pedido details
-            }
+              const pedidos = await apiClient.get<Pedido[]>(`/pedidos?mesa_id=${mesa.id}&status=ABERTO`);
+              if (pedidos.length > 0) return { ...mesa, garcomNome: pedidos[0].garcom?.nome, pedidoId: pedidos[0].id };
+            } catch {}
           }
           return mesa;
         }),
       );
-
-      setMesas(mesasWithInfo);
+      setMesas(result);
     } catch (err: any) {
       Alert.alert('Erro', err?.message || 'Erro ao carregar mesas');
     } finally {
@@ -73,119 +65,120 @@ export default function MesasScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchMesas();
-  }, [fetchMesas]);
+  useEffect(() => { fetchMesas(); }, [fetchMesas]);
 
-  // Real-time mesa status updates
   useEffect(() => {
     if (!socket) return;
-
-    const handleMesaChanged = (payload: MesaStatusChangedPayload) => {
-      setMesas((prev) =>
-        prev.map((mesa) =>
-          mesa.id === payload.mesaId
-            ? { ...mesa, status: payload.novoStatus }
-            : mesa,
-        ),
-      );
-      // Refresh full data to get updated garcom info
+    const handler = (p: MesaStatusChangedPayload) => {
+      setMesas((prev) => prev.map((m) => m.id === p.mesaId ? { ...m, status: p.novoStatus } : m));
       fetchMesas();
     };
-
-    socket.on(SOCKET_EVENTS.MESA_STATUS_CHANGED, handleMesaChanged);
-    return () => {
-      socket.off(SOCKET_EVENTS.MESA_STATUS_CHANGED, handleMesaChanged);
-    };
+    socket.on(SOCKET_EVENTS.MESA_STATUS_CHANGED, handler);
+    return () => { socket.off(SOCKET_EVENTS.MESA_STATUS_CHANGED, handler); };
   }, [socket, fetchMesas]);
 
-  const handleMesaPress = useCallback(
-    async (mesa: MesaWithGarcom) => {
-      if (mesa.status === StatusMesa.LIVRE) {
-        Alert.alert(
-          `Mesa ${mesa.numero}`,
-          'Abrir novo pedido para esta mesa?',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            {
-              text: 'Abrir Pedido',
-              onPress: async () => {
-                try {
-                  const pedido = await apiClient.post<Pedido>('/pedidos', {
-                    mesaId: mesa.id,
-                  });
-                  router.push(`/pedido/${pedido.id}`);
-                } catch (err: any) {
-                  Alert.alert(
-                    'Erro',
-                    err?.message || 'Erro ao criar pedido',
-                  );
-                }
-              },
-            },
-          ],
-        );
-      } else if (mesa.pedidoId) {
-        router.push(`/pedido/${mesa.pedidoId}`);
-      } else {
-        // Try to find the active pedido
-        try {
-          const pedidos = await apiClient.get<Pedido[]>(
-            `/pedidos?mesa_id=${mesa.id}&status=ABERTO`,
-          );
-          if (pedidos.length > 0) {
-            router.push(`/pedido/${pedidos[0].id}`);
-          } else {
-            Alert.alert('Info', 'Nenhum pedido aberto para esta mesa.');
-          }
-        } catch (err: any) {
-          Alert.alert('Erro', err?.message || 'Erro ao buscar pedido');
-        }
-      }
-    },
-    [router],
-  );
+  const counts = useMemo(() => ({
+    free: mesas.filter((m) => m.status === StatusMesa.LIVRE).length,
+    busy: mesas.filter((m) => m.status !== StatusMesa.LIVRE).length,
+  }), [mesas]);
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchMesas();
-  }, [fetchMesas]);
+  const filtered = useMemo(() => {
+    if (filter === 'free') return mesas.filter((m) => m.status === StatusMesa.LIVRE);
+    if (filter === 'busy') return mesas.filter((m) => m.status !== StatusMesa.LIVRE);
+    return mesas;
+  }, [mesas, filter]);
+
+  const handlePress = useCallback(async (mesa: MesaWithGarcom) => {
+    if (mesa.status === StatusMesa.LIVRE) {
+      Alert.alert(`Mesa ${mesa.numero}`, 'Abrir novo pedido?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Abrir', onPress: async () => {
+          try {
+            const pedido = await apiClient.post<Pedido>('/pedidos', { mesaId: mesa.id });
+            router.push(`/pedido/${pedido.id}`);
+          } catch (err: any) { Alert.alert('Erro', err?.message || 'Erro'); }
+        }},
+      ]);
+    } else if (mesa.pedidoId) {
+      router.push(`/pedido/${mesa.pedidoId}`);
+    } else {
+      try {
+        const pedidos = await apiClient.get<Pedido[]>(`/pedidos?mesa_id=${mesa.id}&status=ABERTO`);
+        if (pedidos.length > 0) router.push(`/pedido/${pedidos[0].id}`);
+        else Alert.alert('Info', 'Nenhum pedido aberto.');
+      } catch (err: any) { Alert.alert('Erro', err?.message || 'Erro'); }
+    }
+  }, [router]);
 
   if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
+    return <View style={styles.center}><ActivityIndicator size="large" color={COLORS.brand} /></View>;
   }
+
+  const firstName = user?.nome?.split(' ')[0] || 'Usuario';
+  const FILTERS: { key: Filter; label: string }[] = [
+    { key: 'all', label: 'Todas' },
+    { key: 'free', label: 'Livres' },
+    { key: 'busy', label: 'Ocupadas' },
+  ];
 
   return (
     <View style={styles.container}>
+      {/* Custom header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Ola, {firstName}</Text>
+          <Text style={styles.headerTitle}>CafeControl</Text>
+        </View>
+        <View style={styles.headerStats}>
+          <View style={styles.statBox}>
+            <Text style={styles.statNum}>{counts.free}</Text>
+            <Text style={styles.statLabel}>livres</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={styles.statNum}>{counts.busy}</Text>
+            <Text style={styles.statLabel}>ocupadas</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Tabs */}
+      <View style={styles.tabRow}>
+        {FILTERS.map((f) => {
+          const on = filter === f.key;
+          return (
+            <TouchableOpacity
+              key={f.key}
+              style={[styles.tab, on && styles.tabOn]}
+              onPress={() => setFilter(f.key)}
+            >
+              <Text style={[styles.tabText, on && styles.tabTextOn]}>{f.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Grid */}
       <FlatList
-        data={mesas}
-        keyExtractor={(item) => item.id.toString()}
+        data={filtered}
+        keyExtractor={(i) => i.id.toString()}
         numColumns={numColumns}
-        key={`cols-${numColumns}`}
+        key={`c-${numColumns}`}
         renderItem={({ item }) => (
           <MesaCard
             numero={item.numero}
             status={item.status}
             garcomNome={item.garcomNome}
-            onPress={() => handleMesaPress(item)}
+            onPress={() => handlePress(item)}
           />
         )}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={styles.grid}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[COLORS.primary]}
-            tintColor={COLORS.primary}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchMesas(); }} colors={[COLORS.brand]} />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>Nenhuma mesa cadastrada</Text>
+            <Text style={styles.emptyText}>Nenhuma mesa encontrada</Text>
           </View>
         }
       />
@@ -194,27 +187,84 @@ export default function MesasScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
+  container: { flex: 1, backgroundColor: COLORS.background },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
+
+  // Header
+  header: {
+    backgroundColor: COLORS.primary,
+    paddingTop: 16,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  list: {
-    padding: 10,
+  greeting: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.6)',
+    fontWeight: '500',
   },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: COLORS.white,
+    letterSpacing: 0.5,
+  },
+  headerStats: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 60,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 14,
   },
-  emptyText: {
-    fontSize: 16,
-    color: COLORS.gray[400],
+  statBox: { alignItems: 'center' },
+  statNum: { fontSize: 20, fontWeight: '800', color: COLORS.white },
+  statLabel: { fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: '600', marginTop: 1 },
+  statDivider: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.2)' },
+
+  // Tabs
+  tabRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 10,
+    gap: 8,
   },
+  tab: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: COLORS.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  tabOn: {
+    backgroundColor: COLORS.brand,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text.secondary,
+  },
+  tabTextOn: {
+    color: COLORS.white,
+  },
+
+  // Grid
+  grid: { paddingHorizontal: 14, paddingBottom: 20 },
+  empty: { paddingVertical: 60, alignItems: 'center' },
+  emptyText: { fontSize: 15, color: COLORS.text.tertiary, fontWeight: '500' },
 });

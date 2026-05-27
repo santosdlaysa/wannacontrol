@@ -9,6 +9,7 @@ import * as itensController from './itens-pedido.controller';
 const router = Router({ mergeParams: true });
 
 router.post('/', authorize(Perfil.GARCOM, Perfil.ADMIN, Perfil.GERENTE), validate(addItensSchema), asyncHandler(itensController.adicionar));
+router.patch('/:id/status', authorize(Perfil.GARCOM, Perfil.ADMIN, Perfil.GERENTE, Perfil.COZINHA), validate(updateItemStatusSchema), asyncHandler(itensController.atualizarStatus));
 router.delete('/:id', authorize(Perfil.GARCOM, Perfil.GERENTE, Perfil.ADMIN), asyncHandler(itensController.remover));
 
 export default router;

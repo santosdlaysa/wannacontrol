@@ -26,33 +26,14 @@ export function PinPad({
   const [pin, setPin] = useState('');
   const [shakeAnim] = useState(new Animated.Value(0));
 
-  // Trigger shake when error changes to true
   React.useEffect(() => {
     if (error) {
       Animated.sequence([
-        Animated.timing(shakeAnim, {
-          toValue: 10,
-          duration: 50,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shakeAnim, {
-          toValue: -10,
-          duration: 50,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shakeAnim, {
-          toValue: 10,
-          duration: 50,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shakeAnim, {
-          toValue: 0,
-          duration: 50,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setPin('');
-      });
+        Animated.timing(shakeAnim, { toValue: 12, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -12, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 12, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+      ]).start(() => setPin(''));
     }
   }, [error, shakeAnim]);
 
@@ -64,7 +45,6 @@ export function PinPad({
         setPin(newPin);
         if (newPin.length === length) {
           onComplete(newPin);
-          // Reset pin after a short delay to allow re-entry
           setTimeout(() => setPin(''), 500);
         }
       }
@@ -78,66 +58,51 @@ export function PinPad({
     onClear?.();
   }, [disabled, onClear]);
 
-  const renderDots = () => (
-    <Animated.View
-      style={[styles.dotsContainer, { transform: [{ translateX: shakeAnim }] }]}
-    >
-      {Array.from({ length }, (_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.dot,
-            i < pin.length && styles.dotFilled,
-            error && styles.dotError,
-          ]}
-        />
-      ))}
-    </Animated.View>
-  );
-
-  const renderButton = (label: string, onPress: () => void) => (
-    <TouchableOpacity
-      style={styles.button}
-      onPress={onPress}
-      activeOpacity={0.6}
-      disabled={disabled}
-    >
-      <Text style={styles.buttonText}>{label}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
-      {renderDots()}
+      <Animated.View
+        style={[styles.dots, { transform: [{ translateX: shakeAnim }] }]}
+      >
+        {Array.from({ length }, (_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.dot,
+              i < pin.length && styles.dotActive,
+              error && styles.dotError,
+            ]}
+          />
+        ))}
+      </Animated.View>
 
-      <View style={styles.pad}>
-        <View style={styles.row}>
-          {renderButton('1', () => handlePress('1'))}
-          {renderButton('2', () => handlePress('2'))}
-          {renderButton('3', () => handlePress('3'))}
-        </View>
-        <View style={styles.row}>
-          {renderButton('4', () => handlePress('4'))}
-          {renderButton('5', () => handlePress('5'))}
-          {renderButton('6', () => handlePress('6'))}
-        </View>
-        <View style={styles.row}>
-          {renderButton('7', () => handlePress('7'))}
-          {renderButton('8', () => handlePress('8'))}
-          {renderButton('9', () => handlePress('9'))}
-        </View>
-        <View style={styles.row}>
-          <View style={styles.button} />
-          {renderButton('0', () => handlePress('0'))}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleBackspace}
-            activeOpacity={0.6}
-            disabled={disabled}
-          >
-            <Text style={styles.backspaceText}>&#9003;</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.grid}>
+        {['1','2','3','4','5','6','7','8','9','','0','back'].map((key, i) => {
+          if (key === '') return <View key={i} style={styles.cell} />;
+          if (key === 'back') {
+            return (
+              <TouchableOpacity
+                key={i}
+                style={styles.cell}
+                onPress={handleBackspace}
+                activeOpacity={0.5}
+                disabled={disabled}
+              >
+                <Text style={styles.backText}>&#9003;</Text>
+              </TouchableOpacity>
+            );
+          }
+          return (
+            <TouchableOpacity
+              key={i}
+              style={styles.cell}
+              onPress={() => handlePress(key)}
+              activeOpacity={0.5}
+              disabled={disabled}
+            >
+              <Text style={styles.digit}>{key}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -146,50 +111,47 @@ export function PinPad({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
+    width: '100%',
   },
-  dotsContainer: {
+  dots: {
     flexDirection: 'row',
     gap: 16,
-    marginBottom: 40,
+    marginBottom: 44,
   },
   dot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: COLORS.accent,
-    backgroundColor: 'transparent',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
-  dotFilled: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+  dotActive: {
+    backgroundColor: COLORS.brand,
+    transform: [{ scale: 1.1 }],
   },
   dotError: {
-    borderColor: COLORS.danger,
     backgroundColor: COLORS.danger,
   },
-  pad: {
-    gap: 12,
-  },
-  row: {
+  grid: {
     flexDirection: 'row',
-    gap: 20,
-  },
-  button: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: COLORS.secondary,
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    width: 264,
     justifyContent: 'center',
   },
-  buttonText: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: COLORS.primary,
+  cell: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 6,
   },
-  backspaceText: {
-    fontSize: 24,
-    color: COLORS.primary,
+  digit: {
+    fontSize: 30,
+    fontWeight: '400',
+    color: COLORS.white,
+  },
+  backText: {
+    fontSize: 26,
+    color: 'rgba(255,255,255,0.5)',
   },
 });

@@ -1,129 +1,181 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
 } from 'react-native';
-import { SOCKET_EVENTS, type ItemReadyPayload } from '@cafecontrol/shared';
+import { useRouter } from 'expo-router';
+import {
+  SOCKET_EVENTS,
+  StatusPreparo,
+  type ItemReadyPayload,
+  type Pedido,
+} from '@cafecontrol/shared';
+import { apiClient } from '../../src/lib/api-client';
 import { useSocket } from '../../src/providers/SocketProvider';
-import { COLORS } from '../../src/lib/constants';
+import { COLORS, SPACING } from '../../src/lib/constants';
 
 interface AlertItem {
-  id: string;
+  key: string;
+  itemId: number;
+  pedidoId: number;
   mesaNumero: number;
   produtoNome: string;
-  pedidoId: number;
-  itemId: number;
+  quantidade: number;
   timestamp: Date;
-  read: boolean;
 }
 
 export default function AlertasScreen() {
   const { socket } = useSocket();
+  const router = useRouter();
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [delivering, setDelivering] = useState<Set<number>>(new Set());
+
+  const fetchReadyItems = useCallback(async () => {
+    try {
+      const pedidos = await apiClient.get<Pedido[]>('/pedidos?status=ABERTO');
+      const readyItems: AlertItem[] = [];
+
+      for (const pedido of pedidos) {
+        if (!pedido.itens) continue;
+        for (const item of pedido.itens) {
+          if (item.statusPreparo === StatusPreparo.PRONTO) {
+            readyItems.push({
+              key: `item-${item.id}`,
+              itemId: item.id,
+              pedidoId: pedido.id,
+              mesaNumero: pedido.mesa?.numero ?? 0,
+              produtoNome: item.produto?.nome ?? `Produto #${item.produtoId}`,
+              quantidade: item.quantidade,
+              timestamp: new Date(item.criadoEm),
+            });
+          }
+        }
+      }
+
+      setAlerts(readyItems);
+    } catch {
+      // retry next poll
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchReadyItems(); }, [fetchReadyItems]);
+
+  useEffect(() => {
+    const interval = setInterval(fetchReadyItems, 15000);
+    return () => clearInterval(interval);
+  }, [fetchReadyItems]);
 
   useEffect(() => {
     if (!socket) return;
-
-    const handleItemReady = (payload: ItemReadyPayload) => {
-      const newAlert: AlertItem = {
-        id: `${payload.itemId}-${Date.now()}`,
-        mesaNumero: payload.mesaNumero,
-        produtoNome: payload.produtoNome,
-        pedidoId: payload.pedidoId,
-        itemId: payload.itemId,
-        timestamp: new Date(),
-        read: false,
-      };
-      setAlerts((prev) => [newAlert, ...prev]);
-    };
-
-    socket.on(SOCKET_EVENTS.ITEM_READY, handleItemReady);
+    const handler = () => fetchReadyItems();
+    socket.on(SOCKET_EVENTS.ITEM_READY, handler);
+    socket.on(SOCKET_EVENTS.ITEM_STATUS_CHANGED, handler);
     return () => {
-      socket.off(SOCKET_EVENTS.ITEM_READY, handleItemReady);
+      socket.off(SOCKET_EVENTS.ITEM_READY, handler);
+      socket.off(SOCKET_EVENTS.ITEM_STATUS_CHANGED, handler);
     };
-  }, [socket]);
+  }, [socket, fetchReadyItems]);
 
-  // Reset badge count when viewing alerts
   useEffect(() => {
-    if ((global as any).__resetAlertCount) {
-      (global as any).__resetAlertCount();
+    if ((global as any).__resetAlertCount) (global as any).__resetAlertCount();
+  }, [alerts]);
+
+  const markDelivered = useCallback(async (item: AlertItem) => {
+    setDelivering((prev) => new Set(prev).add(item.itemId));
+    try {
+      await apiClient.patch(`/pedidos/${item.pedidoId}/itens/${item.itemId}/status`, {
+        statusPreparo: StatusPreparo.ENTREGUE,
+      });
+      // Remove from list immediately
+      setAlerts((prev) => prev.filter((a) => a.itemId !== item.itemId));
+      // Refresh badge count
+      if ((global as any).__refreshAlertCount) (global as any).__refreshAlertCount();
+    } catch (err: any) {
+      Alert.alert('Erro', err?.message || 'Erro ao marcar como entregue');
+    } finally {
+      setDelivering((prev) => {
+        const next = new Set(prev);
+        next.delete(item.itemId);
+        return next;
+      });
     }
-  }, [alerts.length]);
-
-  const handleDismiss = useCallback((id: string) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, read: true } : a)),
-    );
   }, []);
 
-  const handleClearRead = useCallback(() => {
-    setAlerts((prev) => prev.filter((a) => !a.read));
-  }, []);
+  const formatTime = (d: Date) =>
+    new Date(d).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-  const formatTime = (date: Date) => {
-    const d = new Date(date);
-    return d.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const unreadCount = alerts.filter((a) => !a.read).length;
+  if (loading) {
+    return <View style={styles.center}><ActivityIndicator size="large" color={COLORS.brand} /></View>;
+  }
 
   return (
     <View style={styles.container}>
       {alerts.length > 0 && (
-        <View style={styles.header}>
-          <Text style={styles.headerText}>
-            {unreadCount} {unreadCount === 1 ? 'nova' : 'novas'}
+        <View style={styles.topBar}>
+          <Text style={styles.topText}>
+            {alerts.length} {alerts.length === 1 ? 'item pronto' : 'itens prontos'}
           </Text>
-          {alerts.some((a) => a.read) && (
-            <TouchableOpacity onPress={handleClearRead}>
-              <Text style={styles.clearText}>Limpar lidas</Text>
-            </TouchableOpacity>
-          )}
         </View>
       )}
 
       <FlatList
         data={alerts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.alertCard, item.read && styles.alertCardRead]}
-            onPress={() => handleDismiss(item.id)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.alertIcon}>
-              <Text style={styles.alertIconText}>
-                {item.read ? '\u2713' : '\u{1F37D}'}
-              </Text>
+        keyExtractor={(i) => i.key}
+        renderItem={({ item }) => {
+          const isDelivering = delivering.has(item.itemId);
+          return (
+            <View style={styles.card}>
+              <View style={styles.accent} />
+              <View style={styles.cardBody}>
+                <View style={styles.cardTop}>
+                  <Text style={styles.cardMesa}>Mesa {item.mesaNumero}</Text>
+                  <Text style={styles.cardTime}>{formatTime(item.timestamp)}</Text>
+                </View>
+                <Text style={styles.cardProduct}>
+                  {item.quantidade}x {item.produtoNome}
+                </Text>
+                <Text style={styles.cardHint}>Pronto para entregar</Text>
+
+                <TouchableOpacity
+                  style={[styles.deliverBtn, isDelivering && styles.deliverBtnOff]}
+                  onPress={() => markDelivered(item)}
+                  disabled={isDelivering}
+                  activeOpacity={0.8}
+                >
+                  {isDelivering ? (
+                    <ActivityIndicator size="small" color={COLORS.white} />
+                  ) : (
+                    <Text style={styles.deliverText}>Entreguei</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.alertContent}>
-              <Text
-                style={[styles.alertTitle, item.read && styles.mutedText]}
-              >
-                Mesa {item.mesaNumero}
-              </Text>
-              <Text
-                style={[styles.alertMessage, item.read && styles.mutedText]}
-              >
-                {item.produtoNome} esta pronto!
-              </Text>
-            </View>
-            <Text style={styles.alertTime}>{formatTime(item.timestamp)}</Text>
-          </TouchableOpacity>
-        )}
+          );
+        }}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); fetchReadyItems(); }}
+            colors={[COLORS.brand]}
+          />
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>&#9749;</Text>
-            <Text style={styles.emptyText}>Nenhuma notificacao</Text>
-            <Text style={styles.emptySubtext}>
-              Voce sera notificado quando itens estiverem prontos
+            <Text style={styles.emptyTitle}>Tudo entregue</Text>
+            <Text style={styles.emptySub}>
+              Quando itens ficarem prontos na cozinha,{'\n'}eles aparecerao aqui
             </Text>
           </View>
         }
@@ -133,105 +185,58 @@ export default function AlertasScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
+  container: { flex: 1, backgroundColor: COLORS.background },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
+
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 12,
+    backgroundColor: COLORS.white,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
+    borderBottomColor: COLORS.border.light,
+  },
+  topText: { fontSize: 14, fontWeight: '700', color: COLORS.text.secondary },
+
+  list: { padding: 20 },
+
+  card: {
     backgroundColor: COLORS.white,
-  },
-  headerText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.gray[600],
-  },
-  clearText: {
-    fontSize: 13,
-    color: COLORS.accent,
-    fontWeight: '500',
-  },
-  list: {
-    padding: 16,
-  },
-  alertCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
+    borderRadius: 16,
+    marginBottom: 12,
+    overflow: 'hidden',
     flexDirection: 'row',
-    alignItems: 'center',
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.success,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  alertCardRead: {
-    opacity: 0.5,
-    borderLeftColor: COLORS.gray[300],
-  },
-  alertIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.secondary,
+  accent: { width: 4, alignSelf: 'stretch', backgroundColor: COLORS.success },
+  cardBody: { flex: 1, padding: 14, gap: 4 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardMesa: { fontSize: 15, fontWeight: '700', color: COLORS.text.primary },
+  cardTime: { fontSize: 11, color: COLORS.text.tertiary, fontWeight: '500' },
+  cardProduct: { fontSize: 14, fontWeight: '600', color: COLORS.text.secondary },
+  cardHint: { fontSize: 12, color: COLORS.success, fontWeight: '600' },
+
+  deliverBtn: {
+    backgroundColor: COLORS.success,
+    borderRadius: 10,
+    paddingVertical: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
+    marginTop: 10,
   },
-  alertIconText: {
-    fontSize: 18,
-  },
-  alertContent: {
-    flex: 1,
-  },
-  alertTitle: {
-    fontSize: 15,
+  deliverBtnOff: { opacity: 0.5 },
+  deliverText: {
+    color: COLORS.white,
+    fontSize: 14,
     fontWeight: '700',
-    color: COLORS.gray[800],
   },
-  alertMessage: {
-    fontSize: 14,
-    color: COLORS.gray[600],
-    marginTop: 2,
-  },
-  mutedText: {
-    color: COLORS.gray[400],
-  },
-  alertTime: {
-    fontSize: 12,
-    color: COLORS.gray[400],
-    marginLeft: 8,
-  },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 80,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.gray[500],
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: COLORS.gray[400],
-    textAlign: 'center',
-    paddingHorizontal: 40,
-  },
+
+  empty: { paddingVertical: 100, alignItems: 'center' },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text.secondary, marginBottom: 8 },
+  emptySub: { fontSize: 14, color: COLORS.text.tertiary, textAlign: 'center', lineHeight: 20 },
 });

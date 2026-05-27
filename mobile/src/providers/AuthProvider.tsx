@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { SECURE_STORE_KEYS, API_BASE_URL } from '../lib/constants';
+import { authEvents } from '../lib/auth-events';
 import type { Usuario, LoginResponse } from '@cafecontrol/shared';
 
 interface AuthContextData {
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const storeTokens = useCallback(async (data: LoginResponse) => {
+    console.log('[AUTH] storeTokens called, user:', data.usuario?.nome);
     await SecureStore.setItemAsync(
       SECURE_STORE_KEYS.ACCESS_TOKEN,
       data.accessToken,
@@ -38,10 +40,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearAuth = useCallback(async () => {
+    console.log('[AUTH] clearAuth called');
+    console.trace('[AUTH] clearAuth stack');
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN);
     setUser(null);
   }, []);
+
+  // Listen for forced logout from api-client (e.g. 401 responses)
+  useEffect(() => {
+    return authEvents.onForceLogout(() => {
+      console.log('[AUTH] forceLogout event received');
+      clearAuth();
+    });
+  }, [clearAuth]);
 
   // Check stored token on mount
   useEffect(() => {
@@ -50,29 +62,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = await SecureStore.getItemAsync(
           SECURE_STORE_KEYS.ACCESS_TOKEN,
         );
+        console.log('[AUTH] mount check, hasToken:', !!token);
         if (!token) {
           setIsLoading(false);
           return;
         }
 
-        // Validate token by fetching user profile
+        // Validate token by refreshing
+        const refreshToken = await SecureStore.getItemAsync(
+          SECURE_STORE_KEYS.REFRESH_TOKEN,
+        );
+        console.log('[AUTH] attempting refresh, hasRefreshToken:', !!refreshToken);
+
         const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            refreshToken: await SecureStore.getItemAsync(
-              SECURE_STORE_KEYS.REFRESH_TOKEN,
-            ),
-          }),
+          body: JSON.stringify({ refreshToken }),
         });
+
+        console.log('[AUTH] refresh response:', response.status);
 
         if (response.ok) {
           const data: LoginResponse = await response.json();
           await storeTokens(data);
         } else {
+          console.log('[AUTH] refresh failed, clearing auth');
           await clearAuth();
         }
-      } catch {
+      } catch (err) {
+        console.log('[AUTH] refresh error:', err);
         await clearAuth();
       } finally {
         setIsLoading(false);
@@ -82,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (pin: string) => {
+      console.log('[AUTH] login-pin chamando API:', `${API_BASE_URL}/auth/login-pin`);
       const response = await fetch(`${API_BASE_URL}/auth/login-pin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -89,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       const data = await response.json();
+      console.log('[AUTH] login-pin response:', response.status, data?.usuario?.nome);
 
       if (!response.ok) {
         throw new Error(data?.message || 'PIN invalido');
@@ -101,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginEmail = useCallback(
     async (email: string, senha: string) => {
+      console.log('[AUTH] login-email chamando API:', `${API_BASE_URL}/auth/login`);
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -108,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       const data = await response.json();
+      console.log('[AUTH] login-email response:', response.status, data?.usuario?.nome);
 
       if (!response.ok) {
         throw new Error(data?.message || 'Credenciais invalidas');

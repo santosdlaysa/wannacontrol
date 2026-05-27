@@ -10,90 +10,44 @@ interface StatusBadgeProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
-  // StatusPreparo
-  [StatusPreparo.PENDENTE]: {
-    bg: COLORS.gray[200],
-    text: COLORS.gray[700],
-    label: 'Pendente',
-  },
-  [StatusPreparo.PREPARANDO]: {
-    bg: '#FEF3C7',
-    text: '#92400E',
-    label: 'Preparando',
-  },
-  [StatusPreparo.PRONTO]: {
-    bg: '#D1FAE5',
-    text: '#065F46',
-    label: 'Pronto',
-  },
-  [StatusPreparo.ENTREGUE]: {
-    bg: COLORS.gray[100],
-    text: COLORS.gray[400],
-    label: 'Entregue',
-  },
-  // StatusMesa
-  [StatusMesa.LIVRE]: {
-    bg: '#D1FAE5',
-    text: '#065F46',
-    label: 'Livre',
-  },
-  [StatusMesa.OCUPADA]: {
-    bg: '#FEE2E2',
-    text: '#991B1B',
-    label: 'Ocupada',
-  },
-  [StatusMesa.AGUARDANDO_CONTA]: {
-    bg: '#FEF3C7',
-    text: '#92400E',
-    label: 'Aguardando Conta',
-  },
+const CONFIG: Record<string, { bg: string; fg: string; label: string }> = {
+  [StatusPreparo.PENDENTE]: { bg: '#F3F4F6', fg: '#6B7280', label: 'Pendente' },
+  [StatusPreparo.PREPARANDO]: { bg: COLORS.warningBg, fg: COLORS.warning, label: 'Preparando' },
+  [StatusPreparo.PRONTO]: { bg: COLORS.successBg, fg: COLORS.success, label: 'Pronto' },
+  [StatusPreparo.ENTREGUE]: { bg: '#F3F4F6', fg: '#9CA3AF', label: 'Entregue' },
+  [StatusMesa.LIVRE]: { bg: COLORS.successBg, fg: COLORS.success, label: 'Livre' },
+  [StatusMesa.OCUPADA]: { bg: COLORS.dangerBg, fg: COLORS.danger, label: 'Ocupada' },
+  [StatusMesa.AGUARDANDO_CONTA]: { bg: COLORS.warningBg, fg: COLORS.warning, label: 'Conta' },
 };
 
-const SIZE_STYLES = {
-  sm: { paddingHorizontal: 6, paddingVertical: 2, fontSize: 10 },
-  md: { paddingHorizontal: 10, paddingVertical: 4, fontSize: 12 },
-  lg: { paddingHorizontal: 14, paddingVertical: 6, fontSize: 14 },
+const SIZES = {
+  sm: { px: 8, py: 3, fs: 10, dot: 5 },
+  md: { px: 10, py: 4, fs: 11, dot: 6 },
+  lg: { px: 14, py: 6, fs: 13, dot: 7 },
 };
 
 export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
-  const config = STATUS_CONFIG[status] || {
-    bg: COLORS.gray[200],
-    text: COLORS.gray[700],
-    label: status,
-  };
-
-  const sizeStyle = SIZE_STYLES[size];
+  const c = CONFIG[status] || { bg: '#F3F4F6', fg: '#6B7280', label: status };
+  const s = SIZES[size];
 
   return (
-    <View
-      style={[
-        styles.badge,
-        {
-          backgroundColor: config.bg,
-          paddingHorizontal: sizeStyle.paddingHorizontal,
-          paddingVertical: sizeStyle.paddingVertical,
-        },
-      ]}
-    >
-      <Text
-        style={[
-          styles.badgeText,
-          { color: config.text, fontSize: sizeStyle.fontSize },
-        ]}
-      >
-        {config.label}
-      </Text>
+    <View style={[styles.badge, { backgroundColor: c.bg, paddingHorizontal: s.px, paddingVertical: s.py }]}>
+      <View style={[styles.dot, { backgroundColor: c.fg, width: s.dot, height: s.dot, borderRadius: s.dot }]} />
+      <Text style={[styles.text, { color: c.fg, fontSize: s.fs }]}>{c.label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
+    borderRadius: 999,
+    gap: 5,
   },
-  badgeText: {
-    fontWeight: '600',
+  dot: {},
+  text: {
+    fontWeight: '700',
   },
 });

@@ -8,10 +8,8 @@ export async function adicionar(req: Request, res: Response) {
 }
 
 export async function atualizarStatus(req: Request, res: Response) {
-  const item = await itensService.atualizarStatus(
-    Number(req.params.id),
-    req.body.statusPreparo
-  );
+  const itemId = Number(req.params.id);
+  const item = await itensService.atualizarStatus(itemId, req.body.statusPreparo);
   res.json(item);
 }
 

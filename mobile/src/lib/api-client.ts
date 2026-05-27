@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
-import { router } from 'expo-router';
 import { API_BASE_URL, SECURE_STORE_KEYS } from './constants';
+import { authEvents } from './auth-events';
 
 type RequestOptions = {
   headers?: Record<string, string>;
@@ -17,9 +17,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (response.status === 401) {
-    await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
-    await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN);
-    router.replace('/login');
+    authEvents.emitForceLogout();
     throw new Error('Sessao expirada');
   }
 

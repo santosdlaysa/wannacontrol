@@ -6,17 +6,15 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
-  Modal,
-  TextInput,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import type { Produto, Mesa, Pedido } from '@cafecontrol/shared';
 import { StatusMesa } from '@cafecontrol/shared';
 import { apiClient } from '../../src/lib/api-client';
-import { ProdutoCard } from '../../src/components/ProdutoCard';
-import { COLORS, formatBRL } from '../../src/lib/constants';
+import { COLORS, RADIUS, SHADOWS, SPACING, formatBRL } from '../../src/lib/constants';
 
 interface CartItem {
   produto: Produto;
@@ -31,34 +29,29 @@ export default function NovoPedidoScreen() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMesaId, setSelectedMesaId] = useState<number | null>(null);
+  const [existingPedidoId, setExistingPedidoId] = useState<number | null>(null);
 
-  const [selectedMesaId, setSelectedMesaId] = useState<number | null>(
-    params.mesaId ? Number(params.mesaId) : null,
-  );
-  const [existingPedidoId, setExistingPedidoId] = useState<number | null>(
-    params.pedidoId ? Number(params.pedidoId) : null,
-  );
-
-  const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+  // Atualizar quando navegar com params (ex: vindo da tela de mesas)
+  useEffect(() => {
+    if (params.mesaId) setSelectedMesaId(Number(params.mesaId));
+    if (params.pedidoId) setExistingPedidoId(Number(params.pedidoId));
+    else setExistingPedidoId(null);
+  }, [params.mesaId, params.pedidoId]);
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [cart, setCart] = useState<CartItem[]>([]);
-
-  // Add item modal
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalProduto, setModalProduto] = useState<Produto | null>(null);
-  const [modalQty, setModalQty] = useState(1);
-  const [modalObs, setModalObs] = useState('');
-
   const [sending, setSending] = useState(false);
+  const [busca, setBusca] = useState('');
 
   useEffect(() => {
     (async () => {
       try {
-        const [produtosData, mesasData] = await Promise.all([
+        const [p, m] = await Promise.all([
           apiClient.get<Produto[]>('/produtos?disponivel=true'),
           apiClient.get<Mesa[]>('/mesas'),
         ]);
-        setProdutos(produtosData);
-        setMesas(mesasData);
+        setProdutos(p);
+        setMesas(m);
       } catch (err: any) {
         Alert.alert('Erro', err?.message || 'Erro ao carregar dados');
       } finally {
@@ -68,111 +61,73 @@ export default function NovoPedidoScreen() {
   }, []);
 
   const categories = useMemo(() => {
-    const cats = new Set(produtos.map((p) => p.categoria));
-    return ['Todos', ...Array.from(cats).sort()];
+    const cats = Array.from(new Set(produtos.map((p) => p.categoria))).sort();
+    if (cats.length === 0) {
+      return ['Todos', 'Cafés Quentes', 'Bebidas Geladas', 'Salgados', 'Doces e Tortas'];
+    }
+    return ['Todos', ...cats];
   }, [produtos]);
 
-  const filteredProdutos = useMemo(() => {
-    if (selectedCategory === 'Todos') return produtos;
-    return produtos.filter((p) => p.categoria === selectedCategory);
-  }, [produtos, selectedCategory]);
+  const filtered = useMemo(() => {
+    let list = produtos;
+    if (selectedCategory !== 'Todos') {
+      list = list.filter((p) => p.categoria === selectedCategory);
+    }
+    if (busca.trim()) {
+      const q = busca.toLowerCase();
+      list = list.filter((p) => p.nome.toLowerCase().includes(q));
+    }
+    return list;
+  }, [produtos, selectedCategory, busca]);
 
-  const occupiedOrFreeMesas = useMemo(
-    () =>
-      mesas.filter(
-        (m) =>
-          m.status === StatusMesa.LIVRE ||
-          m.status === StatusMesa.OCUPADA ||
-          m.status === StatusMesa.AGUARDANDO_CONTA,
-      ),
+  const availableMesas = useMemo(
+    () => mesas.filter((m) => m.status === StatusMesa.LIVRE || m.status === StatusMesa.OCUPADA || m.status === StatusMesa.AGUARDANDO_CONTA),
     [mesas],
   );
 
-  const subtotal = useMemo(
-    () =>
-      cart.reduce(
-        (sum, item) => sum + item.produto.preco * item.quantidade,
-        0,
-      ),
-    [cart],
-  );
+  const totalQty = useMemo(() => cart.reduce((s, i) => s + i.quantidade, 0), [cart]);
+  const totalPrice = useMemo(() => cart.reduce((s, i) => s + Number(i.produto.preco) * i.quantidade, 0), [cart]);
 
-  const handleAddProduto = useCallback((produto: Produto) => {
-    setModalProduto(produto);
-    setModalQty(1);
-    setModalObs('');
-    setModalVisible(true);
+  const getQty = useCallback((id: number) => cart.find((c) => c.produto.id === id)?.quantidade || 0, [cart]);
+
+  const addItem = useCallback((produto: Produto) => {
+    setCart((prev) => {
+      const idx = prev.findIndex((i) => i.produto.id === produto.id);
+      if (idx >= 0) {
+        const u = [...prev];
+        u[idx] = { ...u[idx], quantidade: u[idx].quantidade + 1 };
+        return u;
+      }
+      return [...prev, { produto, quantidade: 1, observacao: '' }];
+    });
   }, []);
 
-  const confirmAddToCart = useCallback(() => {
-    if (!modalProduto) return;
+  const removeItem = useCallback((id: number) => {
     setCart((prev) => {
-      const existing = prev.findIndex(
-        (item) =>
-          item.produto.id === modalProduto.id &&
-          item.observacao === modalObs,
-      );
-      if (existing >= 0) {
-        const updated = [...prev];
-        updated[existing] = {
-          ...updated[existing],
-          quantidade: updated[existing].quantidade + modalQty,
-        };
-        return updated;
-      }
-      return [
-        ...prev,
-        { produto: modalProduto, quantidade: modalQty, observacao: modalObs },
-      ];
+      const idx = prev.findIndex((i) => i.produto.id === id);
+      if (idx < 0) return prev;
+      if (prev[idx].quantidade <= 1) return prev.filter((_, i) => i !== idx);
+      const u = [...prev];
+      u[idx] = { ...u[idx], quantidade: u[idx].quantidade - 1 };
+      return u;
     });
-    setModalVisible(false);
-  }, [modalProduto, modalQty, modalObs]);
-
-  const removeFromCart = useCallback((index: number) => {
-    setCart((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const handleSend = useCallback(async () => {
-    if (cart.length === 0) {
-      Alert.alert('Aviso', 'Adicione pelo menos um item ao pedido.');
-      return;
-    }
-
+    if (cart.length === 0) { Alert.alert('Aviso', 'Adicione pelo menos um item.'); return; }
     setSending(true);
-
     try {
       let pedidoId = existingPedidoId;
-
-      // If no existing pedido, create one for the selected mesa
       if (!pedidoId) {
-        if (!selectedMesaId) {
-          Alert.alert('Aviso', 'Selecione uma mesa primeiro.');
-          setSending(false);
-          return;
-        }
-        const pedido = await apiClient.post<Pedido>('/pedidos', {
-          mesaId: selectedMesaId,
-        });
+        if (!selectedMesaId) { Alert.alert('Aviso', 'Selecione uma mesa.'); setSending(false); return; }
+        const pedido = await apiClient.post<Pedido>('/pedidos', { mesaId: selectedMesaId });
         pedidoId = pedido.id;
       }
-
-      // Send items to the order
       await apiClient.post(`/pedidos/${pedidoId}/itens`, {
-        itens: cart.map((item) => ({
-          produtoId: item.produto.id,
-          quantidade: item.quantidade,
-          observacao: item.observacao || null,
-        })),
+        itens: cart.map((i) => ({ produtoId: i.produto.id, quantidade: i.quantidade, observacao: i.observacao || null })),
       });
-
       Alert.alert('Sucesso', 'Itens enviados para a cozinha!', [
-        {
-          text: 'OK',
-          onPress: () => {
-            setCart([]);
-            router.push(`/pedido/${pedidoId}`);
-          },
-        },
+        { text: 'OK', onPress: () => { setCart([]); router.push(`/pedido/${pedidoId}`); } },
       ]);
     } catch (err: any) {
       Alert.alert('Erro', err?.message || 'Erro ao enviar pedido');
@@ -182,428 +137,325 @@ export default function NovoPedidoScreen() {
   }, [cart, existingPedidoId, selectedMesaId, router]);
 
   if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
+    return <View style={styles.center}><ActivityIndicator size="large" color={COLORS.brand} /></View>;
   }
 
-  return (
-    <View style={styles.container}>
-      {/* Step 1: Mesa selection */}
+  const headerComponent = (
+    <View>
+      {/* Mesa selection */}
       {!existingPedidoId && (
         <View style={styles.mesaSection}>
-          <Text style={styles.sectionTitle}>Mesa</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {occupiedOrFreeMesas.map((mesa) => (
-              <TouchableOpacity
-                key={mesa.id}
-                style={[
-                  styles.mesaChip,
-                  selectedMesaId === mesa.id && styles.mesaChipSelected,
-                ]}
-                onPress={() => setSelectedMesaId(mesa.id)}
-              >
-                <Text
-                  style={[
-                    styles.mesaChipText,
-                    selectedMesaId === mesa.id && styles.mesaChipTextSelected,
-                  ]}
+          <Text style={styles.sectionLabel}>Selecione a mesa</Text>
+          <View style={styles.mesaGrid}>
+            {availableMesas.map((m) => {
+              const active = selectedMesaId === m.id;
+              const isLivre = m.status === StatusMesa.LIVRE;
+              return (
+                <TouchableOpacity
+                  key={m.id}
+                  style={[styles.mesaCard, active && styles.mesaCardActive]}
+                  onPress={() => setSelectedMesaId(m.id)}
+                  activeOpacity={0.7}
                 >
-                  Mesa {mesa.numero}
-                </Text>
-                <Text
-                  style={[
-                    styles.mesaChipStatus,
-                    selectedMesaId === mesa.id && styles.mesaChipTextSelected,
-                  ]}
-                >
-                  {mesa.status === StatusMesa.LIVRE ? 'Livre' : 'Ocupada'}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Text style={[styles.mesaNum, active && styles.mesaNumActive]}>{m.numero}</Text>
+                  <Text style={[styles.mesaStatus, active && styles.mesaStatusActive,
+                    isLivre ? styles.mesaLivre : styles.mesaOcupada
+                  ]}>
+                    {isLivre ? 'Livre' : 'Ocupada'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {selectedMesaId && (
+            <Text style={styles.mesaSelected}>
+              Mesa {mesas.find((m) => m.id === selectedMesaId)?.numero} selecionada
+            </Text>
+          )}
         </View>
       )}
 
       {existingPedidoId && (
-        <View style={styles.mesaSection}>
-          <Text style={styles.sectionTitle}>
-            Adicionando itens ao Pedido #{existingPedidoId}
-          </Text>
+        <View style={styles.existingBar}>
+          <Text style={styles.existingLabel}>Adicionando ao pedido #{existingPedidoId}</Text>
         </View>
       )}
 
-      {/* Step 2: Category tabs */}
-      <View style={styles.categorySection}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {categories.map((cat) => (
+      {/* Search */}
+      <View style={styles.searchSection}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar produto..."
+          placeholderTextColor={COLORS.text.tertiary}
+          value={busca}
+          onChangeText={setBusca}
+        />
+      </View>
+
+      {/* Categories */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.catRow}
+      >
+        {categories.map((cat) => {
+          const active = selectedCategory === cat;
+          return (
             <TouchableOpacity
               key={cat}
-              style={[
-                styles.categoryChip,
-                selectedCategory === cat && styles.categoryChipActive,
-              ]}
+              style={[styles.catCard, active && styles.catCardActive]}
               onPress={() => setSelectedCategory(cat)}
+              activeOpacity={0.7}
             >
-              <Text
-                style={[
-                  styles.categoryText,
-                  selectedCategory === cat && styles.categoryTextActive,
-                ]}
-              >
+              <Text style={[styles.catText, active && styles.catTextActive]}>
                 {cat}
               </Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
 
-      {/* Product list */}
+  return (
+    <View style={styles.container}>
       <FlatList
-        data={filteredProdutos}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <ProdutoCard
-            nome={item.nome}
-            preco={item.preco}
-            categoria={item.categoria}
-            onAdd={() => handleAddProduto(item)}
-          />
-        )}
-        contentContainerStyle={styles.productList}
+        data={filtered}
+        keyExtractor={(i) => i.id.toString()}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        ListHeaderComponent={headerComponent}
+        renderItem={({ item }) => {
+          const qty = getQty(item.id);
+          return (
+            <TouchableOpacity
+              style={[styles.prodCard, qty > 0 && styles.prodCardSelected]}
+              onPress={() => addItem(item)}
+              onLongPress={() => removeItem(item.id)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.prodNome} numberOfLines={2}>{item.nome}</Text>
+              <Text style={styles.prodPreco}>{formatBRL(Number(item.preco))}</Text>
+              {qty > 0 && (
+                <View style={styles.prodQtyBadge}>
+                  <Text style={styles.prodQtyText}>{qty}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        }}
+        contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>Nenhum produto encontrado</Text>
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyText}>Nenhum produto encontrado</Text>
+          </View>
         }
       />
 
-      {/* Cart summary */}
+      {/* Cart bar */}
       {cart.length > 0 && (
         <View style={styles.cartBar}>
           <View style={styles.cartInfo}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {cart.map((item, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.cartItem}
-                  onPress={() => removeFromCart(idx)}
-                >
-                  <Text style={styles.cartItemText}>
-                    {item.quantidade}x {item.produto.nome}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <Text style={styles.cartTotal}>
-              {cart.reduce((s, i) => s + i.quantidade, 0)} itens -{' '}
-              {formatBRL(subtotal)}
-            </Text>
+            <Text style={styles.cartQty}>{totalQty} {totalQty === 1 ? 'item' : 'itens'}</Text>
+            <Text style={styles.cartTotal}>{formatBRL(totalPrice)}</Text>
           </View>
           <TouchableOpacity
-            style={[styles.sendButton, sending && styles.disabledButton]}
+            style={[styles.cartBtn, sending && { opacity: 0.5 }]}
             onPress={handleSend}
             disabled={sending}
+            activeOpacity={0.85}
           >
             {sending ? (
               <ActivityIndicator color={COLORS.white} size="small" />
             ) : (
-              <Text style={styles.sendButtonText}>Enviar</Text>
+              <Text style={styles.cartBtnText}>Enviar para Cozinha</Text>
             )}
           </TouchableOpacity>
         </View>
       )}
-
-      {/* Add item modal */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{modalProduto?.nome}</Text>
-            <Text style={styles.modalPrice}>
-              {modalProduto ? formatBRL(modalProduto.preco) : ''}
-            </Text>
-
-            <View style={styles.qtyRow}>
-              <TouchableOpacity
-                style={styles.qtyButton}
-                onPress={() => setModalQty((q) => Math.max(1, q - 1))}
-              >
-                <Text style={styles.qtyButtonText}>-</Text>
-              </TouchableOpacity>
-              <Text style={styles.qtyValue}>{modalQty}</Text>
-              <TouchableOpacity
-                style={styles.qtyButton}
-                onPress={() => setModalQty((q) => q + 1)}
-              >
-                <Text style={styles.qtyButtonText}>+</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TextInput
-              style={styles.obsInput}
-              placeholder="Observacao (opcional)"
-              placeholderTextColor={COLORS.gray[400]}
-              value={modalObs}
-              onChangeText={setModalObs}
-              maxLength={200}
-              multiline
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={confirmAddToCart}
-              >
-                <Text style={styles.confirmButtonText}>
-                  Adicionar {formatBRL((modalProduto?.preco || 0) * modalQty)}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-  },
-  mesaSection: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  sectionTitle: {
-    fontSize: 14,
+  container: { flex: 1, backgroundColor: COLORS.background },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
+
+  // Section label
+  sectionLabel: {
+    fontSize: 12,
     fontWeight: '700',
-    color: COLORS.gray[600],
-    marginBottom: 8,
+    color: COLORS.text.tertiary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.2,
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.sm,
   },
-  mesaChip: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
-    borderWidth: 2,
-    borderColor: COLORS.gray[200],
+
+  // Mesa
+  mesaSection: { paddingTop: SPACING.lg, paddingHorizontal: SPACING.xl },
+  mesaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  mesaCard: {
+    width: 60,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surface,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.border.light,
+    ...SHADOWS.sm,
   },
-  mesaChipSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary,
-  },
-  mesaChipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.gray[700],
-  },
-  mesaChipTextSelected: {
-    color: COLORS.white,
-  },
-  mesaChipStatus: {
-    fontSize: 10,
-    color: COLORS.gray[400],
-    marginTop: 2,
-  },
-  categorySection: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: COLORS.white,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: COLORS.gray[200],
-  },
-  categoryChipActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  categoryText: {
+  mesaSelected: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.gray[600],
+    color: COLORS.brand,
+    marginTop: SPACING.sm,
   },
-  categoryTextActive: {
+  mesaCardActive: {
+    borderColor: COLORS.brand,
+    backgroundColor: COLORS.brandLight,
+  },
+  mesaNum: { fontSize: 20, fontWeight: '800', color: COLORS.text.primary },
+  mesaNumActive: { color: COLORS.primary },
+  mesaStatus: { fontSize: 9, fontWeight: '600', marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.5 },
+  mesaStatusActive: { color: COLORS.primary },
+  mesaLivre: { color: COLORS.success },
+  mesaOcupada: { color: COLORS.warning },
+
+  existingBar: {
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+  },
+  existingLabel: { fontSize: 14, fontWeight: '600', color: COLORS.text.secondary },
+
+  // Search
+  searchSection: { paddingHorizontal: SPACING.xl, paddingTop: SPACING.md },
+  searchInput: {
+    height: 44,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.lg,
+    fontSize: 14,
+    color: COLORS.text.primary,
+    borderWidth: 1,
+    borderColor: COLORS.border.light,
+  },
+
+  // Categories
+  catRow: { paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md, gap: SPACING.sm },
+  catCard: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm + 2,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1.5,
+    borderColor: COLORS.border.light,
+  },
+  catCardActive: {
+    backgroundColor: COLORS.brand,
+    borderColor: COLORS.brand,
+  },
+  catText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.text.secondary,
+  },
+  catTextActive: {
     color: COLORS.white,
   },
-  productList: {
-    paddingHorizontal: 16,
-    paddingBottom: 100,
+
+  // Product grid
+  row: { justifyContent: 'space-between', paddingHorizontal: SPACING.xl, marginBottom: SPACING.sm },
+  list: { paddingTop: SPACING.xs, paddingBottom: 120 },
+  prodCard: {
+    width: '48%',
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    borderWidth: 1.5,
+    borderColor: COLORS.border.light,
+    minHeight: 90,
+    justifyContent: 'space-between',
+    ...SHADOWS.sm,
   },
-  emptyText: {
-    textAlign: 'center',
-    color: COLORS.gray[400],
-    paddingVertical: 40,
-    fontSize: 15,
+  prodCardSelected: {
+    borderColor: COLORS.brand,
+    backgroundColor: COLORS.surfaceElevated,
   },
+  prodNome: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+    lineHeight: 20,
+  },
+  prodPreco: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.brand,
+  },
+  prodQtyBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.md,
+  },
+  prodQtyText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+
+  emptyBox: { paddingVertical: 60, alignItems: 'center' },
+  emptyText: { fontSize: 14, color: COLORS.text.tertiary },
+
+  // Cart bar
   cartBar: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.gray[200],
+    bottom: 12,
+    left: SPACING.lg,
+    right: SPACING.lg,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.xl,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 8,
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    ...SHADOWS.lg,
   },
   cartInfo: {
-    flex: 1,
-    marginRight: 12,
+    gap: 2,
   },
-  cartItem: {
-    backgroundColor: COLORS.secondary,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginRight: 6,
-  },
-  cartItemText: {
+  cartQty: {
     fontSize: 12,
-    color: COLORS.primary,
+    color: 'rgba(255,255,255,0.5)',
     fontWeight: '500',
   },
   cartTotal: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.white,
+  },
+  cartBtn: {
+    backgroundColor: COLORS.brand,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+  },
+  cartBtnText: {
+    color: COLORS.white,
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.primary,
-    marginTop: 4,
-  },
-  sendButton: {
-    backgroundColor: COLORS.success,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  sendButtonText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.gray[800],
-  },
-  modalPrice: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginTop: 4,
-    marginBottom: 20,
-  },
-  qtyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 20,
-    marginBottom: 16,
-  },
-  qtyButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.accent,
-  },
-  qtyButtonText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  qtyValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: COLORS.gray[800],
-    minWidth: 40,
-    textAlign: 'center',
-  },
-  obsInput: {
-    backgroundColor: COLORS.gray[100],
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
-    color: COLORS.gray[800],
-    minHeight: 60,
-    textAlignVertical: 'top',
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.gray[300],
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.gray[600],
-  },
-  confirmButton: {
-    flex: 2,
-    backgroundColor: COLORS.primary,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  confirmButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.white,
   },
 });
