@@ -12,6 +12,8 @@
     "mobile:dev": "npm run start -w mobile",
     "db:migrate": "npm run migrate -w api",
     "db:seed": "npm run seed -w api",
-    "shared:build": "npm run build -w @cafecontrol/shared"
+    "shared:build": "npm run build -w @cafecontrol/shared",
+    "build:api": "npm run shared:build && cd api && npx prisma generate && npx tsc",
+    "build:web": "npm run shared:build && npm run build -w web"
   }
 }
