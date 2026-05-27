@@ -45,7 +45,7 @@ export async function buscarPorId(id: number) {
   return pedido;
 }
 
-export async function criar(mesaId: number, garcomId: number) {
+export async function criar(mesaId: number, garcomId: number, clienteNome?: string | null, clienteTelefone?: string | null) {
   // Usar transacao para garantir atomicidade
   return prisma.$transaction(async (tx) => {
     const mesa = await tx.mesa.findUnique({ where: { id: mesaId } });
@@ -66,6 +66,8 @@ export async function criar(mesaId: number, garcomId: number) {
         mesaId,
         garcomId,
         statusPedido: 'ABERTO',
+        clienteNome: clienteNome || null,
+        clienteTelefone: clienteTelefone || null,
       },
       include: {
         mesa: true,

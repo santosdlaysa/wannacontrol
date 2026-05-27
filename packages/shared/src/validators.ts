@@ -60,6 +60,8 @@ export const updateMesaStatusSchema = z.object({
 // Pedidos
 export const createPedidoSchema = z.object({
   mesaId: z.number().int().positive(),
+  clienteNome: z.string().max(100).optional().nullable(),
+  clienteTelefone: z.string().max(20).optional().nullable(),
 });
 
 // Itens Pedido

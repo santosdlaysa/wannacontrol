@@ -76,13 +76,15 @@ model Mesa {
 }
 
 model Pedido {
-  id           Int          @id @default(autoincrement())
-  mesaId       Int          @map("mesa_id")
-  garcomId     Int          @map("garcom_id")
-  statusPedido StatusPedido @default(ABERTO) @map("status_pedido")
-  dataCriacao  DateTime     @default(now()) @map("data_criacao")
-  total        Decimal?     @db.Decimal(10, 2)
-  version      Int          @default(0)
+  id              Int          @id @default(autoincrement())
+  mesaId          Int          @map("mesa_id")
+  garcomId        Int          @map("garcom_id")
+  statusPedido    StatusPedido @default(ABERTO) @map("status_pedido")
+  clienteNome     String?      @map("cliente_nome")
+  clienteTelefone String?      @map("cliente_telefone")
+  dataCriacao     DateTime     @default(now()) @map("data_criacao")
+  total           Decimal?     @db.Decimal(10, 2)
+  version         Int          @default(0)
 
   mesa   Mesa         @relation(fields: [mesaId], references: [id])
   garcom Usuario      @relation(fields: [garcomId], references: [id])

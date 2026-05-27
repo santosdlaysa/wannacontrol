@@ -32,6 +32,8 @@ export interface Pedido {
   mesaId: number;
   garcomId: number;
   statusPedido: StatusPedido;
+  clienteNome: string | null;
+  clienteTelefone: string | null;
   dataCriacao: Date;
   total: number | null;
   version: number;

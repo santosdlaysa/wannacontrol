@@ -9,6 +9,10 @@ import {
   useWindowDimensions,
   ActivityIndicator,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -36,6 +40,10 @@ export default function MesasScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('all');
+  const [modalMesa, setModalMesa] = useState<MesaWithGarcom | null>(null);
+  const [clienteNome, setClienteNome] = useState('');
+  const [clienteTel, setClienteTel] = useState('');
+  const [creating, setCreating] = useState(false);
   const { socket } = useSocket();
   const { user } = useAuth();
   const router = useRouter();
@@ -90,15 +98,9 @@ export default function MesasScreen() {
 
   const handlePress = useCallback(async (mesa: MesaWithGarcom) => {
     if (mesa.status === StatusMesa.LIVRE) {
-      Alert.alert(`Mesa ${mesa.numero}`, 'Abrir novo pedido?', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Abrir', onPress: async () => {
-          try {
-            const pedido = await apiClient.post<Pedido>('/pedidos', { mesaId: mesa.id });
-            router.push(`/pedido/${pedido.id}`);
-          } catch (err: any) { Alert.alert('Erro', err?.message || 'Erro'); }
-        }},
-      ]);
+      setModalMesa(mesa);
+      setClienteNome('');
+      setClienteTel('');
     } else if (mesa.pedidoId) {
       router.push(`/pedido/${mesa.pedidoId}`);
     } else {
@@ -109,6 +111,24 @@ export default function MesasScreen() {
       } catch (err: any) { Alert.alert('Erro', err?.message || 'Erro'); }
     }
   }, [router]);
+
+  const handleCreatePedido = useCallback(async () => {
+    if (!modalMesa) return;
+    setCreating(true);
+    try {
+      const pedido = await apiClient.post<Pedido>('/pedidos', {
+        mesaId: modalMesa.id,
+        clienteNome: clienteNome.trim() || null,
+        clienteTelefone: clienteTel.trim() || null,
+      });
+      setModalMesa(null);
+      router.push(`/pedido/${pedido.id}`);
+    } catch (err: any) {
+      Alert.alert('Erro', err?.message || 'Erro ao abrir pedido');
+    } finally {
+      setCreating(false);
+    }
+  }, [modalMesa, clienteNome, clienteTel, router]);
 
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color={COLORS.brand} /></View>;
@@ -182,6 +202,65 @@ export default function MesasScreen() {
           </View>
         }
       />
+
+      {/* Modal novo pedido */}
+      <Modal visible={!!modalMesa} transparent animationType="slide">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalSheet}>
+            <Text style={styles.modalTitle}>
+              Mesa {modalMesa?.numero} - Novo Pedido
+            </Text>
+
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>Nome do cliente</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Ex: Joao Silva"
+                placeholderTextColor={COLORS.text.tertiary}
+                value={clienteNome}
+                onChangeText={setClienteNome}
+                autoFocus
+              />
+            </View>
+
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>Telefone (opcional)</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="(00) 00000-0000"
+                placeholderTextColor={COLORS.text.tertiary}
+                value={clienteTel}
+                onChangeText={setClienteTel}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancel}
+                onPress={() => setModalMesa(null)}
+                disabled={creating}
+              >
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalConfirm, creating && { opacity: 0.5 }]}
+                onPress={handleCreatePedido}
+                disabled={creating}
+              >
+                {creating ? (
+                  <ActivityIndicator size="small" color={COLORS.white} />
+                ) : (
+                  <Text style={styles.modalConfirmText}>Abrir Pedido</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -267,4 +346,73 @@ const styles = StyleSheet.create({
   grid: { paddingHorizontal: 14, paddingBottom: 20 },
   empty: { paddingVertical: 60, alignItems: 'center' },
   emptyText: { fontSize: 15, color: COLORS.text.tertiary, fontWeight: '500' },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 36,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+    marginBottom: 20,
+  },
+  modalField: {
+    marginBottom: 16,
+  },
+  modalLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.text.secondary,
+    marginBottom: 6,
+  },
+  modalInput: {
+    height: 48,
+    backgroundColor: COLORS.background,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    color: COLORS.text.primary,
+    borderWidth: 1,
+    borderColor: COLORS.border.light,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalCancel: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border.medium,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.text.secondary,
+  },
+  modalConfirm: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: COLORS.brand,
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
 });

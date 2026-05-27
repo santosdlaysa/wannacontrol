@@ -12,7 +12,7 @@ export async function buscarPorId(req: Request, res: Response) {
 }
 
 export async function criar(req: Request, res: Response) {
-  const pedido = await pedidosService.criar(req.body.mesaId, req.user!.userId);
+  const pedido = await pedidosService.criar(req.body.mesaId, req.user!.userId, req.body.clienteNome, req.body.clienteTelefone);
   res.status(201).json(pedido);
 }
 
