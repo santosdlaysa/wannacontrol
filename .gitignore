@@ -1,0 +1,33 @@
+node_modules/
+dist/
+.next/
+.env
+.env.local
+*.log
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.tsbuildinfo
+packages/shared/dist/
+
+# Claude Code
+.claude/
+
+# Prisma
+api/prisma/migrations/**/migration_lock.toml
+
+# Uploads (keep folder, ignore files)
+api/uploads/*
+!api/uploads/.gitkeep
+
+# Expo
+mobile/.expo/
+mobile/android/
+mobile/ios/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "CaféControl",
+    "slug": "cafecontrol-mobile",
+    "version": "1.0.0",
+    "scheme": "cafecontrol",
+    "platforms": ["ios", "android"],
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#6F4E37"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

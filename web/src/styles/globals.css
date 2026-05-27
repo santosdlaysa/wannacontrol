@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cafe-brown: #6F4E37;
+  --cafe-cream: #FFF8DC;
+  --cafe-dark: #3E2723;
+  --cafe-light: #F5DEB3;
+  --cafe-accent: #A0785A;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9fafb;
+  color: #1f2937;
+}
+
+/* Custom scrollbar for kitchen display */
+.kds-column::-webkit-scrollbar {
+  width: 6px;
+}
+
+.kds-column::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.kds-column::-webkit-scrollbar-thumb {
+  background: #6F4E37;
+  border-radius: 3px;
+}
+
+/* Pulse animation for new items */
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: #6F4E37;
+  }
+  50% {
+    border-color: #FFF8DC;
+  }
+}
+
+.animate-pulse-border {
+  animation: pulse-border 1.5s ease-in-out 3;
+}
