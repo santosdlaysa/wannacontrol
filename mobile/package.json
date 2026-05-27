@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "private": true,
+  "installConfig": {
+    "hoistingLimits": "workspaces"
+  },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -10,7 +13,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@cafecontrol/shared": "*",
+    "@cafecontrol/shared": "file:../packages/shared",
     "expo": "~53.0.0",
     "expo-router": "~5.1.11",
     "expo-secure-store": "~14.2.4",

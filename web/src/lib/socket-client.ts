@@ -9,7 +9,9 @@ export function getSocket(): Socket {
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
 
-  socket = io('http://localhost:3333', {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+
+  socket = io(API_URL, {
     auth: {
       token,
     },
