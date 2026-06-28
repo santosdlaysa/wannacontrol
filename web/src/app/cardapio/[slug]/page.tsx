@@ -50,6 +50,14 @@ interface CartItem {
 type Tipo = 'DELIVERY' | 'RETIRADA';
 type Step = 'menu' | 'checkout' | 'sucesso';
 
+interface LastPedido {
+  id: number;
+  clienteNome: string;
+  clienteTelefone: string;
+  tipoPedido: Tipo;
+  criadoEm: string;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function CardapioPage() {
@@ -63,6 +71,7 @@ export default function CardapioPage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [step, setStep] = useState<Step>('menu');
   const [pedidoId, setPedidoId] = useState<number | null>(null);
+  const [lastPedido, setLastPedido] = useState<LastPedido | null>(null);
   const [enviando, setEnviando] = useState(false);
 
   // Checkout form
@@ -88,6 +97,20 @@ export default function CardapioPage() {
   }, [slug]);
 
   useEffect(() => { fetchCardapio(); }, [fetchCardapio]);
+
+  useEffect(() => {
+    if (!slug) return;
+
+    const storageKey = `cardapio:last-pedido:${slug}`;
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return;
+
+    try {
+      setLastPedido(JSON.parse(raw) as LastPedido);
+    } catch {
+      localStorage.removeItem(storageKey);
+    }
+  }, [slug]);
 
   // ─── Cart helpers ──────────────────────────────────────────────────────────
 
@@ -165,7 +188,17 @@ export default function CardapioPage() {
       }
 
       const pedido = await res.json();
+      const pedidoSalvo: LastPedido = {
+        id: pedido.id,
+        clienteNome: pedido.cliente?.nome || nome.trim(),
+        clienteTelefone: pedido.cliente?.telefone || telefone.replace(/\D/g, ''),
+        tipoPedido: pedido.tipoPedido || tipo,
+        criadoEm: new Date().toISOString(),
+      };
+
       setPedidoId(pedido.id);
+      setLastPedido(pedidoSalvo);
+      localStorage.setItem(`cardapio:last-pedido:${slug}`, JSON.stringify(pedidoSalvo));
       setCart([]);
       setStep('sucesso');
     } catch (e: any) {
@@ -214,6 +247,9 @@ export default function CardapioPage() {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Pedido Recebido!</h2>
           <p className="text-gray-500 mb-1">Pedido <span className="font-bold text-amber-600">#{pedidoId}</span></p>
+          <p className="text-xs text-gray-400 mb-4">
+            Guarde esse numero para identificar seu pedido no atendimento.
+          </p>
           <p className="text-gray-500 mb-6">
             {tipo === 'DELIVERY'
               ? 'Seu pedido foi recebido e estará a caminho em breve.'
@@ -421,6 +457,33 @@ export default function CardapioPage() {
               </svg>
               {restaurante.telefone}
             </a>
+          )}
+          {lastPedido && (
+            <div className="mt-4 rounded-2xl bg-white/15 border border-white/20 p-3">
+              <p className="text-xs uppercase tracking-wide text-amber-100 font-semibold">
+                Ultimo pedido
+              </p>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-lg font-extrabold">#{lastPedido.id}</p>
+                  <p className="text-xs text-amber-100">
+                    {lastPedido.tipoPedido === 'DELIVERY' ? 'Delivery' : 'Retirada'} de {lastPedido.clienteNome}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setPedidoId(lastPedido.id);
+                    setNome(lastPedido.clienteNome);
+                    setTelefone(lastPedido.clienteTelefone);
+                    setTipo(lastPedido.tipoPedido);
+                    setStep('sucesso');
+                  }}
+                  className="shrink-0 rounded-xl bg-white px-3 py-2 text-xs font-bold text-amber-700"
+                >
+                  Ver numero
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
