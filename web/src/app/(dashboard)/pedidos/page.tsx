@@ -108,6 +108,33 @@ export default function PedidosPage() {
         </div>
       </div>
 
+      {/* Totais */}
+      {!isLoading && pedidos.length > 0 && (() => {
+        const totalGeral = pedidos.reduce((s, p) => s + calcTotal(p), 0);
+        const totalPagos = pedidos.filter((p) => p.statusPedido === StatusPedido.PAGO).reduce((s, p) => s + calcTotal(p), 0);
+        const totalAberto = pedidos.filter((p) => p.statusPedido === StatusPedido.ABERTO).reduce((s, p) => s + calcTotal(p), 0);
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            <div className="bg-white rounded-xl border border-gray-200 px-4 py-3">
+              <p className="text-xs text-gray-400 font-medium">Pedidos</p>
+              <p className="text-xl font-bold text-gray-900">{pedidos.length}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 px-4 py-3">
+              <p className="text-xs text-gray-400 font-medium">Total Geral</p>
+              <p className="text-xl font-bold text-gray-900">{formatBRL(totalGeral)}</p>
+            </div>
+            <div className="bg-green-50 rounded-xl border border-green-200 px-4 py-3">
+              <p className="text-xs text-green-600 font-medium">Pagos</p>
+              <p className="text-xl font-bold text-green-700">{formatBRL(totalPagos)}</p>
+            </div>
+            <div className="bg-blue-50 rounded-xl border border-blue-200 px-4 py-3">
+              <p className="text-xs text-blue-600 font-medium">Em Aberto</p>
+              <p className="text-xl font-bold text-blue-700">{formatBRL(totalAberto)}</p>
+            </div>
+          </div>
+        );
+      })()}
+
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">Carregando...</div>
       ) : pedidos.length === 0 ? (
