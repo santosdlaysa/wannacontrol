@@ -23,6 +23,7 @@ interface CadastroResponse {
     nome: string;
     slug: string;
     plano: string;
+    ativo: boolean;
   };
 }
 

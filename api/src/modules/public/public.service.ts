@@ -323,7 +323,7 @@ export async function cadastrarRestaurante(data: {
       email: emailNorm,
       telefone: data.telefone?.trim() || null,
       plano: 'BASICO',
-      ativo: true,
+      ativo: false,
       usuarios: {
         create: {
           nome: data.nomeResponsavel.trim(),
@@ -353,7 +353,7 @@ export async function cadastrarRestaurante(data: {
   return {
     accessToken,
     usuario: payload,
-    restaurante: { id: restaurante.id, nome: restaurante.nome, slug, plano: restaurante.plano },
+    restaurante: { id: restaurante.id, nome: restaurante.nome, slug, plano: restaurante.plano, ativo: restaurante.ativo },
   };
 }
 

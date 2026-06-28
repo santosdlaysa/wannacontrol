@@ -207,8 +207,12 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
+      return;
     }
-  }, [isLoading, isAuthenticated, router]);
+    if (!isLoading && isAuthenticated && restaurante && !restaurante.ativo && pathname !== '/assinatura') {
+      router.push('/assinatura');
+    }
+  }, [isLoading, isAuthenticated, restaurante, pathname, router]);
 
   if (isLoading) {
     return <PageLoading message="Carregando sistema..." />;

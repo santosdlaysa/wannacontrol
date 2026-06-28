@@ -56,6 +56,22 @@ export default function AssinaturaPage() {
   const [gerandoCartao, setGerandoCartao] = useState(false);
   const [consultando, setConsultando] = useState(false);
 
+  const statusParam = searchParams.get('status');
+
+  useEffect(() => {
+    if (statusParam === 'approved') {
+      toast.success('Pagamento aprovado! Ativando plano...');
+      const storedRestaurante = localStorage.getItem('restaurante');
+      if (storedRestaurante) {
+        try {
+          const r = JSON.parse(storedRestaurante);
+          localStorage.setItem('restaurante', JSON.stringify({ ...r, ativo: true }));
+        } catch {}
+      }
+      setTimeout(() => { window.location.href = '/dashboard'; }, 2000);
+    }
+  }, [statusParam]);
+
   useEffect(() => {
     api.get<PlanoAssinatura[]>('/assinaturas/planos')
       .then((data) => {
@@ -120,6 +136,14 @@ export default function AssinaturaPage() {
       setPixStatus(data.status);
       if (data.status === 'approved') {
         toast.success('Pagamento aprovado. Plano ativado.');
+        const storedRestaurante = localStorage.getItem('restaurante');
+        if (storedRestaurante) {
+          try {
+            const r = JSON.parse(storedRestaurante);
+            localStorage.setItem('restaurante', JSON.stringify({ ...r, ativo: true }));
+          } catch {}
+        }
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
       } else {
         toast(statusLabel[data.status] || data.status);
       }
