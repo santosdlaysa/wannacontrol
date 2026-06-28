@@ -19,7 +19,7 @@ const PLANOS: Record<PlanoId, {
     descricao: 'Receba pedidos online, confirme e controle entregas no basico.',
     valor: 147,
     planoSistema: 'BASICO',
-    recursos: ['Cardapio digital publico', 'Delivery e retirada', 'Confirmar e entregar pedidos', 'Cadastro de clientes', 'Cadastro de produtos', 'Painel de pedidos simples'],
+    recursos: ['Cardapio digital publico', 'Delivery e retirada', 'Confirmar e entregar pedidos', 'Cadastro de clientes e produtos', 'Relatorio basico do dia', 'Painel de pedidos simples'],
   },
   PROFISSIONAL: {
     id: 'PROFISSIONAL',
@@ -27,7 +27,7 @@ const PLANOS: Record<PlanoId, {
     descricao: 'Tudo do Inicial mais mesas, cozinha em tempo real, caixa e financeiro.',
     valor: 297,
     planoSistema: 'PROFISSIONAL',
-    recursos: ['Tudo do Inicial', 'Mesas e pedidos presenciais', 'Cozinha em tempo real', 'Caixa e sangria', 'Relatorio financeiro', 'Multiplos usuarios e perfis'],
+    recursos: ['Tudo do Inicial', 'Mesas e pedidos presenciais', 'Cozinha em tempo real', 'Caixa e sangria', 'Relatorio financeiro completo', 'Multiplos usuarios e perfis'],
   },
   PREMIUM: {
     id: 'PREMIUM',

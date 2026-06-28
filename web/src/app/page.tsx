@@ -203,7 +203,7 @@ export default function LandingPage() {
                 'Mesas e pedidos presenciais',
                 'Cozinha em tempo real',
                 'Caixa e sangria',
-                'Relatorio financeiro',
+                'Relatorio financeiro completo',
                 'Multiplos usuarios e perfis',
               ],
               destaque: true,
