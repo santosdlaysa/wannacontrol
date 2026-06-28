@@ -17,8 +17,8 @@ const formatBRL = (value: number) =>
 const formatDate = (date: string | Date) =>
   new Date(date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-const FLOW_DELIVERY = ['RECEBIDO', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_ENTREGA', 'ENTREGUE'] as const;
-const FLOW_RETIRADA = ['RECEBIDO', 'CONFIRMADO', 'EM_PREPARO', 'PRONTO', 'ENTREGUE'] as const;
+const FLOW_DELIVERY: string[] = ['RECEBIDO', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_ENTREGA', 'ENTREGUE'];
+const FLOW_RETIRADA: string[] = ['RECEBIDO', 'CONFIRMADO', 'EM_PREPARO', 'PRONTO', 'ENTREGUE'];
 
 const STATUS_ENTREGA_LABELS: Record<string, string> = {
   RECEBIDO: 'Recebido',
@@ -147,8 +147,8 @@ export default function DeliveryPage() {
   }
 
   function getNextStatus(current: string, tipoPedido?: string): string | null {
-    const flow = getFlow(tipoPedido);
-    const idx = flow.indexOf(current as typeof FLOW_DELIVERY[number]);
+    const flow: string[] = getFlow(tipoPedido);
+    const idx = flow.indexOf(current);
     if (idx < 0 || idx >= flow.length - 1) return null;
     return flow[idx + 1];
   }
@@ -412,10 +412,8 @@ export default function DeliveryPage() {
               <p className="text-xs text-gray-400 uppercase font-semibold mb-2">Progresso</p>
               <div className="flex items-center gap-1 flex-wrap">
                 {getFlow(selectedPedido.tipoPedido).map((s, i) => {
-                  const flow = getFlow(selectedPedido.tipoPedido);
-                  const current = flow.indexOf(
-                    (selectedPedido.statusEntrega || '') as typeof FLOW_DELIVERY[number]
-                  );
+                  const flow: string[] = getFlow(selectedPedido.tipoPedido);
+                  const current = flow.indexOf(selectedPedido.statusEntrega || '');
                   const done = i <= current;
                   return (
                     <div key={s} className="flex items-center gap-1">
