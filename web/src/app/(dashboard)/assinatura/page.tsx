@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/providers/AuthProvider';
@@ -257,11 +256,11 @@ export default function AssinaturaPage() {
             <div className="mt-5 border-t border-gray-100 pt-5">
               <h3 className="font-black text-gray-900">Pagar via Pix</h3>
               <div className="mt-4 flex justify-center rounded-lg bg-gray-50 p-4">
-                <Image
-                  src={PIX_ESTATICO[selectedPlano.id]!.imagem}
+                <img
+                  src={PIX_ESTATICO[selectedPlano.id]!.imagem.src}
                   alt="QR Code Pix"
-                  width={200}
-                  height={200}
+                  style={{ width: 200, height: 200 }}
+                  className="rounded"
                 />
               </div>
               <label className="mt-4 block text-sm font-medium text-gray-700">
@@ -309,9 +308,14 @@ export default function AssinaturaPage() {
 
                   <div className="mt-4 flex justify-center rounded-lg bg-gray-50 p-4">
                     <img
-                      src={`data:image/png;base64,${pix.qrCodeBase64}`}
+                      src={
+                        pix.qrCodeBase64.startsWith('data:')
+                          ? pix.qrCodeBase64
+                          : `data:image/png;base64,${pix.qrCodeBase64}`
+                      }
                       alt="QR Code Pix"
-                      className="h-56 w-56"
+                      style={{ width: 224, height: 224 }}
+                      className="rounded"
                     />
                   </div>
 
