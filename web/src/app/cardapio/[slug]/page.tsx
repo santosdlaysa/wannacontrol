@@ -271,6 +271,7 @@ export default function CardapioPage() {
 
   const bairroSelecionado = data?.bairros?.find((b) => b.id === bairroId) ?? null;
   const usaBairros = (data?.bairros?.length ?? 0) > 0;
+  const restauranteAberto = data?.configuracoes?.restaurante_aberto !== 'false';
   const taxaEntrega = tipo === 'DELIVERY'
     ? (bairroSelecionado ? Number(bairroSelecionado.taxa) : (usaBairros ? 0 : Number(data?.configuracoes?.taxa_entrega ?? 0)))
     : 0;
@@ -279,6 +280,10 @@ export default function CardapioPage() {
   // ─── Submit ───────────────────────────────────────────────────────────────
 
   async function handleSubmit() {
+    if (!restauranteAberto) {
+      alert('Restaurante fechado no momento');
+      return;
+    }
     if (!nome.trim() || !telefone.trim()) {
       alert('Preencha seu nome e telefone');
       return;
@@ -564,6 +569,13 @@ export default function CardapioPage() {
         </header>
 
         <div className="max-w-lg mx-auto p-4 space-y-4 pb-32">
+          {!restauranteAberto && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+              <p className="text-sm font-bold text-red-700">Restaurante fechado no momento</p>
+              <p className="text-xs text-red-500 mt-1">Voce pode consultar o cardapio, mas novos pedidos estao pausados.</p>
+            </div>
+          )}
+
           {/* Tipo */}
           <div className="bg-white rounded-2xl p-4">
             <h2 className="font-bold text-gray-800 mb-3">Como voce quer receber?</h2>
@@ -683,10 +695,12 @@ export default function CardapioPage() {
           <div className="max-w-lg mx-auto">
             <button
               onClick={handleSubmit}
-              disabled={enviando}
+              disabled={enviando || !restauranteAberto}
               className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white py-4 rounded-xl font-bold text-base transition-colors flex items-center justify-center gap-2"
             >
-              {enviando ? (
+              {!restauranteAberto ? (
+                'Restaurante fechado'
+              ) : enviando ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
@@ -838,6 +852,14 @@ export default function CardapioPage() {
               )}
             </div>
           )}
+          {!restauranteAberto && (
+            <div className="mt-4 rounded-2xl border border-white/25 bg-black/20 p-3">
+              <p className="text-sm font-extrabold text-white">Restaurante fechado no momento</p>
+              <p className="text-xs text-amber-100 mt-1">
+                O cardapio esta disponivel para consulta, mas novos pedidos estao pausados.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Category tabs */}
@@ -913,8 +935,9 @@ export default function CardapioPage() {
                     <div className="shrink-0">
                       {qty === 0 ? (
                         <button
-                          onClick={() => addItem(produto)}
-                          className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600 transition-colors font-bold text-xl"
+                          onClick={() => restauranteAberto && addItem(produto)}
+                          disabled={!restauranteAberto}
+                          className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600 disabled:bg-gray-200 disabled:text-gray-400 transition-colors font-bold text-xl"
                         >
                           +
                         </button>
@@ -928,8 +951,9 @@ export default function CardapioPage() {
                           </button>
                           <span className="w-5 text-center font-bold text-gray-800 text-sm">{qty}</span>
                           <button
-                            onClick={() => addItem(produto)}
-                            className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600 transition-colors font-bold text-lg"
+                            onClick={() => restauranteAberto && addItem(produto)}
+                            disabled={!restauranteAberto}
+                            className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600 disabled:bg-gray-200 disabled:text-gray-400 transition-colors font-bold text-lg"
                           >
                             +
                           </button>
@@ -956,13 +980,14 @@ export default function CardapioPage() {
         <div className="fixed bottom-6 left-0 right-0 px-4 z-50">
           <div className="max-w-2xl mx-auto">
             <button
-              onClick={() => setStep('checkout')}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-2xl font-bold text-base shadow-lg transition-colors flex items-center justify-between px-5"
+              onClick={() => restauranteAberto && setStep('checkout')}
+              disabled={!restauranteAberto}
+              className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white py-4 rounded-2xl font-bold text-base shadow-lg transition-colors flex items-center justify-between px-5"
             >
               <span className="bg-amber-600 rounded-lg px-2.5 py-0.5 text-sm font-bold">
                 {totalItens}
               </span>
-              <span>Ver carrinho</span>
+              <span>{restauranteAberto ? 'Ver carrinho' : 'Restaurante fechado'}</span>
               <span>{formatBRL(subtotal)}</span>
             </button>
           </div>

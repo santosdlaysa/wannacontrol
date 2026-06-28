@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
 interface Configuracoes {
+  restaurante_aberto: string;
   taxa_entrega: string;
   tempo_preparo_medio: string;
   aceita_delivery: string;
@@ -34,6 +35,7 @@ interface CepBairro {
 }
 
 const defaultConfig: Configuracoes = {
+  restaurante_aberto: 'true',
   taxa_entrega: '0',
   tempo_preparo_medio: '30',
   aceita_delivery: 'true',
@@ -332,6 +334,28 @@ export default function ConfiguracoesPage() {
         {/* Secao: Operacao */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Operacao</h2>
+          <div className="mb-5 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Status do restaurante</p>
+                <p className="text-xs text-gray-500">
+                  Quando estiver fechado, o cliente ve o aviso no cardapio e nao consegue enviar pedidos.
+                </p>
+              </div>
+              <label className="inline-flex cursor-pointer items-center gap-3">
+                <span className={`text-sm font-bold ${config.restaurante_aberto === 'true' ? 'text-green-700' : 'text-red-600'}`}>
+                  {config.restaurante_aberto === 'true' ? 'Aberto' : 'Fechado'}
+                </span>
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={config.restaurante_aberto === 'true'}
+                  onChange={(e) => setField('restaurante_aberto', String(e.target.checked))}
+                />
+                <span className="relative h-6 w-11 rounded-full bg-gray-300 transition-colors after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-green-600 peer-checked:after:translate-x-5" />
+              </label>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Tempo Medio de Preparo (minutos)"

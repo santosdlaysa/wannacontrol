@@ -2,6 +2,7 @@ import prisma from '../../lib/prisma';
 import { ValidationError } from '../../lib/errors';
 
 const DEFAULTS: Record<string, string> = {
+  restaurante_aberto: 'true',
   taxa_entrega: '5.00',
   tempo_preparo_medio: '30',
   aceita_delivery: 'true',

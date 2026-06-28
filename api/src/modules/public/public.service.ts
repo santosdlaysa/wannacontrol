@@ -1,5 +1,5 @@
 import prisma from '../../lib/prisma';
-import { NotFoundError } from '../../lib/errors';
+import { NotFoundError, ValidationError } from '../../lib/errors';
 import { getIO } from '../../lib/socket';
 
 const NEW_DELIVERY_ORDER_EVENT = 'order:newDelivery';
@@ -23,7 +23,7 @@ export async function getCardapio(slug: string) {
     where: { restauranteId: restaurante.id },
   });
 
-  const configs: Record<string, string | null> = {};
+  const configs: Record<string, string | null> = { restaurante_aberto: 'true' };
   for (const c of configuracoes) configs[c.chave] = c.valor;
 
   const categorias = await prisma.categoria.findMany({
@@ -91,6 +91,13 @@ export async function criarPedidoPublico(slug: string, data: {
 
   if (!restaurante || !restaurante.ativo) throw new NotFoundError('Restaurante');
   if (!restaurante.usuarios.length) throw new NotFoundError('Operador do restaurante');
+
+  const statusRestaurante = await prisma.configuracao.findUnique({
+    where: { restauranteId_chave: { restauranteId: restaurante.id, chave: 'restaurante_aberto' } },
+  });
+  if (statusRestaurante?.valor === 'false') {
+    throw new ValidationError('Restaurante fechado no momento');
+  }
 
   const operadorId = restaurante.usuarios[0].id;
 
