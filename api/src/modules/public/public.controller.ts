@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import * as service from './public.service';
 
+export async function getStats(req: Request, res: Response) {
+  const data = await service.getStatsPublicos(req.params.slug);
+  res.json(data);
+}
+
 export async function getCardapio(req: Request, res: Response) {
   const data = await service.getCardapio(req.params.slug);
   res.json(data);

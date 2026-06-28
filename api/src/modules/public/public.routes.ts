@@ -5,6 +5,7 @@ import * as controller from './public.controller';
 const router = Router();
 
 // Rotas totalmente públicas — sem authMiddleware
+router.get('/:slug/stats', asyncHandler(controller.getStats));
 router.get('/:slug/cardapio', asyncHandler(controller.getCardapio));
 router.get('/:slug/cliente', asyncHandler(controller.getCliente));
 router.get('/:slug/pedidos/historico', asyncHandler(controller.getHistoricoPedidos));

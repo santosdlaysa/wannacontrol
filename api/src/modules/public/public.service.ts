@@ -4,6 +4,29 @@ import { getIO } from '../../lib/socket';
 
 const NEW_DELIVERY_ORDER_EVENT = 'order:newDelivery';
 
+export async function getStatsPublicos(slug: string) {
+  const restaurante = await prisma.restaurante.findUnique({
+    where: { slug },
+    select: { id: true, nome: true, ativo: true },
+  });
+
+  if (!restaurante || !restaurante.ativo) throw new NotFoundError('Restaurante');
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const [pedidosHoje, pedidosAbertos, pedidosPagos, produtosDisponiveis, clientesTotal] =
+    await Promise.all([
+      prisma.pedido.count({ where: { restauranteId: restaurante.id, dataCriacao: { gte: hoje } } }),
+      prisma.pedido.count({ where: { restauranteId: restaurante.id, statusPedido: 'ABERTO' } }),
+      prisma.pedido.count({ where: { restauranteId: restaurante.id, statusPedido: 'PAGO', dataCriacao: { gte: hoje } } }),
+      prisma.produto.count({ where: { restauranteId: restaurante.id, disponivel: true } }),
+      prisma.cliente.count({ where: { restauranteId: restaurante.id } }),
+    ]);
+
+  return { pedidosHoje, pedidosAbertos, pedidosPagos, produtosDisponiveis, clientesTotal };
+}
+
 export async function getCardapio(slug: string) {
   const restaurante = await prisma.restaurante.findUnique({
     where: { slug },
