@@ -66,6 +66,7 @@ const FORMA_PAGAMENTO_LABELS: Record<string, string> = {
 type StatusFilter = 'ABERTOS' | 'CONCLUIDOS';
 
 export default function DeliveryPage() {
+  const searchParams = useSearchParams();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ABERTOS');
@@ -99,6 +100,25 @@ export default function DeliveryPage() {
   useEffect(() => {
     fetchPedidos();
   }, [fetchPedidos]);
+
+  // Auto-abrir pedido específico vindo da notificação (?pedido=ID)
+  useEffect(() => {
+    const pedidoId = searchParams.get('pedido');
+    if (!pedidoId || isLoading) return;
+
+    const encontrado = pedidos.find((p) => p.id === Number(pedidoId));
+    if (encontrado) {
+      openDetail(encontrado);
+    } else {
+      // Pedido pode estar em outro status, buscar diretamente
+      api.get<Pedido>(`/pedidos/${pedidoId}`)
+        .then((p) => {
+          if (p.tipoPedido !== TipoPedido.MESA) openDetail(p);
+        })
+        .catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, searchParams]);
 
   useEffect(() => {
     if (!socket) return;

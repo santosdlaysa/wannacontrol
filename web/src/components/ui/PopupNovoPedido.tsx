@@ -173,11 +173,11 @@ export function PopupNovoPedido() {
           {/* Botões */}
           <div className="px-6 pb-6 flex gap-3">
             <Link
-              href="/delivery"
+              href={`/delivery?pedido=${pedidoAtual.pedidoId}`}
               onClick={dispensar}
               className="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-center py-3 rounded-xl font-bold text-sm transition-colors"
             >
-              Ver Pedidos
+              Ver Pedido
             </Link>
             <button
               onClick={dispensar}
