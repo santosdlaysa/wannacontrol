@@ -10,6 +10,7 @@ import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 
 const CATEGORIAS = [
+  'Comidas',
   'Cafes Quentes',
   'Bebidas Geladas',
   'Salgados',
