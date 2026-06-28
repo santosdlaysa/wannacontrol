@@ -226,7 +226,7 @@ export async function consultarPagamento(restauranteId: number, paymentId: strin
 }
 
 export async function processarWebhookPagamento(paymentId: string) {
-  if (!paymentId) return { received: true };
+  if (!paymentId || !env.MERCADO_PAGO_ACCESS_TOKEN) return { received: true };
 
   const payment = await mercadoPagoRequest<MercadoPagoPaymentResponse>(`/v1/payments/${paymentId}`, undefined, 'GET');
   const metadata = payment.metadata || {};

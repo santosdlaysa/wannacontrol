@@ -28,12 +28,23 @@ export async function consultarPagamento(req: Request, res: Response) {
 }
 
 export async function receberWebhook(req: Request, res: Response) {
+  // Sempre retornar 200 imediatamente para o Mercado Pago não retentar
+  res.json({ received: true });
+
+  const tipo = req.body?.type || req.body?.action;
+  if (!tipo?.includes('payment')) return;
+
   const paymentId =
     req.body?.data?.id ||
     req.body?.id ||
     req.query?.['data.id'] ||
     req.query?.id;
 
-  const result = await service.processarWebhookPagamento(String(paymentId || ''));
-  res.json(result);
+  if (!paymentId || paymentId === '123456') return;
+
+  try {
+    await service.processarWebhookPagamento(String(paymentId));
+  } catch (err) {
+    console.error('[Webhook MP] Erro ao processar pagamento:', paymentId, err);
+  }
 }
