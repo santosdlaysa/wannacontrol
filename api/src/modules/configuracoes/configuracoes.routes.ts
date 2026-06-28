@@ -13,6 +13,7 @@ router.put('/', authorize(Perfil.ADMIN, Perfil.GERENTE), asyncHandler(controller
 
 // Bairros
 router.get('/bairros', asyncHandler(controller.listarBairros));
+router.get('/bairros/cep/:cep', asyncHandler(controller.buscarBairroPorCep));
 router.post('/bairros', authorize(Perfil.ADMIN, Perfil.GERENTE), asyncHandler(controller.criarBairro));
 router.put('/bairros/:id', authorize(Perfil.ADMIN, Perfil.GERENTE), asyncHandler(controller.atualizarBairro));
 router.delete('/bairros/:id', authorize(Perfil.ADMIN, Perfil.GERENTE), asyncHandler(controller.deletarBairro));

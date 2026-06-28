@@ -21,6 +21,10 @@ export async function listarBairros(req: Request, res: Response) {
   res.json(await service.listarBairros(restauranteId));
 }
 
+export async function buscarBairroPorCep(req: Request, res: Response) {
+  res.json(await service.buscarBairroPorCep(req.params.cep));
+}
+
 export async function criarBairro(req: Request, res: Response) {
   const restauranteId = req.user!.restauranteId!;
   const { bairro, taxa } = req.body;

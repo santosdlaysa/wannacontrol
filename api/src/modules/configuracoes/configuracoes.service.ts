@@ -1,4 +1,5 @@
 import prisma from '../../lib/prisma';
+import { ValidationError } from '../../lib/errors';
 
 const DEFAULTS: Record<string, string> = {
   taxa_entrega: '5.00',
@@ -48,6 +49,45 @@ export async function listarBairros(restauranteId: number) {
     where: { restauranteId },
     orderBy: { bairro: 'asc' },
   });
+}
+
+interface ViaCepResponse {
+  cep?: string;
+  logradouro?: string;
+  bairro?: string;
+  localidade?: string;
+  uf?: string;
+  erro?: boolean;
+}
+
+export async function buscarBairroPorCep(cep: string) {
+  const cepLimpo = cep.replace(/\D/g, '');
+  if (cepLimpo.length !== 8) {
+    throw new ValidationError('Informe um CEP valido com 8 digitos');
+  }
+
+  const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+  if (!response.ok) {
+    throw new ValidationError('Nao foi possivel consultar o CEP agora');
+  }
+
+  const data = (await response.json()) as ViaCepResponse;
+  if (data.erro) {
+    throw new ValidationError('CEP nao encontrado');
+  }
+
+  const bairro = data.bairro?.trim();
+  if (!bairro) {
+    throw new ValidationError('Este CEP nao retornou bairro');
+  }
+
+  return {
+    cep: data.cep,
+    bairro,
+    cidade: data.localidade,
+    uf: data.uf,
+    logradouro: data.logradouro,
+  };
 }
 
 export async function criarBairro(restauranteId: number, bairro: string, taxa: number) {

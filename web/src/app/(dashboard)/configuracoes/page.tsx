@@ -25,6 +25,14 @@ interface Bairro {
   ativo: boolean;
 }
 
+interface CepBairro {
+  cep?: string;
+  bairro: string;
+  cidade?: string;
+  uf?: string;
+  logradouro?: string;
+}
+
 const defaultConfig: Configuracoes = {
   taxa_entrega: '0',
   tempo_preparo_medio: '30',
@@ -46,8 +54,10 @@ export default function ConfiguracoesPage() {
 
   // Bairros
   const [bairros, setBairros] = useState<Bairro[]>([]);
+  const [cepBusca, setCepBusca] = useState('');
   const [novoBairro, setNovoBairro] = useState('');
   const [novaTaxa, setNovaTaxa] = useState('');
+  const [buscandoCep, setBuscandoCep] = useState(false);
   const [adicionando, setAdicionando] = useState(false);
   const [editando, setEditando] = useState<Bairro | null>(null);
 
@@ -93,6 +103,7 @@ export default function ConfiguracoesPage() {
         taxa: Number(novaTaxa),
       });
       setBairros((prev) => [...prev, criado].sort((a, b) => a.bairro.localeCompare(b.bairro)));
+      setCepBusca('');
       setNovoBairro('');
       setNovaTaxa('');
       toast.success('Bairro adicionado');
@@ -100,6 +111,29 @@ export default function ConfiguracoesPage() {
       toast.error('Erro ao adicionar bairro');
     } finally {
       setAdicionando(false);
+    }
+  }
+
+  async function handleBuscarCep() {
+    const cepLimpo = cepBusca.replace(/\D/g, '');
+    if (cepLimpo.length !== 8) {
+      toast.error('Informe um CEP com 8 digitos');
+      return;
+    }
+
+    setBuscandoCep(true);
+    try {
+      const data = await api.get<CepBairro>(`/configuracoes/bairros/cep/${cepLimpo}`);
+      setNovoBairro(data.bairro);
+      toast.success(
+        data.cidade && data.uf
+          ? `Bairro encontrado: ${data.bairro} - ${data.cidade}/${data.uf}`
+          : `Bairro encontrado: ${data.bairro}`
+      );
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao buscar CEP');
+    } finally {
+      setBuscandoCep(false);
     }
   }
 
@@ -175,16 +209,34 @@ export default function ConfiguracoesPage() {
           </p>
 
           {/* Adicionar bairro */}
-          <div className="flex gap-3 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-[150px_1fr_130px_auto_auto] gap-3 mb-4">
+            <div className="flex gap-2">
+              <input
+                className="min-w-0 flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cafe-500"
+                placeholder="CEP"
+                inputMode="numeric"
+                value={cepBusca}
+                onChange={(e) => setCepBusca(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleBuscarCep()}
+              />
+              <button
+                type="button"
+                onClick={handleBuscarCep}
+                disabled={buscandoCep || cepBusca.replace(/\D/g, '').length !== 8}
+                className="md:hidden px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
+              >
+                {buscandoCep ? '...' : 'Buscar'}
+              </button>
+            </div>
             <input
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cafe-500"
+              className="min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cafe-500"
               placeholder="Nome do bairro"
               value={novoBairro}
               onChange={(e) => setNovoBairro(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddBairro()}
             />
             <input
-              className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cafe-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cafe-500"
               placeholder="Taxa (R$)"
               type="number"
               step="0.50"
@@ -192,6 +244,14 @@ export default function ConfiguracoesPage() {
               onChange={(e) => setNovaTaxa(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddBairro()}
             />
+            <button
+              type="button"
+              onClick={handleBuscarCep}
+              disabled={buscandoCep || cepBusca.replace(/\D/g, '').length !== 8}
+              className="hidden md:inline-flex justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
+            >
+              {buscandoCep ? 'Buscando...' : 'Buscar CEP'}
+            </button>
             <button
               onClick={handleAddBairro}
               disabled={adicionando || !novoBairro.trim() || !novaTaxa}
