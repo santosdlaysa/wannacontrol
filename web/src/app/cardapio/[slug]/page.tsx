@@ -99,9 +99,9 @@ interface PedidoHistoricoPublico {
 }
 
 const STATUS_LABELS: Record<StatusEntregaPedido, string> = {
-  RECEBIDO: 'Pedido recebido',
+  RECEBIDO: 'Confirmado',
   CONFIRMADO: 'Pedido confirmado',
-  EM_PREPARO: 'Em preparo',
+  EM_PREPARO: 'Em produção',
   PRONTO: 'Pronto',
   SAIU_ENTREGA: 'Saiu para entrega',
   ENTREGUE: 'Entregue',
@@ -109,20 +109,14 @@ const STATUS_LABELS: Record<StatusEntregaPedido, string> = {
 };
 
 const statusFlowDelivery: StatusEntregaPedido[] = [
-  'RECEBIDO',
   'CONFIRMADO',
   'EM_PREPARO',
-  'PRONTO',
   'SAIU_ENTREGA',
-  'ENTREGUE',
 ];
 
 const statusFlowRetirada: StatusEntregaPedido[] = [
-  'RECEBIDO',
   'CONFIRMADO',
   'EM_PREPARO',
-  'PRONTO',
-  'ENTREGUE',
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -376,9 +370,10 @@ export default function CardapioPage() {
 
   // Tela de sucesso
   if (step === 'sucesso') {
-    const currentStatus = pedidoStatus?.statusPedido === 'CANCELADO'
+    const rawStatus = pedidoStatus?.statusPedido === 'CANCELADO'
       ? 'CANCELADO'
       : pedidoStatus?.statusEntrega || 'RECEBIDO';
+    const currentStatus = rawStatus === 'RECEBIDO' ? 'CONFIRMADO' : rawStatus;
     const flow = (pedidoStatus?.tipoPedido || tipo) === 'DELIVERY'
       ? statusFlowDelivery
       : statusFlowRetirada;

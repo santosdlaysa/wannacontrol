@@ -18,20 +18,17 @@ const formatDate = (date: string | Date) =>
   new Date(date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
 const STATUS_ENTREGA_FLOW = [
-  'RECEBIDO',
   'CONFIRMADO',
   'EM_PREPARO',
-  'PRONTO',
   'SAIU_ENTREGA',
-  'ENTREGUE',
 ] as const;
 
 const STATUS_ENTREGA_LABELS: Record<string, string> = {
   RECEBIDO: 'Recebido',
   CONFIRMADO: 'Confirmado',
-  EM_PREPARO: 'Em Preparo',
+  EM_PREPARO: 'Em Produção',
   PRONTO: 'Pronto',
-  SAIU_ENTREGA: 'Saiu p/ Entrega',
+  SAIU_ENTREGA: 'Saiu para Entrega',
   ENTREGUE: 'Entregue',
   CANCELADO: 'Cancelado',
 };
@@ -149,6 +146,8 @@ export default function DeliveryPage() {
   }
 
   function getNextStatus(current: string): string | null {
+    if (current === 'RECEBIDO') return 'CONFIRMADO';
+
     const idx = STATUS_ENTREGA_FLOW.indexOf(current as typeof STATUS_ENTREGA_FLOW[number]);
     if (idx < 0 || idx >= STATUS_ENTREGA_FLOW.length - 1) return null;
     return STATUS_ENTREGA_FLOW[idx + 1];

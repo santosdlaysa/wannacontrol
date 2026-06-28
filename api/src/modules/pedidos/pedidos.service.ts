@@ -84,7 +84,7 @@ export async function criar(
         clienteId: data.clienteId || null,
         tipoPedido,
         statusPedido: 'ABERTO',
-        statusEntrega: tipoPedido !== 'MESA' ? 'RECEBIDO' : null,
+        statusEntrega: tipoPedido !== 'MESA' ? 'CONFIRMADO' : null,
         clienteNome: data.clienteNome || null,
         clienteTelefone: data.clienteTelefone || null,
         enderecoEntrega: data.enderecoEntrega || null,

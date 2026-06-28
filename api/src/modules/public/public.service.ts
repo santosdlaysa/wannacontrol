@@ -167,7 +167,7 @@ export async function criarPedidoPublico(slug: string, data: {
       clienteId: cliente.id,
       tipoPedido: data.tipoPedido,
       statusPedido: 'ABERTO',
-      statusEntrega: 'RECEBIDO',
+      statusEntrega: 'CONFIRMADO',
       clienteNome,
       clienteTelefone,
       enderecoEntrega,
