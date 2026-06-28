@@ -133,6 +133,6 @@ export function getRoleDashboard(perfil: Perfil): string {
     case Perfil.CAIXA:
       return '/caixa';
     default:
-      return '/pedidos';
+      return '/dashboard';
   }
 }

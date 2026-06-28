@@ -1,5 +1,7 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../lib/errors';
+import { getIO } from '../../lib/socket';
+import { SOCKET_EVENTS } from '@cafecontrol/shared';
 
 export async function getCardapio(slug: string) {
   const restaurante = await prisma.restaurante.findUnique({
@@ -101,17 +103,47 @@ export async function criarPedidoPublico(slug: string, data: {
     where: { restauranteId_chave: { restauranteId: restaurante.id, chave: 'taxa_entrega' } },
   });
   const taxaEntrega = data.tipoPedido === 'DELIVERY' ? Number(taxaConfig?.valor ?? 0) : 0;
+  const clienteNome = data.clienteNome.trim();
+  const clienteTelefone = data.clienteTelefone.replace(/\D/g, '');
+  const enderecoEntrega = data.tipoPedido === 'DELIVERY'
+    ? data.enderecoEntrega?.trim() || null
+    : null;
+
+  const clienteExistente = await prisma.cliente.findFirst({
+    where: {
+      restauranteId: restaurante.id,
+      telefone: clienteTelefone,
+    },
+  });
+
+  const cliente = clienteExistente
+    ? await prisma.cliente.update({
+        where: { id: clienteExistente.id },
+        data: {
+          nome: clienteNome,
+          endereco: enderecoEntrega ?? clienteExistente.endereco,
+        },
+      })
+    : await prisma.cliente.create({
+        data: {
+          restauranteId: restaurante.id,
+          nome: clienteNome,
+          telefone: clienteTelefone,
+          endereco: enderecoEntrega,
+        },
+      });
 
   const pedido = await prisma.pedido.create({
     data: {
       restauranteId: restaurante.id,
       garcomId: operadorId,
+      clienteId: cliente.id,
       tipoPedido: data.tipoPedido,
       statusPedido: 'ABERTO',
       statusEntrega: 'RECEBIDO',
-      clienteNome: data.clienteNome,
-      clienteTelefone: data.clienteTelefone,
-      enderecoEntrega: data.enderecoEntrega ?? null,
+      clienteNome,
+      clienteTelefone,
+      enderecoEntrega,
       taxaEntrega,
       observacao: data.observacao ?? null,
       itens: {
@@ -125,9 +157,28 @@ export async function criarPedidoPublico(slug: string, data: {
       },
     },
     include: {
+      cliente: true,
       itens: { include: { produto: { select: { nome: true } } } },
     },
   });
+
+  const total = pedido.itens.reduce(
+    (acc, item) => acc + Number(item.precoUnitario) * item.quantidade,
+    0,
+  ) + taxaEntrega;
+
+  try {
+    const io = getIO();
+    io.to('tables').emit(SOCKET_EVENTS.NEW_DELIVERY_ORDER, {
+      pedidoId: pedido.id,
+      clienteNome,
+      clienteTelefone,
+      tipoPedido: data.tipoPedido,
+      total,
+      itensCount: pedido.itens.length,
+      restauranteId: restaurante.id,
+    });
+  } catch {}
 
   return pedido;
 }

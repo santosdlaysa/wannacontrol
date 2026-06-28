@@ -77,7 +77,7 @@ export async function adicionarItens(pedidoId: number, itens: ItemInput[]) {
       const io = getIO();
       io.to('kitchen').emit(SOCKET_EVENTS.NEW_ORDER_ITEMS, {
         pedidoId,
-        mesaNumero: pedido.mesa.numero,
+        mesaNumero: pedido.mesa?.numero,
         itens: itensCriados.map((item) => ({
           id: item.id,
           produtoNome: item.produto.nome,
@@ -129,7 +129,7 @@ export async function atualizarStatus(itemId: number, novoStatus: StatusPreparo)
     io.to('kitchen').emit(SOCKET_EVENTS.ITEM_STATUS_CHANGED, {
       itemId: item.id,
       pedidoId: item.pedidoId,
-      mesaNumero: item.pedido.mesa.numero,
+      mesaNumero: item.pedido.mesa?.numero,
       produtoNome: item.produto.nome,
       novoStatus,
     });
@@ -139,7 +139,7 @@ export async function atualizarStatus(itemId: number, novoStatus: StatusPreparo)
       io.to(`waiter:${item.pedido.garcomId}`).emit(SOCKET_EVENTS.ITEM_READY, {
         itemId: item.id,
         pedidoId: item.pedidoId,
-        mesaNumero: item.pedido.mesa.numero,
+        mesaNumero: item.pedido.mesa?.numero,
         produtoNome: item.produto.nome,
         garcomId: item.pedido.garcomId,
       });

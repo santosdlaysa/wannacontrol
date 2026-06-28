@@ -7,6 +7,7 @@ export const SOCKET_EVENTS = {
   MESA_STATUS_CHANGED: 'mesa:statusChanged',
   NEW_ORDER_ITEMS: 'order:newItems',
   ORDER_CLOSED: 'order:closed',
+  NEW_DELIVERY_ORDER: 'order:newDelivery',
 
   // Client -> Server (room management)
   JOIN_KITCHEN: 'room:joinKitchen',
@@ -52,4 +53,14 @@ export interface OrderClosedPayload {
   pedidoId: number;
   mesaId: number;
   mesaNumero: number;
+}
+
+export interface NewDeliveryOrderPayload {
+  pedidoId: number;
+  clienteNome: string;
+  clienteTelefone: string;
+  tipoPedido: 'DELIVERY' | 'RETIRADA';
+  total: number;
+  itensCount: number;
+  restauranteId: number;
 }

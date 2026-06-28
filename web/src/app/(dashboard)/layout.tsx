@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/providers/AuthProvider';
 import { SocketProvider } from '@/providers/SocketProvider';
 import PageLoading from '@/components/ui/PageLoading';
+import { NotificacoesPedidos } from '@/components/ui/NotificacoesPedidos';
 import { Perfil } from '@cafecontrol/shared';
 
 interface NavItem {
@@ -18,7 +19,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     label: 'Dashboard',
-    href: '/',
+    href: '/dashboard',
     roles: [Perfil.ADMIN, Perfil.GERENTE, Perfil.CAIXA, Perfil.GARCOM],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,7 +201,7 @@ export default function DashboardLayout({
             {/* Navigation */}
             <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
               {filteredNav.map((item) => {
-                const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+                const isActive = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
                 return (
                   <Link
                     key={item.href}
@@ -288,7 +289,8 @@ export default function DashboardLayout({
             <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-20">
               <div className="flex items-center justify-between">
                 <div />
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <NotificacoesPedidos />
                   <span className="text-sm text-gray-500">
                     Olá, <span className="font-medium text-gray-700">{user.nome}</span>
                   </span>
