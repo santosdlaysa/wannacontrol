@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "cd ../packages/shared && npm install && npm run build && cd ../../api && prisma migrate deploy && prisma generate && tsc",
+    "build": "cd ../packages/shared && npm install && npm run build && cd ../../api && prisma db execute --file ./prisma/migrations/20260628220000_add_solicitacoes_pix/migration.sql --schema ./prisma/schema.prisma && prisma generate && tsc",
     "start": "node dist/server.js",
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",

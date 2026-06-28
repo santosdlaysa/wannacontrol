@@ -1,8 +1,12 @@
--- CreateEnum
-CREATE TYPE "StatusSolicitacaoPix" AS ENUM ('PENDENTE', 'APROVADO', 'REJEITADO');
+-- CreateEnum (idempotente)
+DO $$ BEGIN
+  CREATE TYPE "StatusSolicitacaoPix" AS ENUM ('PENDENTE', 'APROVADO', 'REJEITADO');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
--- CreateTable
-CREATE TABLE "solicitacoes_pix" (
+-- CreateTable (idempotente)
+CREATE TABLE IF NOT EXISTS "solicitacoes_pix" (
     "id" SERIAL NOT NULL,
     "restaurante_id" INTEGER NOT NULL,
     "plano_id" VARCHAR(50) NOT NULL,
@@ -15,5 +19,10 @@ CREATE TABLE "solicitacoes_pix" (
     CONSTRAINT "solicitacoes_pix_pkey" PRIMARY KEY ("id")
 );
 
--- AddForeignKey
-ALTER TABLE "solicitacoes_pix" ADD CONSTRAINT "solicitacoes_pix_restaurante_id_fkey" FOREIGN KEY ("restaurante_id") REFERENCES "restaurantes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- AddForeignKey (idempotente)
+DO $$ BEGIN
+  ALTER TABLE "solicitacoes_pix" ADD CONSTRAINT "solicitacoes_pix_restaurante_id_fkey"
+    FOREIGN KEY ("restaurante_id") REFERENCES "restaurantes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
