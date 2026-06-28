@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
@@ -34,7 +34,6 @@ export default function CadastroPage() {
   const [telefone, setTelefone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const plano = searchParams.get('plano') || 'PROFISSIONAL';
 
@@ -70,7 +69,7 @@ export default function CadastroPage() {
       localStorage.setItem('restaurante', JSON.stringify(data.restaurante));
 
       toast.success(`Bem-vindo ao ChefFlow, ${data.usuario.nome}!`);
-      router.push(`/assinatura?plano=${plano}`);
+      window.location.href = `/assinatura?plano=${plano}`;
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Erro ao criar conta');
     } finally {
