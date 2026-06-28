@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuth, getRoleDashboard } from '@/providers/AuthProvider';
 import Button from '@/components/ui/Button';
@@ -14,6 +14,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -26,7 +28,7 @@ export default function LoginPage() {
       const data = await login(email, senha);
       const user = data.usuario;
       toast.success(`Bem-vindo, ${user.nome}!`);
-      router.push(getRoleDashboard(user.perfil));
+      router.push(redirect || getRoleDashboard(user.perfil));
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Erro ao fazer login';

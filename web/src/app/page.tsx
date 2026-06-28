@@ -193,7 +193,7 @@ export default function LandingPage() {
               ],
               destaque: false,
               cta: 'Comecar agora',
-              href: '/assinatura?plano=INICIAL',
+              href: '/login?redirect=/assinatura?plano=INICIAL',
             },
             {
               nome: 'Profissional',
@@ -209,7 +209,7 @@ export default function LandingPage() {
               ],
               destaque: true,
               cta: 'Escolher Profissional',
-              href: '/assinatura?plano=PROFISSIONAL',
+              href: '/login?redirect=/assinatura?plano=PROFISSIONAL',
             },
             {
               nome: 'Premium',
