@@ -5,7 +5,7 @@ interface ResumoFiltros {
   dataFim?: string;
 }
 
-export async function resumoDiario(data?: string) {
+export async function resumoDiario(data?: string, restauranteId?: number) {
   // Usar a data string diretamente para evitar problemas de fuso
   const diaStr = data || new Date().toISOString().split('T')[0];
   const inicio = new Date(`${diaStr}T00:00:00.000Z`);
@@ -13,6 +13,7 @@ export async function resumoDiario(data?: string) {
 
   const pedidosPagos = await prisma.pedido.findMany({
     where: {
+      ...(restauranteId ? { restauranteId } : {}),
       statusPedido: 'PAGO',
       dataCriacao: { gte: inicio, lte: fim },
     },
@@ -84,18 +85,19 @@ export async function resumoDiario(data?: string) {
   };
 }
 
-export async function dashboard(data?: string) {
+export async function dashboard(data?: string, restauranteId?: number) {
   const diaStr = data || new Date().toISOString().split('T')[0];
   const inicio = new Date(`${diaStr}T00:00:00.000Z`);
   const fim = new Date(`${diaStr}T23:59:59.999Z`);
+  const rFilter = restauranteId ? { restauranteId } : {};
 
   const [pedidosHoje, pedidosAbertos] = await Promise.all([
     prisma.pedido.findMany({
-      where: { dataCriacao: { gte: inicio, lte: fim } },
+      where: { ...rFilter, dataCriacao: { gte: inicio, lte: fim } },
       include: { itens: true },
     }),
     prisma.pedido.findMany({
-      where: { statusPedido: 'ABERTO' },
+      where: { ...rFilter, statusPedido: 'ABERTO' },
       include: {
         itens: true,
         mesa: true,
@@ -121,7 +123,7 @@ export async function dashboard(data?: string) {
   // Total do mes
   const inicioMes = new Date(`${diaStr.slice(0, 7)}-01T00:00:00.000Z`);
   const pedidosMes = await prisma.pedido.findMany({
-    where: { statusPedido: 'PAGO', dataCriacao: { gte: inicioMes } },
+    where: { ...rFilter, statusPedido: 'PAGO', dataCriacao: { gte: inicioMes } },
     include: { itens: true },
   });
   const totalMes = pedidosMes.reduce(
@@ -141,8 +143,8 @@ export async function dashboard(data?: string) {
   };
 }
 
-export async function historico(filtros: ResumoFiltros) {
-  const where: any = { statusPedido: 'PAGO' };
+export async function historico(filtros: ResumoFiltros, restauranteId?: number) {
+  const where: any = { statusPedido: 'PAGO', ...(restauranteId ? { restauranteId } : {}) };
 
   if (filtros.dataInicio || filtros.dataFim) {
     where.dataCriacao = {};

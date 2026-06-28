@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import * as pedidosService from './pedidos.service';
 
 export async function listar(req: Request, res: Response) {
-  const pedidos = await pedidosService.listar(req.query as any);
+  const restauranteId = req.user?.restauranteId;
+  const pedidos = await pedidosService.listar(req.query as any, restauranteId);
   res.json(pedidos);
 }
 

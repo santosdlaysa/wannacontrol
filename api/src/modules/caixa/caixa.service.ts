@@ -37,6 +37,7 @@ export async function fecharCaixa(caixaId: number) {
   // Calcular total de vendas no período do caixa
   const pedidosPagos = await prisma.pedido.findMany({
     where: {
+      ...(caixa.restauranteId ? { restauranteId: caixa.restauranteId } : {}),
       statusPedido: 'PAGO',
       dataCriacao: {
         gte: caixa.aberturaEm,

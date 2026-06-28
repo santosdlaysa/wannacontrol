@@ -3,8 +3,10 @@ import { NotFoundError, ValidationError, ConflictError } from '../../lib/errors'
 import { StatusPedido, StatusMesa, SOCKET_EVENTS } from '@chefflow/shared';
 import { getIO } from '../../lib/socket';
 
-export async function listar(params: { status?: string; mesa_id?: string }) {
+export async function listar(params: { status?: string; mesa_id?: string }, restauranteId?: number) {
   const where: any = {};
+
+  if (restauranteId) where.restauranteId = restauranteId;
 
   if (params.status) {
     where.statusPedido = params.status;
