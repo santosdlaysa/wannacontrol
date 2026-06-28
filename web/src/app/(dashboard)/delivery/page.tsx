@@ -156,8 +156,9 @@ export default function DeliveryPage() {
   async function advanceStatus(pedido: Pedido) {
     const next = getNextStatus(pedido.statusEntrega || '', pedido.tipoPedido);
     if (!next) return;
+    const statusToPersist = next === 'CONFIRMADO' ? 'EM_PREPARO' : next;
 
-    if (next === 'ENTREGUE') {
+    if (statusToPersist === 'ENTREGUE') {
       payPedidoRef.current = pedido;
       setFormaPagamento(pedido.formaPagamento || 'PIX');
       setPayModalOpen(true);
@@ -167,11 +168,15 @@ export default function DeliveryPage() {
     setAdvancingId(pedido.id);
     try {
       const updated = await api.patch<Pedido>(`/pedidos/${pedido.id}/status-entrega`, {
-        statusEntrega: next,
+        statusEntrega: statusToPersist,
       });
       setPedidos((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       if (selectedPedido?.id === updated.id) setSelectedPedido(updated);
-      toast.success(`Status: ${STATUS_ENTREGA_LABELS[next]}`);
+      toast.success(
+        next === 'CONFIRMADO'
+          ? 'Confirmado e em producao'
+          : `Status: ${STATUS_ENTREGA_LABELS[statusToPersist]}`
+      );
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Erro ao atualizar status');
     } finally {
@@ -494,7 +499,9 @@ export default function DeliveryPage() {
                       const next = getNextStatus(selectedPedido.statusEntrega || '', selectedPedido.tipoPedido);
                       return next === 'ENTREGUE'
                         ? 'Finalizar & Cobrar'
-                        : `Avançar → ${STATUS_ENTREGA_LABELS[next || ''] || next}`;
+                        : next === 'CONFIRMADO'
+                          ? 'Confirmar e Produzir'
+                          : `Avançar → ${STATUS_ENTREGA_LABELS[next || ''] || next}`;
                     })()}
                   </Button>
                 )}
