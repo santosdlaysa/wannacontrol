@@ -7,22 +7,42 @@ import { Perfil } from '@cafecontrol/shared';
 
 type UserInfo = Omit<Usuario, 'pin'>;
 type RestaurantInfo = Omit<Restaurante, 'criadoEm'>;
+type AuthResult = LoginResponse;
 
 interface AuthContextType {
   user: UserInfo | null;
   restaurante: RestaurantInfo | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, senha: string) => Promise<void>;
-  loginPin: (pin: string) => Promise<void>;
+  login: (email: string, senha: string) => Promise<AuthResult>;
+  loginPin: (pin: string) => Promise<AuthResult>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserInfo | null>(null);
-  const [restaurante, setRestaurante] = useState<RestaurantInfo | null>(null);
+  const [user, setUser] = useState<UserInfo | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const storedUser = localStorage.getItem('user');
+    const accessToken = localStorage.getItem('accessToken');
+    if (!storedUser || !accessToken) return null;
+    try {
+      return JSON.parse(storedUser) as UserInfo;
+    } catch {
+      return null;
+    }
+  });
+  const [restaurante, setRestaurante] = useState<RestaurantInfo | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const storedRestaurant = localStorage.getItem('restaurante');
+    if (!storedRestaurant) return null;
+    try {
+      return JSON.parse(storedRestaurant) as RestaurantInfo;
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -101,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(data.usuario);
     setRestaurante((data.restaurante as RestaurantInfo) ?? null);
+    return data;
   }, []);
 
   const loginPin = useCallback(async (pin: string) => {
@@ -115,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(data.usuario);
     setRestaurante((data.restaurante as RestaurantInfo) ?? null);
+    return data;
   }, []);
 
   const logout = useCallback(() => {

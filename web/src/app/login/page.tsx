@@ -23,8 +23,8 @@ export default function LoginPage() {
     }
     setIsLoading(true);
     try {
-      await login(email, senha);
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const data = await login(email, senha);
+      const user = data.usuario;
       toast.success(`Bem-vindo, ${user.nome}!`);
       router.push(getRoleDashboard(user.perfil));
     } catch (err: unknown) {
