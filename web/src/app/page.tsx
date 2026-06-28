@@ -201,7 +201,7 @@ export default function LandingPage() {
           {[
             {
               nome: 'Inicial',
-              valor: 'R$ 147',
+              valor: 'R$ 75',
               desc: 'Receba pedidos online, confirme e controle entregas no basico.',
               recursos: [
                 'Cardapio digital publico',

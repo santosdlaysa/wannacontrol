@@ -104,7 +104,7 @@ async function main() {
   // Produtos — Acompanhamentos
   const acompanhamentos = [
     { nome: 'Arroz', descricao: 'Arroz branco cozido no ponto certo.', preco: 0.0, urlImagem: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?auto=format&fit=crop&w=600&q=80' },
-    { nome: 'Feijao', descricao: 'Feijao carioca temperado.', preco: 0.0, urlImagem: 'https://images.unsplash.com/photo-1551462147-37885acc36f1?auto=format&fit=crop&w=600&q=80' },
+    { nome: 'Feijao', descricao: 'Feijao carioca temperado.', preco: 0.0, urlImagem: 'https://images.unsplash.com/photo-155146275-37885acc36f1?auto=format&fit=crop&w=600&q=80' },
     { nome: 'Macarrao', descricao: 'Macarrao ao alho e oleo.', preco: 0.0, urlImagem: 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?auto=format&fit=crop&w=600&q=80' },
     { nome: 'Pure de Batata', descricao: 'Pure de batata cremoso.', preco: 0.0, urlImagem: 'https://images.unsplash.com/photo-1600335895229-6e75511892c8?auto=format&fit=crop&w=600&q=80' },
     { nome: 'Salada de Legumes', descricao: 'Mix de legumes frescos temperados.', preco: 0.0, urlImagem: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80' },
