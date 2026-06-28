@@ -50,11 +50,11 @@ export async function criar(data: {
   perfil: string;
   restauranteId?: number;
 }) {
-  const existente = await prisma.usuario.findUnique({ where: { email: data.email } });
+  const existente = await prisma.usuario.findFirst({ where: { email: data.email } });
   if (existente) throw new ConflictError('E-mail já está em uso');
 
   if (data.pin) {
-    const pinExistente = await prisma.usuario.findUnique({ where: { pin: data.pin } });
+    const pinExistente = await prisma.usuario.findFirst({ where: { pin: data.pin } });
     if (pinExistente) throw new ConflictError('PIN já está em uso');
   }
 
