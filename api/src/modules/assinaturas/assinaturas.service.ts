@@ -17,7 +17,7 @@ const PLANOS: Record<PlanoId, {
     id: 'INICIAL',
     nome: 'Inicial',
     descricao: 'Receba pedidos online, confirme e controle entregas no basico.',
-    valor: 75,00,
+    valor: 75.00,
     planoSistema: 'BASICO',
     recursos: ['Cardapio digital publico', 'Delivery e retirada', 'Confirmar e entregar pedidos', 'Cadastro de clientes e produtos', 'Relatorio basico do dia', 'Painel de pedidos simples'],
   },
