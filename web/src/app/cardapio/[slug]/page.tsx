@@ -155,6 +155,7 @@ export default function CardapioPage() {
   const [bairroId, setBairroId] = useState<number | null>(null);
   const [rua, setRua] = useState('');
   const [obs, setObs] = useState('');
+  const [dadosSalvos, setDadosSalvos] = useState(false);
 
   const fetchCardapio = useCallback(async () => {
     try {
@@ -184,6 +185,24 @@ export default function CardapioPage() {
       setLastPedido(JSON.parse(raw) as LastPedido);
     } catch {
       localStorage.removeItem(storageKey);
+    }
+  }, [slug]);
+
+  useEffect(() => {
+    if (!slug) return;
+
+    const raw = localStorage.getItem(`cardapio:cliente:${slug}`);
+    if (!raw) return;
+
+    try {
+      const saved = JSON.parse(raw) as { nome: string; telefone: string; bairroId: number | null; rua: string };
+      if (saved.nome) setNome(saved.nome);
+      if (saved.telefone) setTelefone(saved.telefone);
+      if (saved.bairroId) setBairroId(saved.bairroId);
+      if (saved.rua) setRua(saved.rua);
+      setDadosSalvos(true);
+    } catch {
+      localStorage.removeItem(`cardapio:cliente:${slug}`);
     }
   }, [slug]);
 
@@ -343,6 +362,13 @@ export default function CardapioPage() {
       setPedidoStatus(null);
       setLastPedido(pedidoSalvo);
       localStorage.setItem(`cardapio:last-pedido:${slug}`, JSON.stringify(pedidoSalvo));
+      localStorage.setItem(`cardapio:cliente:${slug}`, JSON.stringify({
+        nome: nome.trim(),
+        telefone: telefone.trim(),
+        bairroId: tipo === 'DELIVERY' ? bairroId : null,
+        rua: tipo === 'DELIVERY' ? rua.trim() : '',
+      }));
+      setDadosSalvos(true);
       setCart([]);
       setStep('sucesso');
     } catch (e: any) {
@@ -598,7 +624,32 @@ export default function CardapioPage() {
 
           {/* Dados pessoais */}
           <div className="bg-white rounded-2xl p-4 space-y-3">
-            <h2 className="font-bold text-gray-800">Seus dados</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-gray-800">Seus dados</h2>
+              {dadosSalvos && (
+                <button
+                  onClick={() => {
+                    setNome('');
+                    setTelefone('');
+                    setBairroId(null);
+                    setRua('');
+                    setDadosSalvos(false);
+                    localStorage.removeItem(`cardapio:cliente:${slug}`);
+                  }}
+                  className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  Limpar dados salvos
+                </button>
+              )}
+            </div>
+            {dadosSalvos && (
+              <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                <svg className="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <p className="text-xs text-green-700 font-medium">Seus dados foram carregados automaticamente</p>
+              </div>
+            )}
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Nome *</label>
               <input
