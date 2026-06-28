@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import LandingInteractiveDemo from '@/components/LandingInteractiveDemo';
+import AdminDemoWidget from '@/components/AdminDemoWidget';
 
 const modules = [
   {
@@ -100,44 +101,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/18 bg-white/12 p-4 shadow-2xl backdrop-blur-md">
-              <div className="rounded-lg bg-white p-4 text-gray-950">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                  <div>
-                    <p className="text-xs font-bold uppercase text-gray-500">Hoje</p>
-                    <p className="text-xl font-black">Painel da operacao</p>
-                  </div>
-                  <span className="rounded-lg bg-green-100 px-3 py-1 text-xs font-black text-green-700">
-                    Online
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  {[
-                    ['Pedidos abertos', '18'],
-                    ['Em preparo', '7'],
-                    ['Prontos', '4'],
-                    ['Faturamento', 'R$ 2.840'],
-                  ].map(([label, value]) => (
-                    <div key={label} className="rounded-lg border border-gray-200 p-3">
-                      <p className="text-xs font-semibold text-gray-500">{label}</p>
-                      <p className="mt-1 text-2xl font-black text-cafe-800">{value}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 rounded-lg bg-cafe-50 p-3">
-                  <p className="text-xs font-bold uppercase text-cafe-700">Novo pedido online</p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <div>
-                      <p className="font-black">#1042 - Delivery</p>
-                      <p className="text-sm text-gray-600">Cliente cadastrado automaticamente</p>
-                    </div>
-                    <span className="rounded-lg bg-cafe-700 px-3 py-2 text-sm font-black text-white">
-                      R$ 68,90
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AdminDemoWidget minHeight={460} />
           </div>
 
           <div className="grid gap-3 pb-4 sm:grid-cols-3">
