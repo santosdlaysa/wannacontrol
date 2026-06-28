@@ -84,6 +84,20 @@ interface StatusPedidoPublico {
   total: number;
 }
 
+interface PedidoHistoricoPublico {
+  id: number;
+  tipoPedido: Tipo;
+  statusPedido: 'ABERTO' | 'PAGO' | 'CANCELADO';
+  statusEntrega: StatusEntregaPedido | null;
+  dataCriacao: string;
+  total: number;
+  itens: Array<{
+    id: number;
+    quantidade: number;
+    produto: { nome: string };
+  }>;
+}
+
 const STATUS_LABELS: Record<StatusEntregaPedido, string> = {
   RECEBIDO: 'Pedido recebido',
   CONFIRMADO: 'Pedido confirmado',
@@ -128,6 +142,10 @@ export default function CardapioPage() {
   const [pedidoStatus, setPedidoStatus] = useState<StatusPedidoPublico | null>(null);
   const [statusErro, setStatusErro] = useState('');
   const [statusLoading, setStatusLoading] = useState(false);
+  const [historicoOpen, setHistoricoOpen] = useState(false);
+  const [historicoPedidos, setHistoricoPedidos] = useState<PedidoHistoricoPublico[]>([]);
+  const [historicoLoading, setHistoricoLoading] = useState(false);
+  const [historicoErro, setHistoricoErro] = useState('');
   const [enviando, setEnviando] = useState(false);
 
   // Checkout form
@@ -194,6 +212,29 @@ export default function CardapioPage() {
     const interval = window.setInterval(fetchPedidoStatus, 10_000);
     return () => window.clearInterval(interval);
   }, [step, pedidoId, fetchPedidoStatus]);
+
+  async function fetchHistoricoPedidos(telefoneHistorico?: string) {
+    const telefoneBusca = telefoneHistorico || lastPedido?.clienteTelefone || telefone;
+    if (!telefoneBusca.trim()) {
+      setHistoricoErro('Informe um telefone para buscar o historico');
+      return;
+    }
+
+    setHistoricoLoading(true);
+    try {
+      const params = new URLSearchParams({ telefone: telefoneBusca.trim() });
+      const res = await fetch(`${BASE}/public/${slug}/pedidos/historico?${params}`);
+      if (!res.ok) throw new Error('Nao foi possivel carregar seu historico');
+      const json: PedidoHistoricoPublico[] = await res.json();
+      setHistoricoPedidos(json);
+      setHistoricoErro('');
+      setHistoricoOpen(true);
+    } catch (e: any) {
+      setHistoricoErro(e.message || 'Erro ao carregar historico');
+    } finally {
+      setHistoricoLoading(false);
+    }
+  }
 
   // ─── Cart helpers ──────────────────────────────────────────────────────────
 
@@ -651,20 +692,85 @@ export default function CardapioPage() {
                     {lastPedido.tipoPedido === 'DELIVERY' ? 'Delivery' : 'Retirada'} de {lastPedido.clienteNome}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setPedidoId(lastPedido.id);
-                    setPedidoStatus(null);
-                    setNome(lastPedido.clienteNome);
-                    setTelefone(lastPedido.clienteTelefone);
-                    setTipo(lastPedido.tipoPedido);
-                    setStep('sucesso');
-                  }}
-                  className="shrink-0 rounded-xl bg-white px-3 py-2 text-xs font-bold text-amber-700"
-                >
-                  Ver numero
-                </button>
+                <div className="shrink-0 flex gap-2">
+                  <button
+                    onClick={() => fetchHistoricoPedidos(lastPedido.clienteTelefone)}
+                    className="rounded-xl bg-white/20 px-3 py-2 text-xs font-bold text-white"
+                  >
+                    Historico
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPedidoId(lastPedido.id);
+                      setPedidoStatus(null);
+                      setNome(lastPedido.clienteNome);
+                      setTelefone(lastPedido.clienteTelefone);
+                      setTipo(lastPedido.tipoPedido);
+                      setStep('sucesso');
+                    }}
+                    className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-amber-700"
+                  >
+                    Ver numero
+                  </button>
+                </div>
               </div>
+              {historicoOpen && (
+                <div className="mt-3 rounded-xl bg-white text-gray-900 overflow-hidden">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+                    <span className="text-sm font-bold">Meus pedidos</span>
+                    <button
+                      onClick={() => setHistoricoOpen(false)}
+                      className="text-xs font-bold text-gray-400"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                  {historicoLoading ? (
+                    <p className="px-3 py-4 text-sm text-gray-500">Carregando historico...</p>
+                  ) : historicoErro ? (
+                    <p className="px-3 py-4 text-sm text-red-600">{historicoErro}</p>
+                  ) : historicoPedidos.length === 0 ? (
+                    <p className="px-3 py-4 text-sm text-gray-500">Nenhum pedido encontrado para este telefone.</p>
+                  ) : (
+                    <div className="max-h-72 overflow-y-auto divide-y divide-gray-100">
+                      {historicoPedidos.map((pedido) => {
+                        const statusAtual = pedido.statusPedido === 'CANCELADO'
+                          ? 'CANCELADO'
+                          : pedido.statusEntrega || 'RECEBIDO';
+                        return (
+                          <button
+                            key={pedido.id}
+                            onClick={() => {
+                              setPedidoId(pedido.id);
+                              setPedidoStatus(null);
+                              setNome(lastPedido.clienteNome);
+                              setTelefone(lastPedido.clienteTelefone);
+                              setTipo(pedido.tipoPedido);
+                              setStep('sucesso');
+                            }}
+                            className="w-full px-3 py-3 text-left hover:bg-amber-50"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-extrabold">Pedido #{pedido.id}</p>
+                                <p className="text-xs text-gray-500">
+                                  {pedido.tipoPedido === 'DELIVERY' ? 'Delivery' : 'Retirada'} · {STATUS_LABELS[statusAtual as StatusEntregaPedido] || statusAtual}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {pedido.itens.length} {pedido.itens.length === 1 ? 'item' : 'itens'}
+                                </p>
+                              </div>
+                              <span className="text-sm font-bold text-amber-700">
+                                {formatBRL(Number(pedido.total))}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

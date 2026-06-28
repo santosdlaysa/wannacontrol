@@ -262,3 +262,54 @@ export async function getStatusPedidoPublico(slug: string, pedidoId: number, tel
     total: pedido.total != null ? Number(pedido.total) : subtotal + Number(pedido.taxaEntrega ?? 0),
   };
 }
+
+export async function getHistoricoPedidosPublico(slug: string, telefone: string) {
+  const restaurante = await prisma.restaurante.findUnique({
+    where: { slug },
+    select: { id: true, ativo: true },
+  });
+
+  if (!restaurante || !restaurante.ativo) throw new NotFoundError('Restaurante');
+
+  const telefoneNormalizado = telefone.replace(/\D/g, '');
+  if (!telefoneNormalizado) return [];
+
+  const pedidos = await prisma.pedido.findMany({
+    where: {
+      restauranteId: restaurante.id,
+      clienteTelefone: telefoneNormalizado,
+    },
+    orderBy: { dataCriacao: 'desc' },
+    take: 20,
+    select: {
+      id: true,
+      tipoPedido: true,
+      statusPedido: true,
+      statusEntrega: true,
+      dataCriacao: true,
+      total: true,
+      taxaEntrega: true,
+      itens: {
+        select: {
+          id: true,
+          quantidade: true,
+          precoUnitario: true,
+          produto: { select: { nome: true } },
+        },
+      },
+    },
+  });
+
+  return pedidos.map((pedido) => {
+    const subtotal = pedido.itens.reduce(
+      (sum, item) => sum + Number(item.precoUnitario) * item.quantidade,
+      0,
+    );
+
+    return {
+      ...pedido,
+      subtotal,
+      total: pedido.total != null ? Number(pedido.total) : subtotal + Number(pedido.taxaEntrega ?? 0),
+    };
+  });
+}

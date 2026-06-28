@@ -19,3 +19,11 @@ export async function getStatusPedido(req: Request, res: Response) {
   );
   res.json(data);
 }
+
+export async function getHistoricoPedidos(req: Request, res: Response) {
+  const data = await service.getHistoricoPedidosPublico(
+    req.params.slug,
+    String(req.query.telefone || ''),
+  );
+  res.json(data);
+}
