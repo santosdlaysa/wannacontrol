@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/providers/AuthProvider';
@@ -9,6 +9,7 @@ import PageLoading from '@/components/ui/PageLoading';
 import { NotificacoesPedidos } from '@/components/ui/NotificacoesPedidos';
 import { PopupNovoPedido } from '@/components/ui/PopupNovoPedido';
 import { Perfil } from '@chefflow/shared';
+import { api } from '@/lib/api-client';
 
 type PlanoSistema = 'BASICO' | 'PROFISSIONAL' | 'ENTERPRISE';
 
@@ -203,14 +204,38 @@ export default function DashboardLayout({
   const { user, restaurante, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const verificouAssinatura = useRef(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
       return;
     }
-    if (!isLoading && isAuthenticated && restaurante && !restaurante.ativo && pathname !== '/assinatura') {
-      router.push('/assinatura');
+
+    if (!isLoading && isAuthenticated && pathname !== '/assinatura') {
+      // Verificacao rapida pelo cache local
+      if (!restaurante || !restaurante.ativo) {
+        router.push('/assinatura');
+        return;
+      }
+
+      // Verificacao no backend uma vez por sessao
+      if (!verificouAssinatura.current) {
+        verificouAssinatura.current = true;
+        api.get<{ ativo: boolean; plano: string }>('/restaurante/me')
+          .then((data) => {
+            if (!data.ativo) {
+              const stored = localStorage.getItem('restaurante');
+              if (stored) {
+                try {
+                  localStorage.setItem('restaurante', JSON.stringify({ ...JSON.parse(stored), ativo: false }));
+                } catch {}
+              }
+              router.push('/assinatura');
+            }
+          })
+          .catch(() => {});
+      }
     }
   }, [isLoading, isAuthenticated, restaurante, pathname, router]);
 
