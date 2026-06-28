@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AdminDemoWidget from './AdminDemoWidget';
 
-const SLUG = 'cozinha-da-daika';
+const SLUG = 'chefflow-demo';
 const BASE = '/api/v1';
 
 interface Stats {
