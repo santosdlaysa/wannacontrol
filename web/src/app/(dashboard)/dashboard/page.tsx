@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/providers/AuthProvider';
 import { Perfil } from '@cafecontrol/shared';
@@ -54,9 +55,10 @@ function StatCard({
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, restaurante } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [origin, setOrigin] = useState('');
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -75,7 +77,23 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [fetchDashboard]);
 
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
   const canSeeFinanceiro = user && [Perfil.ADMIN, Perfil.GERENTE, Perfil.CAIXA].includes(user.perfil as Perfil);
+  const publicLink = restaurante ? `/cardapio/${restaurante.slug}` : '';
+
+  async function copyPublicLink() {
+    if (!publicLink) return;
+    const fullLink = `${origin}${publicLink}`;
+    try {
+      await navigator.clipboard.writeText(fullLink);
+      toast.success('Link copiado');
+    } catch {
+      toast.error('Nao foi possivel copiar o link');
+    }
+  }
 
   return (
     <div>
@@ -83,6 +101,34 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">Visao geral do dia</p>
       </div>
+
+      {restaurante && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Link do cliente</h2>
+          <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">{restaurante.nome}</p>
+              <p className="text-xs text-gray-500 truncate">{origin ? `${origin}${publicLink}` : publicLink}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={publicLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Abrir link
+              </Link>
+              <button
+                onClick={copyPublicLink}
+                className="inline-flex items-center justify-center rounded-lg bg-cafe-700 px-3 py-2 text-sm font-medium text-white hover:bg-cafe-800"
+              >
+                Copiar link
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {loading ? (
         <div className="text-center py-12 text-gray-500">Carregando...</div>
