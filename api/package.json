@@ -9,6 +9,7 @@
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "ts-node prisma/seed.ts",
+    "seed:daika": "ts-node prisma/seed-daika.ts",
     "generate": "prisma generate"
   },
   "dependencies": {

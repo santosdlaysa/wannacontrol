@@ -1,8 +1,9 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../lib/errors';
 
-export async function listar(params: { busca?: string }) {
+export async function listar(params: { busca?: string }, restauranteId?: number) {
   const where: any = {};
+  if (restauranteId) where.restauranteId = restauranteId;
   if (params.busca) {
     where.OR = [
       { nome: { contains: params.busca, mode: 'insensitive' } },
@@ -18,9 +19,12 @@ export async function listar(params: { busca?: string }) {
   });
 }
 
-export async function buscarPorId(id: number) {
-  const cliente = await prisma.cliente.findUnique({
-    where: { id },
+export async function buscarPorId(id: number, restauranteId?: number) {
+  const where: any = { id };
+  if (restauranteId) where.restauranteId = restauranteId;
+
+  const cliente = await prisma.cliente.findFirst({
+    where,
     include: {
       pedidos: {
         orderBy: { dataCriacao: 'desc' },
@@ -45,6 +49,7 @@ export async function criar(data: {
   bairro?: string;
   cidade?: string;
   observacao?: string;
+  restauranteId?: number;
 }) {
   return prisma.cliente.create({ data });
 }

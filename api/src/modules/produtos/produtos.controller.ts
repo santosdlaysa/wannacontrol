@@ -2,17 +2,20 @@ import { Request, Response } from 'express';
 import * as produtosService from './produtos.service';
 
 export async function listar(req: Request, res: Response) {
-  const produtos = await produtosService.listar(req.query as any);
+  const restauranteId = req.user?.restauranteId;
+  const produtos = await produtosService.listar(req.query as any, restauranteId);
   res.json(produtos);
 }
 
 export async function buscarPorId(req: Request, res: Response) {
-  const produto = await produtosService.buscarPorId(Number(req.params.id));
+  const restauranteId = req.user?.restauranteId;
+  const produto = await produtosService.buscarPorId(Number(req.params.id), restauranteId);
   res.json(produto);
 }
 
 export async function criar(req: Request, res: Response) {
-  const produto = await produtosService.criar(req.body);
+  const restauranteId = req.user?.restauranteId;
+  const produto = await produtosService.criar({ ...req.body, restauranteId });
   res.status(201).json(produto);
 }
 

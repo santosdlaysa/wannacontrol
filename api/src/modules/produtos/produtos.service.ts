@@ -7,8 +7,10 @@ interface ListarParams {
   busca?: string;
 }
 
-export async function listar(params: ListarParams) {
+export async function listar(params: ListarParams, restauranteId?: number) {
   const where: any = {};
+
+  if (restauranteId) where.restauranteId = restauranteId;
 
   if (params.categoria) {
     where.categoria = params.categoria;
@@ -28,8 +30,11 @@ export async function listar(params: ListarParams) {
   });
 }
 
-export async function buscarPorId(id: number) {
-  const produto = await prisma.produto.findUnique({ where: { id } });
+export async function buscarPorId(id: number, restauranteId?: number) {
+  const where: any = { id };
+  if (restauranteId) where.restauranteId = restauranteId;
+
+  const produto = await prisma.produto.findFirst({ where });
   if (!produto) throw new NotFoundError('Produto');
   return produto;
 }
@@ -41,6 +46,7 @@ export async function criar(data: {
   categoria: string;
   disponivel?: boolean;
   urlImagem?: string | null;
+  restauranteId?: number;
 }) {
   return prisma.produto.create({ data });
 }

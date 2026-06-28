@@ -1,5 +1,60 @@
 import { z } from 'zod';
-import { Perfil, StatusMesa, StatusPreparo, TipoPedido, FormaPagamento } from './enums';
+import { Perfil, Plano, StatusMesa, StatusPreparo, TipoPedido, FormaPagamento } from './enums';
+
+// Restaurante
+export const createRestauranteSchema = z.object({
+  nome: z.string().min(2).max(150),
+  slug: z.string().min(2).max(100).regex(/^[a-z0-9-]+$/, 'Slug deve conter apenas letras minusculas, numeros e hifens'),
+  cnpj: z.string().max(18).optional().nullable(),
+  telefone: z.string().max(20).optional().nullable(),
+  email: z.string().email().optional().nullable(),
+  endereco: z.string().max(300).optional().nullable(),
+  plano: z.nativeEnum(Plano).optional(),
+});
+
+export const updateRestauranteSchema = createRestauranteSchema.partial();
+
+// Categorias
+export const createCategoriaSchema = z.object({
+  nome: z.string().min(1).max(100),
+  descricao: z.string().max(500).optional().nullable(),
+  imagemUrl: z.string().max(500).optional().nullable(),
+  ativo: z.boolean().optional(),
+  ordem: z.number().int().min(0).optional(),
+});
+
+export const updateCategoriaSchema = createCategoriaSchema.partial();
+
+// Complementos
+export const createGrupoComplementoSchema = z.object({
+  nome: z.string().min(1).max(100),
+  descricao: z.string().max(500).optional().nullable(),
+  obrigatorio: z.boolean().optional(),
+  minimo: z.number().int().min(0).optional(),
+  maximo: z.number().int().min(1).optional(),
+  ativo: z.boolean().optional(),
+});
+
+export const updateGrupoComplementoSchema = createGrupoComplementoSchema.partial();
+
+export const createItemComplementoSchema = z.object({
+  nome: z.string().min(1).max(100),
+  preco: z.number().min(0),
+  disponivel: z.boolean().optional(),
+});
+
+export const updateItemComplementoSchema = createItemComplementoSchema.partial();
+
+// Entregadores
+export const createEntregadorSchema = z.object({
+  nome: z.string().min(2).max(100),
+  telefone: z.string().max(20).optional().nullable(),
+  veiculo: z.string().max(50).optional().nullable(),
+  placa: z.string().max(10).optional().nullable(),
+  ativo: z.boolean().optional(),
+});
+
+export const updateEntregadorSchema = createEntregadorSchema.partial();
 
 // Auth
 export const loginEmailSchema = z.object({

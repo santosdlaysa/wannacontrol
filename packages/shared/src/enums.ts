@@ -1,3 +1,9 @@
+export enum Plano {
+  BASICO = 'BASICO',
+  PROFISSIONAL = 'PROFISSIONAL',
+  ENTERPRISE = 'ENTERPRISE',
+}
+
 export enum Perfil {
   ADMIN = 'ADMIN',
   GERENTE = 'GERENTE',

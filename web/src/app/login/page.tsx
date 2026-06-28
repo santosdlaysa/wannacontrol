@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useAuth, getRoleDashboard } from '@/providers/AuthProvider';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import PageLoading from '@/components/ui/PageLoading';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -37,6 +38,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cafe-900 via-cafe-800 to-cafe-700">
+      {isLoading && <PageLoading message="Entrando..." />}
+
       <div className="w-full max-w-md mx-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           {/* Logo area */}

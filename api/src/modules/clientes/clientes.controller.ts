@@ -2,17 +2,20 @@ import { Request, Response } from 'express';
 import * as service from './clientes.service';
 
 export async function listar(req: Request, res: Response) {
-  const clientes = await service.listar({ busca: req.query.busca as string | undefined });
+  const restauranteId = req.user?.restauranteId;
+  const clientes = await service.listar({ busca: req.query.busca as string | undefined }, restauranteId);
   res.json(clientes);
 }
 
 export async function buscarPorId(req: Request, res: Response) {
-  const cliente = await service.buscarPorId(Number(req.params.id));
+  const restauranteId = req.user?.restauranteId;
+  const cliente = await service.buscarPorId(Number(req.params.id), restauranteId);
   res.json(cliente);
 }
 
 export async function criar(req: Request, res: Response) {
-  const cliente = await service.criar(req.body);
+  const restauranteId = req.user?.restauranteId;
+  const cliente = await service.criar({ ...req.body, restauranteId });
   res.status(201).json(cliente);
 }
 

@@ -1,10 +1,10 @@
 import prisma from '../../lib/prisma';
 import { ValidationError, NotFoundError, ConflictError } from '../../lib/errors';
 
-export async function abrirCaixa(operadorId: number, valorInicial: number, observacao?: string) {
+export async function abrirCaixa(operadorId: number, valorInicial: number, observacao?: string, restauranteId?: number) {
   // Verificar se já existe caixa aberto
   const caixaAberto = await prisma.caixa.findFirst({
-    where: { aberto: true },
+    where: { aberto: true, ...(restauranteId ? { restauranteId } : {}) },
   });
 
   if (caixaAberto) {
@@ -16,6 +16,7 @@ export async function abrirCaixa(operadorId: number, valorInicial: number, obser
       operadorId,
       valorInicial,
       observacao,
+      ...(restauranteId ? { restauranteId } : {}),
     },
     include: {
       operador: { select: { id: true, nome: true } },
@@ -76,9 +77,12 @@ export async function fecharCaixa(caixaId: number) {
   });
 }
 
-export async function getCaixaAtual() {
+export async function getCaixaAtual(restauranteId?: number) {
+  const where: any = { aberto: true };
+  if (restauranteId) where.restauranteId = restauranteId;
+
   return prisma.caixa.findFirst({
-    where: { aberto: true },
+    where,
     include: {
       operador: { select: { id: true, nome: true } },
       movimentacoes: { orderBy: { criadoEm: 'desc' } },
@@ -86,9 +90,12 @@ export async function getCaixaAtual() {
   });
 }
 
-export async function getHistoricoCaixas() {
+export async function getHistoricoCaixas(restauranteId?: number) {
+  const where: any = { aberto: false };
+  if (restauranteId) where.restauranteId = restauranteId;
+
   return prisma.caixa.findMany({
-    where: { aberto: false },
+    where,
     include: {
       operador: { select: { id: true, nome: true } },
       movimentacoes: true,

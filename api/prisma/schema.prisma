@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Plano {
+  BASICO
+  PROFISSIONAL
+  ENTERPRISE
+}
+
 enum Perfil {
   ADMIN
   GERENTE
@@ -32,105 +40,6 @@ enum StatusPreparo {
   PREPARANDO
   PRONTO
   ENTREGUE
-}
-
-model Usuario {
-  id        Int      @id @default(autoincrement())
-  nome      String   @db.VarChar(100)
-  email     String   @unique @db.VarChar(100)
-  senhaHash String   @map("senha_hash") @db.VarChar(255)
-  pin       String?  @unique @db.VarChar(6)
-  perfil    Perfil
-  ativo     Boolean  @default(true)
-  criadoEm  DateTime @default(now()) @map("criado_em")
-
-  pedidos Pedido[]
-  caixas  Caixa[]
-
-  @@map("usuarios")
-}
-
-model Produto {
-  id         Int      @id @default(autoincrement())
-  nome       String   @db.VarChar(100)
-  descricao  String?  @db.Text
-  preco      Decimal  @db.Decimal(10, 2)
-  categoria  String   @db.VarChar(50)
-  disponivel Boolean  @default(true)
-  urlImagem  String?  @map("url_imagem") @db.VarChar(255)
-  criadoEm   DateTime @default(now()) @map("criado_em")
-
-  itensPedido ItemPedido[]
-
-  @@map("produtos")
-}
-
-model Mesa {
-  id     Int        @id @default(autoincrement())
-  numero Int        @unique
-  status StatusMesa @default(LIVRE)
-
-  pedidos Pedido[]
-
-  @@map("mesas")
-}
-
-model Cliente {
-  id          Int      @id @default(autoincrement())
-  nome        String   @db.VarChar(100)
-  telefone    String   @db.VarChar(20)
-  endereco    String?  @db.VarChar(255)
-  complemento String?  @db.VarChar(100)
-  bairro      String?  @db.VarChar(100)
-  cidade      String?  @db.VarChar(100)
-  observacao  String?  @db.Text
-  criadoEm   DateTime @default(now()) @map("criado_em")
-
-  pedidos Pedido[]
-
-  @@map("clientes")
-}
-
-model Pedido {
-  id              Int             @id @default(autoincrement())
-  mesaId          Int?            @map("mesa_id")
-  garcomId        Int             @map("garcom_id")
-  clienteId       Int?            @map("cliente_id")
-  tipoPedido      TipoPedido      @default(MESA) @map("tipo_pedido")
-  statusPedido    StatusPedido    @default(ABERTO) @map("status_pedido")
-  statusEntrega   StatusEntrega?  @map("status_entrega")
-  formaPagamento  FormaPagamento? @map("forma_pagamento")
-  clienteNome     String?         @map("cliente_nome")
-  clienteTelefone String?         @map("cliente_telefone")
-  enderecoEntrega String?         @map("endereco_entrega") @db.VarChar(300)
-  taxaEntrega     Decimal?        @map("taxa_entrega") @db.Decimal(10, 2)
-  observacao      String?         @db.Text
-  dataCriacao     DateTime        @default(now()) @map("data_criacao")
-  total           Decimal?        @db.Decimal(10, 2)
-  version         Int             @default(0)
-
-  mesa    Mesa?    @relation(fields: [mesaId], references: [id])
-  garcom  Usuario  @relation(fields: [garcomId], references: [id])
-  cliente Cliente? @relation(fields: [clienteId], references: [id])
-  itens   ItemPedido[]
-
-  @@map("pedidos")
-}
-
-model ItemPedido {
-  id            Int           @id @default(autoincrement())
-  pedidoId      Int           @map("pedido_id")
-  produtoId     Int           @map("produto_id")
-  quantidade    Int
-  precoUnitario Decimal       @db.Decimal(10, 2) @map("preco_unitario")
-  observacao    String?       @db.Text
-  statusPreparo StatusPreparo @default(PENDENTE) @map("status_preparo")
-  criadoEm      DateTime      @default(now()) @map("criado_em")
-
-  pedido  Pedido  @relation(fields: [pedidoId], references: [id])
-  produto Produto @relation(fields: [produtoId], references: [id])
-
-  @@map("itens_pedido")
 }
 
 enum TipoPedido {
@@ -161,32 +70,299 @@ enum TipoMovimentacao {
   SUPRIMENTO
 }
 
+// ─── Restaurante (Multi-Tenant Root) ─────────────────────────────────────────
+
+model Restaurante {
+  id        Int      @id @default(autoincrement())
+  nome      String   @db.VarChar(150)
+  slug      String   @unique @db.VarChar(100)
+  cnpj      String?  @db.VarChar(18)
+  telefone  String?  @db.VarChar(20)
+  email     String?  @db.VarChar(100)
+  logoUrl   String?  @map("logo_url") @db.VarChar(500)
+  endereco  String?  @db.VarChar(300)
+  plano     Plano    @default(BASICO)
+  ativo     Boolean  @default(true)
+  criadoEm DateTime @default(now()) @map("criado_em")
+
+  usuarios      Usuario[]
+  produtos      Produto[]
+  mesas         Mesa[]
+  clientes      Cliente[]
+  pedidos       Pedido[]
+  categorias    Categoria[]
+  grupos        GrupoComplemento[]
+  entregadores  Entregador[]
+  configuracoes Configuracao[]
+  caixas        Caixa[]
+
+  @@map("restaurantes")
+}
+
+// ─── Usuarios ─────────────────────────────────────────────────────────────────
+
+model Usuario {
+  id            Int          @id @default(autoincrement())
+  restauranteId Int?         @map("restaurante_id")
+  nome          String       @db.VarChar(100)
+  email         String       @db.VarChar(100)
+  senhaHash     String       @map("senha_hash") @db.VarChar(255)
+  pin           String?      @db.VarChar(6)
+  perfil        Perfil
+  ativo         Boolean      @default(true)
+  criadoEm     DateTime     @default(now()) @map("criado_em")
+
+  restaurante Restaurante? @relation(fields: [restauranteId], references: [id])
+  pedidos     Pedido[]
+  caixas      Caixa[]
+
+  @@unique([email, restauranteId])
+  @@unique([pin, restauranteId])
+  @@map("usuarios")
+}
+
+// ─── Produtos e Categorias ────────────────────────────────────────────────────
+
+model Categoria {
+  id            Int         @id @default(autoincrement())
+  restauranteId Int         @map("restaurante_id")
+  nome          String      @db.VarChar(100)
+  descricao     String?     @db.Text
+  imagemUrl     String?     @map("imagem_url") @db.VarChar(500)
+  ativo         Boolean     @default(true)
+  ordem         Int         @default(0)
+  criadoEm     DateTime    @default(now()) @map("criado_em")
+
+  restaurante Restaurante @relation(fields: [restauranteId], references: [id])
+  produtos    Produto[]
+
+  @@map("categorias")
+}
+
+model Produto {
+  id            Int       @id @default(autoincrement())
+  restauranteId Int?      @map("restaurante_id")
+  categoriaId   Int?      @map("categoria_id")
+  nome          String    @db.VarChar(100)
+  descricao     String?   @db.Text
+  preco         Decimal   @db.Decimal(10, 2)
+  categoria     String    @db.VarChar(50)
+  disponivel    Boolean   @default(true)
+  urlImagem     String?   @map("url_imagem") @db.VarChar(255)
+  criadoEm     DateTime  @default(now()) @map("criado_em")
+
+  restaurante Restaurante?      @relation(fields: [restauranteId], references: [id])
+  categoriaObj Categoria?       @relation(fields: [categoriaId], references: [id])
+  itensPedido  ItemPedido[]
+  grupos       ProdutoGrupo[]
+
+  @@map("produtos")
+}
+
+// ─── Complementos ─────────────────────────────────────────────────────────────
+
+model GrupoComplemento {
+  id            Int      @id @default(autoincrement())
+  restauranteId Int      @map("restaurante_id")
+  nome          String   @db.VarChar(100)
+  descricao     String?  @db.Text
+  obrigatorio   Boolean  @default(false)
+  minimo        Int      @default(0)
+  maximo        Int      @default(1)
+  ativo         Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+
+  restaurante Restaurante      @relation(fields: [restauranteId], references: [id])
+  itens       ItemComplemento[]
+  produtos    ProdutoGrupo[]
+
+  @@map("grupos_complemento")
+}
+
+model ItemComplemento {
+  id         Int     @id @default(autoincrement())
+  grupoId    Int     @map("grupo_id")
+  nome       String  @db.VarChar(100)
+  preco      Decimal @default(0) @db.Decimal(10, 2)
+  disponivel Boolean @default(true)
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  grupo       GrupoComplemento        @relation(fields: [grupoId], references: [id])
+  selecionados ItemPedidoComplemento[]
+
+  @@map("itens_complemento")
+}
+
+model ProdutoGrupo {
+  produtoId Int @map("produto_id")
+  grupoId   Int @map("grupo_id")
+  ordem     Int @default(0)
+
+  produto Produto          @relation(fields: [produtoId], references: [id])
+  grupo   GrupoComplemento @relation(fields: [grupoId], references: [id])
+
+  @@id([produtoId, grupoId])
+  @@map("produto_grupos")
+}
+
+model ItemPedidoComplemento {
+  id                Int @id @default(autoincrement())
+  itemPedidoId      Int @map("item_pedido_id")
+  itemComplementoId Int @map("item_complemento_id")
+  quantidade        Int @default(1)
+
+  itemPedido      ItemPedido      @relation(fields: [itemPedidoId], references: [id])
+  itemComplemento ItemComplemento @relation(fields: [itemComplementoId], references: [id])
+
+  @@map("itens_pedido_complemento")
+}
+
+// ─── Mesas ────────────────────────────────────────────────────────────────────
+
+model Mesa {
+  id            Int        @id @default(autoincrement())
+  restauranteId Int?       @map("restaurante_id")
+  numero        Int
+  status        StatusMesa @default(LIVRE)
+
+  restaurante Restaurante? @relation(fields: [restauranteId], references: [id])
+  pedidos     Pedido[]
+
+  @@unique([restauranteId, numero])
+  @@map("mesas")
+}
+
+// ─── Clientes ─────────────────────────────────────────────────────────────────
+
+model Cliente {
+  id            Int      @id @default(autoincrement())
+  restauranteId Int?     @map("restaurante_id")
+  nome          String   @db.VarChar(100)
+  telefone      String   @db.VarChar(20)
+  endereco      String?  @db.VarChar(255)
+  complemento   String?  @db.VarChar(100)
+  bairro        String?  @db.VarChar(100)
+  cidade        String?  @db.VarChar(100)
+  observacao    String?  @db.Text
+  criadoEm     DateTime @default(now()) @map("criado_em")
+
+  restaurante Restaurante? @relation(fields: [restauranteId], references: [id])
+  pedidos     Pedido[]
+
+  @@map("clientes")
+}
+
+// ─── Entregadores ─────────────────────────────────────────────────────────────
+
+model Entregador {
+  id            Int      @id @default(autoincrement())
+  restauranteId Int      @map("restaurante_id")
+  nome          String   @db.VarChar(100)
+  telefone      String?  @db.VarChar(20)
+  veiculo       String?  @db.VarChar(50)
+  placa         String?  @db.VarChar(10)
+  ativo         Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+
+  restaurante Restaurante @relation(fields: [restauranteId], references: [id])
+  pedidos     Pedido[]
+
+  @@map("entregadores")
+}
+
+// ─── Pedidos ──────────────────────────────────────────────────────────────────
+
+model Pedido {
+  id              Int            @id @default(autoincrement())
+  restauranteId   Int?           @map("restaurante_id")
+  mesaId          Int?           @map("mesa_id")
+  garcomId        Int            @map("garcom_id")
+  clienteId       Int?           @map("cliente_id")
+  entregadorId    Int?           @map("entregador_id")
+  tipoPedido      TipoPedido     @default(MESA) @map("tipo_pedido")
+  statusPedido    StatusPedido   @default(ABERTO) @map("status_pedido")
+  statusEntrega   StatusEntrega? @map("status_entrega")
+  formaPagamento  FormaPagamento? @map("forma_pagamento")
+  clienteNome     String?        @map("cliente_nome")
+  clienteTelefone String?        @map("cliente_telefone")
+  enderecoEntrega String?        @map("endereco_entrega") @db.VarChar(300)
+  taxaEntrega     Decimal?       @map("taxa_entrega") @db.Decimal(10, 2)
+  observacao      String?        @db.Text
+  dataCriacao     DateTime       @default(now()) @map("data_criacao")
+  total           Decimal?       @db.Decimal(10, 2)
+  version         Int            @default(0)
+
+  restaurante Restaurante? @relation(fields: [restauranteId], references: [id])
+  mesa        Mesa?        @relation(fields: [mesaId], references: [id])
+  garcom      Usuario      @relation(fields: [garcomId], references: [id])
+  cliente     Cliente?     @relation(fields: [clienteId], references: [id])
+  entregador  Entregador?  @relation(fields: [entregadorId], references: [id])
+  itens       ItemPedido[]
+
+  @@map("pedidos")
+}
+
+model ItemPedido {
+  id            Int           @id @default(autoincrement())
+  pedidoId      Int           @map("pedido_id")
+  produtoId     Int           @map("produto_id")
+  quantidade    Int
+  precoUnitario Decimal       @db.Decimal(10, 2) @map("preco_unitario")
+  observacao    String?       @db.Text
+  statusPreparo StatusPreparo @default(PENDENTE) @map("status_preparo")
+  criadoEm     DateTime      @default(now()) @map("criado_em")
+
+  pedido       Pedido                  @relation(fields: [pedidoId], references: [id])
+  produto      Produto                 @relation(fields: [produtoId], references: [id])
+  complementos ItemPedidoComplemento[]
+
+  @@map("itens_pedido")
+}
+
+// ─── Caixa ────────────────────────────────────────────────────────────────────
+
 model Caixa {
   id            Int       @id @default(autoincrement())
+  restauranteId Int?      @map("restaurante_id")
   operadorId    Int       @map("operador_id")
   valorInicial  Decimal   @db.Decimal(10, 2) @map("valor_inicial")
   valorFinal    Decimal?  @db.Decimal(10, 2) @map("valor_final")
   totalVendas   Decimal?  @db.Decimal(10, 2) @map("total_vendas")
-  aberturaEm    DateTime  @default(now()) @map("abertura_em")
-  fechamentoEm  DateTime? @map("fechamento_em")
-  observacao     String?   @db.Text
+  aberturaEm   DateTime  @default(now()) @map("abertura_em")
+  fechamentoEm DateTime? @map("fechamento_em")
+  observacao    String?   @db.Text
   aberto        Boolean   @default(true)
 
-  operador      Usuario          @relation(fields: [operadorId], references: [id])
+  restaurante   Restaurante?        @relation(fields: [restauranteId], references: [id])
+  operador      Usuario             @relation(fields: [operadorId], references: [id])
   movimentacoes MovimentacaoCaixa[]
 
   @@map("caixas")
 }
 
 model MovimentacaoCaixa {
-  id          Int              @id @default(autoincrement())
-  caixaId     Int              @map("caixa_id")
-  tipo        TipoMovimentacao
-  valor       Decimal          @db.Decimal(10, 2)
-  descricao   String           @db.VarChar(200)
-  criadoEm    DateTime         @default(now()) @map("criado_em")
+  id        Int              @id @default(autoincrement())
+  caixaId   Int              @map("caixa_id")
+  tipo      TipoMovimentacao
+  valor     Decimal          @db.Decimal(10, 2)
+  descricao String           @db.VarChar(200)
+  criadoEm DateTime         @default(now()) @map("criado_em")
 
   caixa Caixa @relation(fields: [caixaId], references: [id])
 
   @@map("movimentacoes_caixa")
+}
+
+// ─── Configuracoes ────────────────────────────────────────────────────────────
+
+model Configuracao {
+  id            Int     @id @default(autoincrement())
+  restauranteId Int     @map("restaurante_id")
+  chave         String  @db.VarChar(100)
+  valor         String? @db.Text
+
+  restaurante Restaurante @relation(fields: [restauranteId], references: [id])
+
+  @@unique([restauranteId, chave])
+  @@map("configuracoes")
 }

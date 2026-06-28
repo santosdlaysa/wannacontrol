@@ -1,18 +1,21 @@
 import { Request, Response } from 'express';
 import * as usuariosService from './usuarios.service';
 
-export async function listar(_req: Request, res: Response) {
-  const usuarios = await usuariosService.listar();
+export async function listar(req: Request, res: Response) {
+  const restauranteId = req.user?.restauranteId;
+  const usuarios = await usuariosService.listar(restauranteId);
   res.json(usuarios);
 }
 
 export async function buscarPorId(req: Request, res: Response) {
-  const usuario = await usuariosService.buscarPorId(Number(req.params.id));
+  const restauranteId = req.user?.restauranteId;
+  const usuario = await usuariosService.buscarPorId(Number(req.params.id), restauranteId);
   res.json(usuario);
 }
 
 export async function criar(req: Request, res: Response) {
-  const usuario = await usuariosService.criar(req.body);
+  const restauranteId = req.user?.restauranteId;
+  const usuario = await usuariosService.criar({ ...req.body, restauranteId });
   res.status(201).json(usuario);
 }
 

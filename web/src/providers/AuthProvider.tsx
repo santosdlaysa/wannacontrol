@@ -23,31 +23,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const accessToken = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
+    let isMounted = true;
 
-    if (storedUser && accessToken) {
-      setUser(JSON.parse(storedUser));
-      setIsLoading(false);
-    } else if (refreshToken) {
-      api
-        .post<LoginResponse>('/auth/refresh', { refreshToken })
-        .then((data) => {
+    function clearSession() {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+    }
+
+    async function restoreSession() {
+      const storedUser = localStorage.getItem('user');
+      const accessToken = localStorage.getItem('accessToken');
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      try {
+        if (storedUser && accessToken) {
+          const parsedUser = JSON.parse(storedUser) as UserInfo;
+          if (isMounted) {
+            setUser(parsedUser);
+          }
+          return;
+        }
+
+        if (refreshToken) {
+          const timeout = new Promise<never>((_, reject) => {
+            window.setTimeout(() => reject(new Error('Tempo de sessao expirado')), 8000);
+          });
+          const data = await Promise.race([
+            api.post<LoginResponse>('/auth/refresh', { refreshToken }),
+            timeout,
+          ]);
+
           localStorage.setItem('accessToken', data.accessToken);
           localStorage.setItem('refreshToken', data.refreshToken);
           localStorage.setItem('user', JSON.stringify(data.usuario));
-          setUser(data.usuario);
-        })
-        .catch(() => {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-        })
-        .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
+
+          if (isMounted) {
+            setUser(data.usuario);
+          }
+        }
+      } catch {
+        clearSession();
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
     }
+
+    restoreSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = useCallback(async (email: string, senha: string) => {

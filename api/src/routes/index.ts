@@ -7,6 +7,12 @@ import pedidosRoutes from '../modules/pedidos/pedidos.routes';
 import financeiroRoutes from '../modules/financeiro/financeiro.routes';
 import caixaRoutes from '../modules/caixa/caixa.routes';
 import clientesRoutes from '../modules/clientes/clientes.routes';
+import categoriasRoutes from '../modules/categorias/categorias.routes';
+import complementosRoutes from '../modules/complementos/complementos.routes';
+import entregadoresRoutes from '../modules/entregadores/entregadores.routes';
+import configuracoesRoutes from '../modules/configuracoes/configuracoes.routes';
+import restauranteRoutes from '../modules/restaurante/restaurante.routes';
+import publicRoutes from '../modules/public/public.routes';
 import { authMiddleware } from '../middlewares/auth';
 import { authorize } from '../middlewares/authorize';
 import { validate } from '../middlewares/validate';
@@ -18,6 +24,7 @@ export const router = Router();
 
 // Rotas publicas
 router.use('/auth', authRoutes);
+router.use('/public', publicRoutes);
 
 // Rotas protegidas
 router.use('/usuarios', usuariosRoutes);
@@ -27,6 +34,11 @@ router.use('/pedidos', pedidosRoutes);
 router.use('/financeiro', financeiroRoutes);
 router.use('/caixa', caixaRoutes);
 router.use('/clientes', clientesRoutes);
+router.use('/restaurante', restauranteRoutes);
+router.use('/categorias', categoriasRoutes);
+router.use('/complementos', complementosRoutes);
+router.use('/entregadores', entregadoresRoutes);
+router.use('/configuracoes', configuracoesRoutes);
 
 // Rota direta para atualizar status de item (usada pela cozinha e garcom)
 router.patch(

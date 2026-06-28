@@ -2,8 +2,12 @@ import bcrypt from 'bcryptjs';
 import prisma from '../../lib/prisma';
 import { NotFoundError, ConflictError } from '../../lib/errors';
 
-export async function listar() {
+export async function listar(restauranteId?: number) {
+  const where: any = {};
+  if (restauranteId) where.restauranteId = restauranteId;
+
   return prisma.usuario.findMany({
+    where,
     select: {
       id: true,
       nome: true,
@@ -17,9 +21,12 @@ export async function listar() {
   });
 }
 
-export async function buscarPorId(id: number) {
-  const usuario = await prisma.usuario.findUnique({
-    where: { id },
+export async function buscarPorId(id: number, restauranteId?: number) {
+  const where: any = { id };
+  if (restauranteId) where.restauranteId = restauranteId;
+
+  const usuario = await prisma.usuario.findFirst({
+    where,
     select: {
       id: true,
       nome: true,
@@ -41,6 +48,7 @@ export async function criar(data: {
   senha: string;
   pin?: string;
   perfil: string;
+  restauranteId?: number;
 }) {
   const existente = await prisma.usuario.findUnique({ where: { email: data.email } });
   if (existente) throw new ConflictError('E-mail já está em uso');
@@ -59,6 +67,7 @@ export async function criar(data: {
       senhaHash,
       pin: data.pin,
       perfil: data.perfil as any,
+      restauranteId: data.restauranteId,
     },
     select: {
       id: true,

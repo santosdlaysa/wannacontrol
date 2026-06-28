@@ -4,8 +4,12 @@ import { StatusMesa } from '@cafecontrol/shared';
 import { getIO } from '../../lib/socket';
 import { SOCKET_EVENTS } from '@cafecontrol/shared';
 
-export async function listar() {
+export async function listar(restauranteId?: number) {
+  const where: any = {};
+  if (restauranteId) where.restauranteId = restauranteId;
+
   return prisma.mesa.findMany({
+    where,
     orderBy: { numero: 'asc' },
     include: {
       pedidos: {
@@ -24,9 +28,12 @@ export async function listar() {
   });
 }
 
-export async function buscarPorId(id: number) {
-  const mesa = await prisma.mesa.findUnique({
-    where: { id },
+export async function buscarPorId(id: number, restauranteId?: number) {
+  const where: any = { id };
+  if (restauranteId) where.restauranteId = restauranteId;
+
+  const mesa = await prisma.mesa.findFirst({
+    where,
     include: {
       pedidos: {
         where: { statusPedido: 'ABERTO' },

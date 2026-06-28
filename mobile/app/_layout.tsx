@@ -29,7 +29,10 @@ function NavigationGuard() {
       segments[0] === 'relatorios' ||
       segments[0] === 'caixa-screen' ||
       segments[0] === 'produtos' ||
-      segments[0] === 'pedidos-delivery';
+      segments[0] === 'pedidos-delivery' ||
+      segments[0] === 'categorias' ||
+      segments[0] === 'entregadores' ||
+      segments[0] === 'configuracoes-restaurante';
 
     if (!isAuthenticated && inAuthGroup) {
       console.log('[NAV GUARD] -> /login');
@@ -66,6 +69,9 @@ function NavigationGuard() {
         <Stack.Screen name="caixa-screen" options={{ headerShown: true, title: 'Caixa' }} />
         <Stack.Screen name="produtos" options={{ headerShown: true, title: 'Produtos' }} />
         <Stack.Screen name="pedidos-delivery" options={{ headerShown: true, title: 'Pedidos Delivery' }} />
+        <Stack.Screen name="categorias" options={{ title: 'Categorias', headerShown: true }} />
+        <Stack.Screen name="entregadores" options={{ title: 'Entregadores', headerShown: true }} />
+        <Stack.Screen name="configuracoes-restaurante" options={{ title: 'Configuracoes', headerShown: true }} />
       </Stack>
     </>
   );

@@ -22,7 +22,7 @@ function generateTokens(payload: AuthPayload) {
 }
 
 export async function loginEmail(email: string, senha: string) {
-  const usuario = await prisma.usuario.findUnique({ where: { email } });
+  const usuario = await prisma.usuario.findFirst({ where: { email } });
 
   if (!usuario || !usuario.ativo) {
     throw new UnauthorizedError('E-mail ou senha inválidos');
@@ -33,27 +33,43 @@ export async function loginEmail(email: string, senha: string) {
     throw new UnauthorizedError('E-mail ou senha inválidos');
   }
 
-  const payload: AuthPayload = { userId: usuario.id, perfil: usuario.perfil as any };
+  const payload: AuthPayload = {
+    userId: usuario.id,
+    perfil: usuario.perfil as any,
+    restauranteId: usuario.restauranteId ?? undefined,
+  };
   const tokens = generateTokens(payload);
 
   const { senhaHash, ...usuarioSemSenha } = usuario;
 
-  return { ...tokens, usuario: usuarioSemSenha };
+  const restaurante = usuario.restauranteId
+    ? await prisma.restaurante.findUnique({ where: { id: usuario.restauranteId } })
+    : null;
+
+  return { ...tokens, usuario: usuarioSemSenha, restaurante: restaurante ?? undefined };
 }
 
 export async function loginPin(pin: string) {
-  const usuario = await prisma.usuario.findUnique({ where: { pin } });
+  const usuario = await prisma.usuario.findFirst({ where: { pin } });
 
   if (!usuario || !usuario.ativo) {
     throw new UnauthorizedError('PIN inválido');
   }
 
-  const payload: AuthPayload = { userId: usuario.id, perfil: usuario.perfil as any };
+  const payload: AuthPayload = {
+    userId: usuario.id,
+    perfil: usuario.perfil as any,
+    restauranteId: usuario.restauranteId ?? undefined,
+  };
   const tokens = generateTokens(payload);
 
   const { senhaHash, ...usuarioSemSenha } = usuario;
 
-  return { ...tokens, usuario: usuarioSemSenha };
+  const restaurante = usuario.restauranteId
+    ? await prisma.restaurante.findUnique({ where: { id: usuario.restauranteId } })
+    : null;
+
+  return { ...tokens, usuario: usuarioSemSenha, restaurante: restaurante ?? undefined };
 }
 
 export async function refreshAccessToken(refreshToken: string) {
@@ -65,7 +81,11 @@ export async function refreshAccessToken(refreshToken: string) {
       throw new UnauthorizedError('Usuário não encontrado ou inativo');
     }
 
-    const payload: AuthPayload = { userId: usuario.id, perfil: usuario.perfil as any };
+    const payload: AuthPayload = {
+      userId: usuario.id,
+      perfil: usuario.perfil as any,
+      restauranteId: usuario.restauranteId ?? undefined,
+    };
     return generateTokens(payload);
   } catch {
     throw new UnauthorizedError('Refresh token inválido ou expirado');
