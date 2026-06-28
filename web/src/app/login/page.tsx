@@ -29,7 +29,11 @@ export default function LoginPage() {
       const data = await login(email, senha);
       const user = data.usuario;
       toast.success(`Bem-vindo, ${user.nome}!`);
-      router.push(redirect || getRoleDashboard(user.perfil));
+      if (user.perfil === 'ADMIN' && !data.restaurante) {
+        router.push('/super-admin');
+      } else {
+        router.push(redirect || getRoleDashboard(user.perfil));
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Erro ao fazer login';
