@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { useSocket } from '@/providers/SocketProvider';
 import type { Pedido } from '@cafecontrol/shared';
-import { SOCKET_EVENTS, TipoPedido } from '@cafecontrol/shared';
+import { SOCKET_EVENTS, TipoPedido, StatusPedido } from '@cafecontrol/shared';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
@@ -13,7 +13,7 @@ import Modal from '@/components/ui/Modal';
 const formatBRL = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-const formatDate = (date: string) =>
+const formatDate = (date: string | Date) =>
   new Date(date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
 const STATUS_ENTREGA_FLOW = [
@@ -188,7 +188,7 @@ export default function DeliveryPage() {
       await api.patch(`/pedidos/${pedido.id}/cancelar`);
       setPedidos((prev) =>
         prev.map((p) =>
-          p.id === pedido.id ? { ...p, statusPedido: 'CANCELADO' } : p
+          p.id === pedido.id ? { ...p, statusPedido: StatusPedido.CANCELADO } : p
         )
       );
       if (selectedPedido?.id === pedido.id) setDetailOpen(false);
@@ -288,7 +288,7 @@ export default function DeliveryPage() {
                       {pedido.statusPedido === 'CANCELADO' && (
                         <Badge variant="red">Cancelado</Badge>
                       )}
-                      <span className="text-xs text-gray-400 ml-auto">{formatDate(pedido.dataCriacao)}</span>
+                      <span className="text-xs text-gray-400 ml-auto">{formatDate(String(pedido.dataCriacao))}</span>
                     </div>
 
                     <div className="mt-2 text-sm text-gray-700">

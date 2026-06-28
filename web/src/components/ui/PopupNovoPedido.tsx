@@ -2,9 +2,19 @@
 
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useSocket } from '@/providers/SocketProvider';
-import { SOCKET_EVENTS } from '@cafecontrol/shared';
-import type { NewDeliveryOrderPayload } from '@cafecontrol/shared';
 import Link from 'next/link';
+
+const NEW_DELIVERY_ORDER_EVENT = 'order:newDelivery';
+
+interface NewDeliveryOrderPayload {
+  pedidoId: number;
+  clienteNome: string;
+  clienteTelefone: string;
+  tipoPedido: 'DELIVERY' | 'RETIRADA';
+  total: number;
+  itensCount: number;
+  restauranteId: number;
+}
 
 const formatBRL = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -98,9 +108,9 @@ export function PopupNovoPedido() {
 
   useEffect(() => {
     if (!socket) return;
-    socket.on(SOCKET_EVENTS.NEW_DELIVERY_ORDER, handleNovoPedido);
+    socket.on(NEW_DELIVERY_ORDER_EVENT, handleNovoPedido);
     return () => {
-      socket.off(SOCKET_EVENTS.NEW_DELIVERY_ORDER, handleNovoPedido);
+      socket.off(NEW_DELIVERY_ORDER_EVENT, handleNovoPedido);
     };
   }, [socket, handleNovoPedido]);
 

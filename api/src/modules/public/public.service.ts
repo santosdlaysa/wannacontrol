@@ -1,7 +1,8 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../lib/errors';
 import { getIO } from '../../lib/socket';
-import { SOCKET_EVENTS } from '@cafecontrol/shared';
+
+const NEW_DELIVERY_ORDER_EVENT = 'order:newDelivery';
 
 export async function getCardapio(slug: string) {
   const restaurante = await prisma.restaurante.findUnique({
@@ -195,7 +196,7 @@ export async function criarPedidoPublico(slug: string, data: {
 
   try {
     const io = getIO();
-    io.to('tables').emit(SOCKET_EVENTS.NEW_DELIVERY_ORDER, {
+    io.to('tables').emit(NEW_DELIVERY_ORDER_EVENT, {
       pedidoId: pedido.id,
       clienteNome,
       clienteTelefone,

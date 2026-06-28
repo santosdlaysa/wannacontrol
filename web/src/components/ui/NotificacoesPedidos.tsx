@@ -3,8 +3,18 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useSocket } from '@/providers/SocketProvider';
-import { SOCKET_EVENTS } from '@cafecontrol/shared';
-import type { NewDeliveryOrderPayload } from '@cafecontrol/shared';
+
+const NEW_DELIVERY_ORDER_EVENT = 'order:newDelivery';
+
+interface NewDeliveryOrderPayload {
+  pedidoId: number;
+  clienteNome: string;
+  clienteTelefone: string;
+  tipoPedido: 'DELIVERY' | 'RETIRADA';
+  total: number;
+  itensCount: number;
+  restauranteId: number;
+}
 
 const formatBRL = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -133,10 +143,10 @@ export function NotificacoesPedidos() {
       console.log('[Socket] Sem socket, listener não registrado');
       return;
     }
-    console.log('[Socket] Registrando listener NEW_DELIVERY_ORDER no socket', socket.id);
-    socket.on(SOCKET_EVENTS.NEW_DELIVERY_ORDER, handleNovoPedido);
+    console.log('[Socket] Registrando listener order:newDelivery no socket', socket.id);
+    socket.on(NEW_DELIVERY_ORDER_EVENT, handleNovoPedido);
     return () => {
-      socket.off(SOCKET_EVENTS.NEW_DELIVERY_ORDER, handleNovoPedido);
+      socket.off(NEW_DELIVERY_ORDER_EVENT, handleNovoPedido);
     };
   }, [socket, handleNovoPedido]);
 
