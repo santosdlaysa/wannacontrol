@@ -190,7 +190,7 @@ export default function AssinaturaPage() {
         </Badge>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr] xl:items-start">
         <div className="grid gap-4 md:grid-cols-3">
           {planos.map((plano) => {
             const active = selectedPlano?.id === plano.id;
