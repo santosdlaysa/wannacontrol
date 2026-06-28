@@ -98,26 +98,32 @@ interface PedidoHistoricoPublico {
   }>;
 }
 
-const STATUS_LABELS: Record<StatusEntregaPedido, string> = {
-  RECEBIDO: 'Confirmado',
-  CONFIRMADO: 'Pedido confirmado',
-  EM_PREPARO: 'Em produção',
-  PRONTO: 'Pronto',
-  SAIU_ENTREGA: 'Saiu para entrega',
-  ENTREGUE: 'Entregue',
-  CANCELADO: 'Cancelado',
+interface TimelineStep {
+  status: StatusEntregaPedido;
+  label: string;
+  icon: string;
+  desc: string;
+}
+
+const TIMELINE_DELIVERY: TimelineStep[] = [
+  { status: 'RECEBIDO',     label: 'Pedido recebido',    icon: '📋', desc: 'Seu pedido foi enviado ao restaurante' },
+  { status: 'CONFIRMADO',   label: 'Confirmado',         icon: '✅', desc: 'O restaurante confirmou seu pedido' },
+  { status: 'EM_PREPARO',   label: 'Em produção',        icon: '👨‍🍳', desc: 'Sua comida está sendo preparada' },
+  { status: 'SAIU_ENTREGA', label: 'Saiu para entrega',  icon: '🛵', desc: 'O entregador está a caminho' },
+  { status: 'ENTREGUE',     label: 'Entregue',           icon: '🎉', desc: 'Pedido entregue. Bom apetite!' },
+];
+
+const TIMELINE_RETIRADA: TimelineStep[] = [
+  { status: 'RECEBIDO',   label: 'Pedido recebido',       icon: '📋', desc: 'Seu pedido foi enviado ao restaurante' },
+  { status: 'CONFIRMADO', label: 'Confirmado',            icon: '✅', desc: 'O restaurante confirmou seu pedido' },
+  { status: 'EM_PREPARO', label: 'Em produção',           icon: '👨‍🍳', desc: 'Sua comida está sendo preparada' },
+  { status: 'PRONTO',     label: 'Pronto para retirada',  icon: '🥡', desc: 'Seu pedido está pronto!' },
+];
+
+const STATUS_ORDER: Record<StatusEntregaPedido, number> = {
+  RECEBIDO: 0, CONFIRMADO: 1, EM_PREPARO: 2, PRONTO: 3,
+  SAIU_ENTREGA: 3, ENTREGUE: 4, CANCELADO: -1,
 };
-
-const statusFlowDelivery: StatusEntregaPedido[] = [
-  'CONFIRMADO',
-  'EM_PREPARO',
-  'SAIU_ENTREGA',
-];
-
-const statusFlowRetirada: StatusEntregaPedido[] = [
-  'CONFIRMADO',
-  'EM_PREPARO',
-];
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -341,6 +347,12 @@ export default function CardapioPage() {
     }
   }
 
+  function getStatusLabel(status: StatusEntregaPedido | string): string {
+    const allSteps = [...TIMELINE_DELIVERY, ...TIMELINE_RETIRADA];
+    const found = allSteps.find((s) => s.status === status);
+    return found?.label ?? status;
+  }
+
   // ─── Render estados ───────────────────────────────────────────────────────
 
   if (loading) {
@@ -370,108 +382,165 @@ export default function CardapioPage() {
 
   // Tela de sucesso
   if (step === 'sucesso') {
-    const rawStatus = pedidoStatus?.statusPedido === 'CANCELADO'
-      ? 'CANCELADO'
-      : pedidoStatus?.statusEntrega || 'RECEBIDO';
-    const currentStatus = rawStatus === 'RECEBIDO' ? 'CONFIRMADO' : rawStatus;
-    const flow = (pedidoStatus?.tipoPedido || tipo) === 'DELIVERY'
-      ? statusFlowDelivery
-      : statusFlowRetirada;
-    const currentIndex = currentStatus === 'CANCELADO'
-      ? -1
-      : flow.indexOf(currentStatus as StatusEntregaPedido);
+    const currentStatusRaw: StatusEntregaPedido =
+      pedidoStatus?.statusPedido === 'CANCELADO'
+        ? 'CANCELADO'
+        : (pedidoStatus?.statusEntrega || 'RECEBIDO');
+
+    const isCanceled = currentStatusRaw === 'CANCELADO';
+    const tipoPedidoAtual = pedidoStatus?.tipoPedido || tipo;
+    const timeline = tipoPedidoAtual === 'DELIVERY' ? TIMELINE_DELIVERY : TIMELINE_RETIRADA;
+    const currentOrder = isCanceled ? -1 : (STATUS_ORDER[currentStatusRaw] ?? 0);
+
+    const tempoPreparo = Number(data?.configuracoes?.tempo_preparo_medio ?? 30);
+    const criadoEm = lastPedido?.criadoEm ? new Date(lastPedido.criadoEm) : null;
+    const minutosDecorridos = criadoEm
+      ? Math.floor((Date.now() - criadoEm.getTime()) / 60000)
+      : null;
+
+    function getStepState(index: number): 'done' | 'current' | 'pending' {
+      if (isCanceled) return 'pending';
+      if (index < currentOrder) return 'done';
+      if (index === currentOrder) return 'current';
+      return 'pending';
+    }
 
     return (
-      <div className="min-h-screen bg-amber-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-lg">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Pedido Recebido!</h2>
-          <p className="text-gray-500 mb-1">Pedido <span className="font-bold text-amber-600">#{pedidoId}</span></p>
-          <p className="text-xs text-gray-400 mb-4">
-            Guarde esse numero para identificar seu pedido no atendimento.
-          </p>
-          <p className="text-gray-500 mb-6">
-            {tipo === 'DELIVERY'
-              ? 'Seu pedido foi recebido e estará a caminho em breve.'
-              : 'Seu pedido foi recebido. Aguarde a confirmação para retirada.'}
-          </p>
-          <div className="mb-6 rounded-2xl bg-amber-50 border border-amber-100 p-4 text-left">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-amber-700 font-bold">Status do pedido</p>
-                <p className="text-lg font-extrabold text-gray-900">
-                  {STATUS_LABELS[currentStatus as StatusEntregaPedido] || 'Aguardando atualizacao'}
-                </p>
-              </div>
-              <button
-                onClick={fetchPedidoStatus}
-                disabled={statusLoading}
-                className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-amber-700 disabled:opacity-60"
-              >
-                {statusLoading ? 'Atualizando' : 'Atualizar'}
-              </button>
+      <div className="min-h-screen bg-amber-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-sm w-full shadow-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-amber-500 text-white px-6 pt-8 pb-6 text-center">
+            <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
+            <h2 className="text-xl font-extrabold">Pedido Recebido!</h2>
+            <p className="text-amber-100 text-sm mt-1">
+              Pedido <span className="font-bold text-white">#{pedidoId}</span>
+            </p>
+          </div>
 
-            {statusErro ? (
-              <p className="text-sm text-red-600">{statusErro}</p>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  {flow.map((status, index) => {
-                    const active = index <= currentIndex;
-                    return (
-                      <div key={status} className="flex items-center gap-3">
-                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                          active ? 'bg-amber-500 text-white' : 'bg-white text-gray-400 border border-gray-200'
-                        }`}>
-                          {index + 1}
-                        </span>
-                        <span className={`text-sm font-medium ${active ? 'text-gray-900' : 'text-gray-400'}`}>
-                          {STATUS_LABELS[status]}
-                        </span>
-                      </div>
-                    );
-                  })}
+          <div className="p-5">
+            {/* Cancelado */}
+            {isCanceled && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-center">
+                <p className="text-red-600 font-bold">Pedido cancelado</p>
+                <p className="text-xs text-red-400 mt-1">Entre em contato com o restaurante</p>
+              </div>
+            )}
+
+            {/* Tempo estimado + decorrido */}
+            {!isCanceled && (
+              <div className="flex items-center gap-3 mb-5 bg-amber-50 rounded-xl px-4 py-3">
+                <div className="flex-1">
+                  <p className="text-xs text-amber-700 font-semibold uppercase tracking-wide">Tempo estimado</p>
+                  <p className="text-xl font-extrabold text-gray-900">~{tempoPreparo} min</p>
                 </div>
-
-                {pedidoStatus && (
-                  <div className="mt-4 border-t border-amber-100 pt-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Total</span>
-                      <span className="font-bold text-gray-900">{formatBRL(Number(pedidoStatus.total))}</span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Atualiza automaticamente a cada 10 segundos.
-                    </p>
+                {minutosDecorridos !== null && (
+                  <div className="text-right border-l border-amber-200 pl-3">
+                    <p className="text-xs text-gray-400">Aguardando há</p>
+                    <p className="text-xl font-extrabold text-gray-700">{minutosDecorridos} min</p>
                   </div>
                 )}
-              </>
+                <button
+                  onClick={fetchPedidoStatus}
+                  disabled={statusLoading}
+                  className="text-amber-600 bg-white rounded-lg p-2 disabled:opacity-50 hover:bg-amber-100 transition-colors"
+                  title="Atualizar status"
+                >
+                  <svg className={`w-4 h-4 ${statusLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
             )}
+
+            {statusErro && (
+              <p className="text-sm text-red-500 mb-4 text-center">{statusErro}</p>
+            )}
+
+            {/* Timeline */}
+            {!isCanceled && (
+              <div>
+                {timeline.map((timelineStep, index) => {
+                  const state = getStepState(index);
+                  const isLast = index === timeline.length - 1;
+                  return (
+                    <div key={timelineStep.status} className="flex gap-3">
+                      {/* Coluna esquerda: ícone + linha */}
+                      <div className="flex flex-col items-center">
+                        {state === 'done' ? (
+                          <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center shrink-0">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        ) : state === 'current' ? (
+                          <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center shrink-0 ring-4 ring-amber-200 animate-pulse">
+                            <span className="text-sm leading-none">{timelineStep.icon}</span>
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 rounded-full border-2 border-gray-200 flex items-center justify-center shrink-0">
+                            <span className="text-sm leading-none opacity-30">{timelineStep.icon}</span>
+                          </div>
+                        )}
+                        {!isLast && (
+                          <div
+                            className={`w-0.5 my-1 ${state === 'done' ? 'bg-amber-400' : 'bg-gray-200'}`}
+                            style={{ minHeight: '24px' }}
+                          />
+                        )}
+                      </div>
+
+                      {/* Coluna direita: texto */}
+                      <div className={`pb-4 ${isLast ? 'pb-0' : ''}`}>
+                        <p className={`text-sm font-bold leading-tight ${state !== 'pending' ? 'text-gray-900' : 'text-gray-400'}`}>
+                          {timelineStep.label}
+                        </p>
+                        <p className={`text-xs mt-0.5 ${state !== 'pending' ? 'text-gray-500' : 'text-gray-300'}`}>
+                          {timelineStep.desc}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Total */}
+            {pedidoStatus && (
+              <div className="mt-5 border-t border-gray-100 pt-3 flex justify-between text-sm">
+                <span className="text-gray-500">Total do pedido</span>
+                <span className="font-bold text-gray-900">{formatBRL(Number(pedidoStatus.total))}</span>
+              </div>
+            )}
+
+            <p className="text-xs text-gray-300 text-center mt-3">Atualiza automaticamente a cada 10 segundos</p>
           </div>
 
-          {restaurante.telefone && (
-            <a
-              href={`https://wa.me/55${restaurante.telefone.replace(/\D/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors mb-4"
+          {/* Footer */}
+          <div className="px-5 pb-5 space-y-2">
+            {restaurante.telefone && (
+              <a
+                href={`https://wa.me/55${restaurante.telefone.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-green-500 text-white py-3 rounded-xl font-semibold text-sm hover:bg-green-600 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg>
+                Falar no WhatsApp
+              </a>
+            )}
+            <button
+              onClick={() => { setStep('menu'); setNome(''); setTelefone(''); setBairroId(null); setRua(''); setObs(''); }}
+              className="w-full text-center text-amber-600 font-medium text-sm py-2 hover:text-amber-800 transition-colors"
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-              </svg>
-              Falar no WhatsApp
-            </a>
-          )}
-          <button
-            onClick={() => { setStep('menu'); setNome(''); setTelefone(''); setBairroId(null); setRua(''); setObs(''); }}
-            className="block w-full text-center text-amber-600 font-medium hover:text-amber-800 transition-colors"
-          >
-            Fazer outro pedido
-          </button>
+              Fazer outro pedido
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -749,7 +818,7 @@ export default function CardapioPage() {
                               <div>
                                 <p className="text-sm font-extrabold">Pedido #{pedido.id}</p>
                                 <p className="text-xs text-gray-500">
-                                  {pedido.tipoPedido === 'DELIVERY' ? 'Delivery' : 'Retirada'} · {STATUS_LABELS[statusAtual as StatusEntregaPedido] || statusAtual}
+                                  {pedido.tipoPedido === 'DELIVERY' ? 'Delivery' : 'Retirada'} · {getStatusLabel(statusAtual as StatusEntregaPedido)}
                                 </p>
                                 <p className="text-xs text-gray-400">
                                   {pedido.itens.length} {pedido.itens.length === 1 ? 'item' : 'itens'}
