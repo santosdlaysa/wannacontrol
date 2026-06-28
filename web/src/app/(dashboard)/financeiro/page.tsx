@@ -58,6 +58,23 @@ interface Historico {
 
 type Tab = 'resumo' | 'historico';
 
+function csvCell(value: string | number | null | undefined) {
+  const text = value === null || value === undefined ? '' : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function downloadCsv(filename: string, rows: Array<Array<string | number | null | undefined>>) {
+  const bom = '\uFEFF';
+  const csv = rows.map((row) => row.map(csvCell).join(';')).join('\r\n');
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function FinanceiroPage() {
   const [tab, setTab] = useState<Tab>('resumo');
   const [resumo, setResumo] = useState<ResumoDiario | null>(null);
@@ -77,6 +94,78 @@ export default function FinanceiroPage() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   });
   const [expandedPedido, setExpandedPedido] = useState<number | null>(null);
+
+  function handleExportarPlanilha() {
+    if (tab === 'resumo') {
+      if (!resumo) {
+        toast.error('Carregue o resumo antes de exportar');
+        return;
+      }
+
+      const rows: Array<Array<string | number | null | undefined>> = [
+        ['Financeiro', 'Resumo Diario'],
+        ['Data', formatDateShort(resumo.data)],
+        ['Faturamento', resumo.faturamento],
+        ['Pedidos Fechados', resumo.totalPedidos],
+        ['Ticket Medio', resumo.ticketMedio],
+        [],
+        ['Produtos Mais Vendidos'],
+        ['Produto', 'Categoria', 'Quantidade', 'Receita'],
+        ...resumo.topProdutos.map((p) => [p.nome, p.categoria, p.quantidade, p.receita]),
+        [],
+        ['Vendas por Garcom'],
+        ['Garcom', 'Pedidos', 'Receita'],
+        ...resumo.vendasPorGarcom.map((g) => [g.nome, g.pedidos, g.receita]),
+      ];
+
+      downloadCsv(`financeiro-resumo-${dataResumo}.csv`, rows);
+      toast.success('Planilha exportada');
+      return;
+    }
+
+    if (!historico) {
+      toast.error('Carregue o historico antes de exportar');
+      return;
+    }
+
+    const rows: Array<Array<string | number | null | undefined>> = [
+      ['Financeiro', 'Historico de Vendas'],
+      ['Periodo', `${formatDateShort(dataInicio)} a ${formatDateShort(dataFim)}`],
+      ['Faturamento Total', historico.faturamentoTotal],
+      ['Total de Pedidos', historico.totalPedidos],
+      ['Ticket Medio', historico.ticketMedio],
+      [],
+      ['Pedidos'],
+      ['Pedido', 'Data', 'Mesa', 'Garcom', 'Itens', 'Total'],
+      ...historico.pedidos.map((pedido) => [
+        `#${pedido.id}`,
+        formatDate(pedido.dataCriacao),
+        `Mesa ${pedido.mesa.numero}`,
+        pedido.garcom.nome,
+        pedido.itens.length,
+        pedido.totalCalculado,
+      ]),
+      [],
+      ['Itens por Pedido'],
+      ['Pedido', 'Produto', 'Quantidade', 'Preco Unitario', 'Subtotal', 'Observacao'],
+    ];
+
+    for (const pedido of historico.pedidos) {
+      for (const item of pedido.itens) {
+        rows.push([
+          `#${pedido.id}`,
+          item.produto.nome,
+          item.quantidade,
+          item.precoUnitario,
+          Number(item.precoUnitario) * item.quantidade,
+          item.observacao || '',
+        ]);
+      }
+    }
+
+    downloadCsv(`financeiro-historico-${dataInicio}-a-${dataFim}.csv`, rows);
+    toast.success('Planilha exportada');
+  }
 
   const fetchResumo = useCallback(async () => {
     setIsLoading(true);
@@ -111,6 +200,12 @@ export default function FinanceiroPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Financeiro</h1>
+        <Button variant="secondary" size="sm" onClick={handleExportarPlanilha} disabled={isLoading}>
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14a2 2 0 002-2v-2H3v2a2 2 0 002 2z" />
+          </svg>
+          Exportar planilha
+        </Button>
       </div>
 
       {/* Tabs */}
