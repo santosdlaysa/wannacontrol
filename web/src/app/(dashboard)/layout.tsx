@@ -245,6 +245,23 @@ export default function DashboardLayout({
 
   if (!user) return null;
 
+  // Sem assinatura ativa: layout minimo apenas para a pagina de assinatura
+  const semAssinatura = !restaurante?.ativo;
+  if (semAssinatura) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-cafe-900 text-white px-6 py-4 flex items-center justify-between">
+          <span className="text-lg font-black tracking-tight">ChefFlow</span>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-cafe-300">{user.nome}</span>
+            <button onClick={logout} className="text-sm text-cafe-300 hover:text-white">Sair</button>
+          </div>
+        </header>
+        <div className="p-6">{children}</div>
+      </div>
+    );
+  }
+
   const planoAtual = restaurante?.plano as string | undefined;
   const filteredNav = navItems.filter((item) =>
     item.roles.includes(user.perfil as Perfil)
