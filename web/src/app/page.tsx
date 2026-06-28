@@ -1,20 +1,6 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import LandingInteractiveDemo from '@/components/LandingInteractiveDemo';
 import AdminDemoWidget from '@/components/AdminDemoWidget';
-import segundoQr from '@/assets/segundo.png';
-import terceiroQr from '@/assets/terceiro.png';
-
-const PIX_PLANOS: Record<string, { imagem: typeof segundoQr; codigo: string }> = {
-  Profissional: {
-    imagem: segundoQr,
-    codigo: '00020126360014BR.GOV.BCB.PIX0114+55959812739125204000053039865406200.005802BR5901N6001C62070503***63040382',
-  },
-  Premium: {
-    imagem: terceiroQr,
-    codigo: '00020126360014BR.GOV.BCB.PIX0114+55959812739125204000053039865406597.005802BR5901N6001C62070503***6304B8F3',
-  },
-};
 
 const modules = [
   {
@@ -283,26 +269,6 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              {PIX_PLANOS[plano.nome] && (
-                <div className={`mt-6 border-t pt-5 ${plano.destaque ? 'border-white/20' : 'border-gray-200'}`}>
-                  <p className={`mb-3 text-xs font-black uppercase tracking-wider ${plano.destaque ? 'text-cafe-300' : 'text-cafe-700'}`}>
-                    Pagar via Pix
-                  </p>
-                  <div className="flex justify-center">
-                    <Image
-                      src={PIX_PLANOS[plano.nome]!.imagem}
-                      alt="QR Code Pix"
-                      width={140}
-                      height={140}
-                      className="rounded"
-                    />
-                  </div>
-                  <p className={`mt-3 text-xs ${plano.destaque ? 'text-white/50' : 'text-gray-400'}`}>Pix copia e cola:</p>
-                  <p className={`mt-1 break-all text-xs leading-5 select-all ${plano.destaque ? 'text-white/70' : 'text-gray-600'}`}>
-                    {PIX_PLANOS[plano.nome]!.codigo}
-                  </p>
-                </div>
-              )}
               <Link
                 href={plano.href}
                 className={`mt-8 block rounded-lg py-3 text-center font-black transition-colors ${
