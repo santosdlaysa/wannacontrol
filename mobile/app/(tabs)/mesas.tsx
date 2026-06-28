@@ -22,7 +22,7 @@ import {
   type Mesa,
   type MesaStatusChangedPayload,
   type Pedido,
-} from '@cafecontrol/shared';
+} from '@chefflow/shared';
 import { apiClient } from '../../src/lib/api-client';
 import { useSocket } from '../../src/providers/SocketProvider';
 import { useAuth } from '../../src/providers/AuthProvider';
@@ -150,7 +150,7 @@ export default function MesasScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Ola, {firstName}</Text>
-          <Text style={styles.headerTitle}>CafeControl</Text>
+          <Text style={styles.headerTitle}>ChefFlow</Text>
         </View>
         <View style={styles.headerStats}>
           <View style={styles.statBox}>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/providers/AuthProvider';
-import { Perfil } from '@cafecontrol/shared';
+import { Perfil } from '@chefflow/shared';
 
 const formatBRL = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);

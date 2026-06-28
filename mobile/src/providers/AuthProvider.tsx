@@ -9,7 +9,7 @@ import React, {
 import * as SecureStore from 'expo-secure-store';
 import { SECURE_STORE_KEYS, API_BASE_URL } from '../lib/constants';
 import { authEvents } from '../lib/auth-events';
-import type { Usuario, LoginResponse } from '@cafecontrol/shared';
+import type { Usuario, LoginResponse } from '@chefflow/shared';
 
 interface AuthContextData {
   user: Omit<Usuario, 'pin'> | null;

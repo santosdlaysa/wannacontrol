@@ -1,8 +1,8 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError, ValidationError } from '../../lib/errors';
-import { StatusMesa } from '@cafecontrol/shared';
+import { StatusMesa } from '@chefflow/shared';
 import { getIO } from '../../lib/socket';
-import { SOCKET_EVENTS } from '@cafecontrol/shared';
+import { SOCKET_EVENTS } from '@chefflow/shared';
 
 export async function listar(restauranteId?: number) {
   const where: any = {};

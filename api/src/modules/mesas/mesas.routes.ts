@@ -3,7 +3,7 @@ import { authMiddleware } from '../../middlewares/auth';
 import { authorize } from '../../middlewares/authorize';
 import { validate } from '../../middlewares/validate';
 import { asyncHandler } from '../../lib/async-handler';
-import { Perfil, updateMesaStatusSchema } from '@cafecontrol/shared';
+import { Perfil, updateMesaStatusSchema } from '@chefflow/shared';
 import * as mesasController from './mesas.controller';
 
 const router = Router();

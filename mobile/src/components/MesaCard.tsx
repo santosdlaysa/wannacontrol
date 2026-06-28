@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { StatusMesa } from '@cafecontrol/shared';
+import { StatusMesa } from '@chefflow/shared';
 import { COLORS } from '../lib/constants';
 
 interface MesaCardProps {

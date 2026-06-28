@@ -1,9 +1,9 @@
 {
   "expo": {
     "name": "CaféControl",
-    "slug": "cafecontrol-mobile",
+    "slug": "chefflow-mobile",
     "version": "1.0.0",
-    "scheme": "cafecontrol",
+    "scheme": "chefflow",
     "platforms": [
       "ios",
       "android"
@@ -29,7 +29,7 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "com.santosdlaysa.cafecontrolmobile"
+      "package": "com.santosdlaysa.chefflowmobile"
     },
     "androidNavigationBar": {
       "backgroundColor": "#FFFFFF",

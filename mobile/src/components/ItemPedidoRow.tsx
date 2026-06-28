@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { StatusPreparo } from '@cafecontrol/shared';
+import { StatusPreparo } from '@chefflow/shared';
 import { COLORS, RADIUS, SHADOWS, SPACING, formatBRL } from '../lib/constants';
 import { StatusBadge } from './StatusBadge';
 

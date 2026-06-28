@@ -15,7 +15,7 @@ import {
   StatusPreparo,
   type ItemReadyPayload,
   type Pedido,
-} from '@cafecontrol/shared';
+} from '@chefflow/shared';
 import { apiClient } from '../../src/lib/api-client';
 import { useSocket } from '../../src/providers/SocketProvider';
 import { COLORS, SPACING } from '../../src/lib/constants';

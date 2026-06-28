@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '../../lib/prisma';
 import { env } from '../../config/env';
 import { UnauthorizedError, NotFoundError } from '../../lib/errors';
-import { AuthPayload } from '@cafecontrol/shared';
+import { AuthPayload } from '@chefflow/shared';
 
 function generateTokens(payload: AuthPayload) {
   const accessToken = jwt.sign(

@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api-client';
-import type { LoginResponse, Restaurante, Usuario } from '@cafecontrol/shared';
-import { Perfil } from '@cafecontrol/shared';
+import type { LoginResponse, Restaurante, Usuario } from '@chefflow/shared';
+import { Perfil } from '@chefflow/shared';
 
 type UserInfo = Omit<Usuario, 'pin'>;
 type RestaurantInfo = Omit<Restaurante, 'criadoEm'>;

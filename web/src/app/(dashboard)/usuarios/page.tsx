@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
-import { Perfil } from '@cafecontrol/shared';
-import type { Usuario } from '@cafecontrol/shared';
+import { Perfil } from '@chefflow/shared';
+import type { Usuario } from '@chefflow/shared';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';

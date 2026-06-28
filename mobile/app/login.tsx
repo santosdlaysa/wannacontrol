@@ -117,7 +117,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.footer}>CafeControl © 2025</Text>
+          <Text style={styles.footer}>ChefFlow © 2025</Text>
         </View>
       </SafeAreaView>
     );

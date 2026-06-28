@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { SOCKET_EVENTS } from '@cafecontrol/shared';
+import { SOCKET_EVENTS } from '@chefflow/shared';
 
 export function registerSocketHandlers(io: Server) {
   io.on('connection', (socket: Socket) => {

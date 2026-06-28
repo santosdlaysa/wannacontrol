@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
-import { StatusPedido, StatusPreparo } from '@cafecontrol/shared';
-import type { Pedido } from '@cafecontrol/shared';
+import { StatusPedido, StatusPreparo } from '@chefflow/shared';
+import type { Pedido } from '@chefflow/shared';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 

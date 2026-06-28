@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { StatusPreparo, StatusMesa } from '@cafecontrol/shared';
+import { StatusPreparo, StatusMesa } from '@chefflow/shared';
 import { COLORS } from '../lib/constants';
 
 type BadgeStatus = StatusPreparo | StatusMesa | string;

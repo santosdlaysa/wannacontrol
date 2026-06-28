@@ -47,7 +47,7 @@ async function main() {
   const senhaHash = await bcrypt.hash('admin123', 10);
   const admin = await ensureGlobalUser({
     nome: 'Administrador',
-    email: 'admin@cafecontrol.com',
+    email: 'admin@chefflow.com',
     senhaHash,
     pin: '000000',
     perfil: 'ADMIN',
@@ -58,7 +58,7 @@ async function main() {
   const garcomHash = await bcrypt.hash('garcom123', 10);
   const garcom = await ensureGlobalUser({
     nome: 'João Garçom',
-    email: 'garcom@cafecontrol.com',
+    email: 'garcom@chefflow.com',
     senhaHash: garcomHash,
     pin: '111111',
     perfil: 'GARCOM',
@@ -69,7 +69,7 @@ async function main() {
   const cozinhaHash = await bcrypt.hash('cozinha123', 10);
   const cozinheiro = await ensureGlobalUser({
     nome: 'Maria Cozinha',
-    email: 'cozinha@cafecontrol.com',
+    email: 'cozinha@chefflow.com',
     senhaHash: cozinhaHash,
     pin: '222222',
     perfil: 'COZINHA',
@@ -80,7 +80,7 @@ async function main() {
   const caixaHash = await bcrypt.hash('caixa123', 10);
   const caixa = await ensureGlobalUser({
     nome: 'Ana Caixa',
-    email: 'caixa@cafecontrol.com',
+    email: 'caixa@chefflow.com',
     senhaHash: caixaHash,
     pin: '333333',
     perfil: 'CAIXA',

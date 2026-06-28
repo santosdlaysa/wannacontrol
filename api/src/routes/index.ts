@@ -18,7 +18,7 @@ import { authMiddleware } from '../middlewares/auth';
 import { authorize } from '../middlewares/authorize';
 import { validate } from '../middlewares/validate';
 import { asyncHandler } from '../lib/async-handler';
-import { Perfil, updateItemStatusSchema } from '@cafecontrol/shared';
+import { Perfil, updateItemStatusSchema } from '@chefflow/shared';
 import * as itensController from '../modules/itens-pedido/itens-pedido.controller';
 
 export const router = Router();

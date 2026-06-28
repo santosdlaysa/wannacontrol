@@ -116,7 +116,7 @@ docker-compose up -d
 
 Isso sobe:
 - **PostgreSQL** na porta `5432`
-- **pgAdmin** em `http://localhost:5050` (admin@cafecontrol.com / admin123)
+- **pgAdmin** em `http://localhost:5050` (admin@chefflow.com / admin123)
 
 ---
 
@@ -129,7 +129,7 @@ cp .env.example api/.env
 Conteúdo padrão do `.env`:
 
 ```env
-DATABASE_URL=postgresql://cafecontrol:cafecontrol_dev@localhost:5432/cafecontrol
+DATABASE_URL=postgresql://chefflow:chefflow_dev@localhost:5432/chefflow
 JWT_SECRET=change-me-in-production
 JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
@@ -151,10 +151,10 @@ O seed cria os seguintes usuários de teste:
 
 | Perfil | E-mail | Senha | PIN |
 |---|---|---|---|
-| Admin | admin@cafecontrol.com | admin123 | 000000 |
-| Garçom | garcom@cafecontrol.com | garcom123 | 111111 |
-| Cozinha | cozinha@cafecontrol.com | cozinha123 | 222222 |
-| Caixa | caixa@cafecontrol.com | caixa123 | 333333 |
+| Admin | admin@chefflow.com | admin123 | 000000 |
+| Garçom | garcom@chefflow.com | garcom123 | 111111 |
+| Cozinha | cozinha@chefflow.com | cozinha123 | 222222 |
+| Caixa | caixa@chefflow.com | caixa123 | 333333 |
 
 Também cria 10 mesas e 18 produtos de exemplo.
 

@@ -3,6 +3,52 @@ import { NotFoundError, ValidationError } from '../../lib/errors';
 import { getIO } from '../../lib/socket';
 
 const NEW_DELIVERY_ORDER_EVENT = 'order:newDelivery';
+const DEFAULT_CONFIGS: Record<string, string> = {
+  restaurante_aberto: 'true',
+  horario_abertura: '08:00',
+  horario_fechamento: '22:00',
+};
+
+function parseHorarioToMinutes(value?: string | null) {
+  const match = value?.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+
+  return hours * 60 + minutes;
+}
+
+function isRestauranteAberto(configs: Record<string, string | null>, now = new Date()) {
+  if (configs.restaurante_aberto === 'false') return false;
+
+  const abertura = parseHorarioToMinutes(configs.horario_abertura);
+  const fechamento = parseHorarioToMinutes(configs.horario_fechamento);
+  if (abertura == null || fechamento == null) return true;
+  if (abertura === fechamento) return true;
+
+  const minutoAtual = now.getHours() * 60 + now.getMinutes();
+  if (abertura < fechamento) {
+    return minutoAtual >= abertura && minutoAtual < fechamento;
+  }
+
+  return minutoAtual >= abertura || minutoAtual < fechamento;
+}
+
+async function getConfiguracoesOperacao(restauranteId: number) {
+  const configuracoes = await prisma.configuracao.findMany({
+    where: {
+      restauranteId,
+      chave: { in: ['restaurante_aberto', 'horario_abertura', 'horario_fechamento'] },
+    },
+  });
+
+  const configs: Record<string, string | null> = { ...DEFAULT_CONFIGS };
+  for (const c of configuracoes) configs[c.chave] = c.valor;
+
+  return configs;
+}
 
 export async function getStatsPublicos(slug: string) {
   const restaurante = await prisma.restaurante.findUnique({
@@ -115,10 +161,8 @@ export async function criarPedidoPublico(slug: string, data: {
   if (!restaurante || !restaurante.ativo) throw new NotFoundError('Restaurante');
   if (!restaurante.usuarios.length) throw new NotFoundError('Operador do restaurante');
 
-  const statusRestaurante = await prisma.configuracao.findUnique({
-    where: { restauranteId_chave: { restauranteId: restaurante.id, chave: 'restaurante_aberto' } },
-  });
-  if (statusRestaurante?.valor === 'false') {
+  const configsOperacao = await getConfiguracoesOperacao(restaurante.id);
+  if (!isRestauranteAberto(configsOperacao)) {
     throw new ValidationError('Restaurante fechado no momento');
   }
 

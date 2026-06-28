@@ -3,7 +3,7 @@ import { authMiddleware } from '../../middlewares/auth';
 import { authorize } from '../../middlewares/authorize';
 import { validate } from '../../middlewares/validate';
 import { asyncHandler } from '../../lib/async-handler';
-import { Perfil, createUsuarioSchema, updateUsuarioSchema } from '@cafecontrol/shared';
+import { Perfil, createUsuarioSchema, updateUsuarioSchema } from '@chefflow/shared';
 import * as usuariosController from './usuarios.controller';
 
 const router = Router();

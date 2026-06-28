@@ -1,6 +1,6 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError, ValidationError, ConflictError } from '../../lib/errors';
-import { StatusPreparo, VALID_STATUS_TRANSITIONS, SOCKET_EVENTS } from '@cafecontrol/shared';
+import { StatusPreparo, VALID_STATUS_TRANSITIONS, SOCKET_EVENTS } from '@chefflow/shared';
 import { getIO } from '../../lib/socket';
 
 interface ItemInput {

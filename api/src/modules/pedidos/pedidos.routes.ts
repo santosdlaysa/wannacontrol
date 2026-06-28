@@ -3,7 +3,7 @@ import { authMiddleware } from '../../middlewares/auth';
 import { authorize } from '../../middlewares/authorize';
 import { validate } from '../../middlewares/validate';
 import { asyncHandler } from '../../lib/async-handler';
-import { Perfil, createPedidoSchema } from '@cafecontrol/shared';
+import { Perfil, createPedidoSchema } from '@chefflow/shared';
 import * as pedidosController from './pedidos.controller';
 import itensRoutes from '../itens-pedido/itens-pedido.routes';
 

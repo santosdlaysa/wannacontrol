@@ -1,4 +1,4 @@
-# PRD — ChefFlow Delivery (CafeControl)
+# PRD — ChefFlow Delivery (ChefFlow)
 ## Sistema SaaS para Gestão de Delivery de Restaurantes
 
 ---
@@ -103,7 +103,7 @@ Sistema multiusuário para gestão de restaurantes com suporte a mesas, delivery
 | Auth       | JWT (access + refresh) + PIN |
 | Mobile     | React Native + Expo SDK 53 + Expo Router |
 | Web        | Next.js 14 + App Router + Tailwind CSS |
-| Shared     | Pacote `@cafecontrol/shared` (enums, types, validators) |
+| Shared     | Pacote `@chefflow/shared` (enums, types, validators) |
 
 ---
 

@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
-import { StatusMesa } from '@cafecontrol/shared';
-import type { Mesa, Pedido } from '@cafecontrol/shared';
+import { StatusMesa } from '@chefflow/shared';
+import type { Mesa, Pedido } from '@chefflow/shared';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';

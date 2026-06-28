@@ -7,13 +7,13 @@ import { useSocket } from '@/providers/SocketProvider';
 import {
   SOCKET_EVENTS,
   StatusPreparo,
-} from '@cafecontrol/shared';
+} from '@chefflow/shared';
 import type {
   Pedido,
   ItemPedido,
   NewOrderItemsPayload,
   ItemStatusChangedPayload,
-} from '@cafecontrol/shared';
+} from '@chefflow/shared';
 import Button from '@/components/ui/Button';
 
 interface KitchenItem {

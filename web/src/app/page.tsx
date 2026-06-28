@@ -48,7 +48,7 @@ export default function LandingPage() {
         <div className="relative mx-auto flex min-h-[92vh] max-w-7xl flex-col px-5 py-5 sm:px-8">
           <header className="flex items-center justify-between gap-4">
             <Link href="/" className="text-xl font-black tracking-tight">
-              CafeControl
+              ChefFlow
             </Link>
             <nav className="hidden items-center gap-7 text-sm font-semibold text-white/82 md:flex">
               <a href="#demo" className="hover:text-white">Demo</a>
@@ -64,7 +64,7 @@ export default function LandingPage() {
                 Entrar
               </Link>
               <a
-                href="https://wa.me/5595999999999?text=Quero%20conhecer%20o%20CafeControl"
+                href="https://wa.me/5595999999999?text=Quero%20conhecer%20o%20ChefFlow"
                 className="rounded-lg bg-white px-4 py-2 text-sm font-black text-cafe-900 hover:bg-cafe-50"
               >
                 Falar no WhatsApp
@@ -78,7 +78,7 @@ export default function LandingPage() {
                 Sistema para cafeterias, restaurantes e delivery
               </p>
               <h1 className="max-w-4xl text-5xl font-black leading-[0.98] tracking-normal sm:text-6xl lg:text-7xl">
-                CafeControl vende, organiza e mostra tudo em tempo real.
+                ChefFlow vende, organiza e mostra tudo em tempo real.
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-white/86">
                 Controle mesas, cardapio digital, pedidos online, cozinha, delivery,
@@ -86,7 +86,7 @@ export default function LandingPage() {
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a
-                  href="https://wa.me/5595999999999?text=Quero%20uma%20demonstracao%20do%20CafeControl"
+                  href="https://wa.me/5595999999999?text=Quero%20uma%20demonstracao%20do%20ChefFlow"
                   className="inline-flex justify-center rounded-lg bg-cafe-100 px-6 py-4 text-base font-black text-cafe-900 hover:bg-white"
                 >
                   Agendar demonstracao
@@ -225,7 +225,7 @@ export default function LandingPage() {
                 </h3>
               </div>
               <a
-                href="https://wa.me/5595999999999?text=Quero%20uma%20proposta%20do%20CafeControl"
+                href="https://wa.me/5595999999999?text=Quero%20uma%20proposta%20do%20ChefFlow"
                 className="rounded-lg bg-cafe-800 px-5 py-4 text-center font-black text-white hover:bg-cafe-900"
               >
                 Chamar vendas

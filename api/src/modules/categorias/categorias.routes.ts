@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authMiddleware } from '../../middlewares/auth';
 import { authorize } from '../../middlewares/authorize';
 import { asyncHandler } from '../../lib/async-handler';
-import { Perfil } from '@cafecontrol/shared';
+import { Perfil } from '@chefflow/shared';
 import * as controller from './categorias.controller';
 
 const router = Router();

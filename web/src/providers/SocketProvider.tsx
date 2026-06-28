@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
-import { SOCKET_EVENTS, Perfil } from '@cafecontrol/shared';
+import { SOCKET_EVENTS, Perfil } from '@chefflow/shared';
 import { getSocket, disconnectSocket } from '@/lib/socket-client';
 import { useAuth } from './AuthProvider';
 

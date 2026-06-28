@@ -11,8 +11,8 @@ import {
   TextInput,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import type { Produto, Mesa, Pedido } from '@cafecontrol/shared';
-import { StatusMesa } from '@cafecontrol/shared';
+import type { Produto, Mesa, Pedido } from '@chefflow/shared';
+import { StatusMesa } from '@chefflow/shared';
 import { apiClient } from '../../src/lib/api-client';
 import { COLORS, RADIUS, SHADOWS, SPACING, formatBRL } from '../../src/lib/constants';
 

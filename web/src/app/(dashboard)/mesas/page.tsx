@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { useSocket } from '@/providers/SocketProvider';
-import { SOCKET_EVENTS, StatusMesa } from '@cafecontrol/shared';
-import type { Mesa, Pedido, MesaStatusChangedPayload } from '@cafecontrol/shared';
+import { SOCKET_EVENTS, StatusMesa } from '@chefflow/shared';
+import type { Mesa, Pedido, MesaStatusChangedPayload } from '@chefflow/shared';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 

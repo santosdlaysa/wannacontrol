@@ -17,7 +17,7 @@ import {
   StatusEntrega,
   TipoPedido,
   type Pedido,
-} from '@cafecontrol/shared';
+} from '@chefflow/shared';
 import { apiClient } from '../src/lib/api-client';
 import { useSocket } from '../src/providers/SocketProvider';
 import { COLORS, RADIUS, SHADOWS, SPACING, formatBRL } from '../src/lib/constants';

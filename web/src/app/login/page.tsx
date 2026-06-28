@@ -59,7 +59,7 @@ export default function LoginPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-cafe-900">CafeControl</h1>
+            <h1 className="text-3xl font-bold text-cafe-900">ChefFlow</h1>
             <p className="text-cafe-500 mt-1">Sistema de Gestao para Cafeterias</p>
           </div>
 
@@ -123,7 +123,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-cafe-200 text-sm mt-6">
-          CafeControl &copy; {new Date().getFullYear()}
+          ChefFlow &copy; {new Date().getFullYear()}
         </p>
       </div>
     </div>

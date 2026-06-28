@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'CafeControl - Sistema de Gestao',
+  title: 'ChefFlow - Sistema de Gestao',
   description: 'Sistema de gestao para cafeterias',
 };
 

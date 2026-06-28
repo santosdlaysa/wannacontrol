@@ -1,6 +1,6 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError, ValidationError, ConflictError } from '../../lib/errors';
-import { StatusPedido, StatusMesa, SOCKET_EVENTS } from '@cafecontrol/shared';
+import { StatusPedido, StatusMesa, SOCKET_EVENTS } from '@chefflow/shared';
 import { getIO } from '../../lib/socket';
 
 export async function listar(params: { status?: string; mesa_id?: string }) {

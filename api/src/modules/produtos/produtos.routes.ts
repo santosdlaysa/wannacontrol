@@ -4,7 +4,7 @@ import { authorize } from '../../middlewares/authorize';
 import { validate } from '../../middlewares/validate';
 import { asyncHandler } from '../../lib/async-handler';
 import { upload } from '../../middlewares/upload';
-import { Perfil, createProdutoSchema, updateProdutoSchema } from '@cafecontrol/shared';
+import { Perfil, createProdutoSchema, updateProdutoSchema } from '@chefflow/shared';
 import * as produtosController from './produtos.controller';
 
 const router = Router();

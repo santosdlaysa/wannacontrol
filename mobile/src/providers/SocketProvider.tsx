@@ -6,7 +6,7 @@ import React, {
   type ReactNode,
 } from 'react';
 import type { Socket } from 'socket.io-client';
-import { SOCKET_EVENTS } from '@cafecontrol/shared';
+import { SOCKET_EVENTS } from '@chefflow/shared';
 import { useAuth } from './AuthProvider';
 import { connectSocket, disconnectSocket, getSocket } from '../lib/socket-client';
 

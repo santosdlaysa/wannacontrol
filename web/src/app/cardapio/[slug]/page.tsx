@@ -8,6 +8,33 @@ const BASE = '/api/v1';
 const formatBRL = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
+function parseHorarioToMinutes(value?: string | null) {
+  const match = value?.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+
+  return hours * 60 + minutes;
+}
+
+function isDentroHorarioFuncionamento(configuracoes: Record<string, string | null> | undefined, now: Date) {
+  if (configuracoes?.restaurante_aberto === 'false') return false;
+
+  const abertura = parseHorarioToMinutes(configuracoes?.horario_abertura);
+  const fechamento = parseHorarioToMinutes(configuracoes?.horario_fechamento);
+  if (abertura == null || fechamento == null) return true;
+  if (abertura === fechamento) return true;
+
+  const minutoAtual = now.getHours() * 60 + now.getMinutes();
+  if (abertura < fechamento) {
+    return minutoAtual >= abertura && minutoAtual < fechamento;
+  }
+
+  return minutoAtual >= abertura || minutoAtual < fechamento;
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Restaurante {
@@ -147,6 +174,7 @@ export default function CardapioPage() {
   const [historicoLoading, setHistoricoLoading] = useState(false);
   const [historicoErro, setHistoricoErro] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [agora, setAgora] = useState(() => new Date());
 
   // Checkout form
   const [nome, setNome] = useState('');
@@ -174,6 +202,11 @@ export default function CardapioPage() {
   }, [slug]);
 
   useEffect(() => { fetchCardapio(); }, [fetchCardapio]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setAgora(new Date()), 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!slug) return;
@@ -291,7 +324,7 @@ export default function CardapioPage() {
 
   const bairroSelecionado = data?.bairros?.find((b) => b.id === bairroId) ?? null;
   const usaBairros = (data?.bairros?.length ?? 0) > 0;
-  const restauranteAberto = data?.configuracoes?.restaurante_aberto !== 'false';
+  const restauranteAberto = isDentroHorarioFuncionamento(data?.configuracoes, agora);
   const taxaEntrega = tipo === 'DELIVERY'
     ? (bairroSelecionado ? Number(bairroSelecionado.taxa) : (usaBairros ? 0 : Number(data?.configuracoes?.taxa_entrega ?? 0)))
     : 0;

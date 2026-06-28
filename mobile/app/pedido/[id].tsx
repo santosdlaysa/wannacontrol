@@ -19,7 +19,7 @@ import {
   SOCKET_EVENTS,
   type Pedido,
   type ItemStatusChangedPayload,
-} from '@cafecontrol/shared';
+} from '@chefflow/shared';
 import { apiClient } from '../../src/lib/api-client';
 import { useSocket } from '../../src/providers/SocketProvider';
 import { ItemPedidoRow } from '../../src/components/ItemPedidoRow';

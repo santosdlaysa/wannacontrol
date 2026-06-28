@@ -296,7 +296,7 @@ export default function PerfilScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.version}>CafeControl v1.0.0</Text>
+        <Text style={styles.version}>ChefFlow v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );

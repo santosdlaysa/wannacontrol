@@ -46,7 +46,7 @@ function NavigationGuard() {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <Text style={styles.loadingBrand}>cafecontrol</Text>
+        <Text style={styles.loadingBrand}>chefflow</Text>
         <ActivityIndicator size="small" color={COLORS.brand} style={{ marginTop: 16 }} />
       </View>
     );

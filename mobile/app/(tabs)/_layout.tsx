@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusPreparo, Perfil, type Pedido } from '@cafecontrol/shared';
+import { StatusPreparo, Perfil, type Pedido } from '@chefflow/shared';
 import { COLORS, SHADOWS } from '../../src/lib/constants';
 import { useAuth } from '../../src/providers/AuthProvider';
 import { apiClient } from '../../src/lib/api-client';

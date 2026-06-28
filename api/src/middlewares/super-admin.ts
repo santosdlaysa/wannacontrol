@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Perfil } from '@cafecontrol/shared';
+import { Perfil } from '@chefflow/shared';
 import { ForbiddenError, UnauthorizedError } from '../lib/errors';
 
 export function requireSuperAdmin(req: Request, _res: Response, next: NextFunction) {

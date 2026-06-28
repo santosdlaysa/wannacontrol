@@ -2,7 +2,7 @@ import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
-import { AuthPayload } from '@cafecontrol/shared';
+import { AuthPayload } from '@chefflow/shared';
 
 let io: Server;
 

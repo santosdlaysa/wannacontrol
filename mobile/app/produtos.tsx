@@ -16,7 +16,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { type Produto } from '@cafecontrol/shared';
+import { type Produto } from '@chefflow/shared';
 import { apiClient } from '../src/lib/api-client';
 import { COLORS, RADIUS, SHADOWS, SPACING, formatBRL } from '../src/lib/constants';
 

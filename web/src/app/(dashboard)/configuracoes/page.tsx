@@ -49,10 +49,38 @@ const defaultConfig: Configuracoes = {
 const formatBRL = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
+function parseHorarioToMinutes(value?: string | null) {
+  const match = value?.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+
+  return hours * 60 + minutes;
+}
+
+function isDentroHorarioFuncionamento(config: Configuracoes, now: Date) {
+  if (config.restaurante_aberto === 'false') return false;
+
+  const abertura = parseHorarioToMinutes(config.horario_abertura);
+  const fechamento = parseHorarioToMinutes(config.horario_fechamento);
+  if (abertura == null || fechamento == null) return true;
+  if (abertura === fechamento) return true;
+
+  const minutoAtual = now.getHours() * 60 + now.getMinutes();
+  if (abertura < fechamento) {
+    return minutoAtual >= abertura && minutoAtual < fechamento;
+  }
+
+  return minutoAtual >= abertura || minutoAtual < fechamento;
+}
+
 export default function ConfiguracoesPage() {
   const [config, setConfig] = useState<Configuracoes>(defaultConfig);
   const [isLoading, setIsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [agora, setAgora] = useState(() => new Date());
 
   // Bairros
   const [bairros, setBairros] = useState<Bairro[]>([]);
@@ -79,6 +107,11 @@ export default function ConfiguracoesPage() {
   }, []);
 
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setAgora(new Date()), 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   function setField(key: keyof Configuracoes, value: string) {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -168,6 +201,8 @@ export default function ConfiguracoesPage() {
   if (isLoading) {
     return <div className="text-center py-12 text-gray-500">Carregando...</div>;
   }
+
+  const abertoAgora = isDentroHorarioFuncionamento(config, agora);
 
   return (
     <div>
@@ -339,12 +374,15 @@ export default function ConfiguracoesPage() {
               <div>
                 <p className="text-sm font-semibold text-gray-900">Status do restaurante</p>
                 <p className="text-xs text-gray-500">
-                  Quando estiver fechado, o cliente ve o aviso no cardapio e nao consegue enviar pedidos.
+                  O sistema abre e fecha automaticamente pelos horarios. Desative para pausar manualmente.
+                </p>
+                <p className={`mt-1 text-xs font-bold ${abertoAgora ? 'text-green-700' : 'text-red-600'}`}>
+                  Agora: {abertoAgora ? 'Aberto' : 'Fechado'}
                 </p>
               </div>
               <label className="inline-flex cursor-pointer items-center gap-3">
                 <span className={`text-sm font-bold ${config.restaurante_aberto === 'true' ? 'text-green-700' : 'text-red-600'}`}>
-                  {config.restaurante_aberto === 'true' ? 'Aberto' : 'Fechado'}
+                  {config.restaurante_aberto === 'true' ? 'Automatico' : 'Pausado'}
                 </span>
                 <input
                   type="checkbox"

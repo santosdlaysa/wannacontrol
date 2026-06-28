@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { UnauthorizedError } from '../lib/errors';
-import { AuthPayload } from '@cafecontrol/shared';
+import { AuthPayload } from '@chefflow/shared';
 
 declare global {
   namespace Express {

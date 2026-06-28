@@ -90,8 +90,8 @@ export const SHADOWS = {
 } as const;
 
 export const SECURE_STORE_KEYS = {
-  ACCESS_TOKEN: 'cafecontrol_access_token',
-  REFRESH_TOKEN: 'cafecontrol_refresh_token',
+  ACCESS_TOKEN: 'chefflow_access_token',
+  REFRESH_TOKEN: 'chefflow_refresh_token',
 } as const;
 
 export function formatBRL(value: number): string {

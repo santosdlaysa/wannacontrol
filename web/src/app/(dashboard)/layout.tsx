@@ -8,7 +8,7 @@ import { SocketProvider } from '@/providers/SocketProvider';
 import PageLoading from '@/components/ui/PageLoading';
 import { NotificacoesPedidos } from '@/components/ui/NotificacoesPedidos';
 import { PopupNovoPedido } from '@/components/ui/PopupNovoPedido';
-import { Perfil } from '@cafecontrol/shared';
+import { Perfil } from '@chefflow/shared';
 
 interface NavItem {
   label: string;
@@ -197,7 +197,7 @@ export default function DashboardLayout({
             {/* Logo */}
             <div className="p-5 border-b border-cafe-800">
               <h1 className="text-xl font-bold text-cafe-50 truncate">
-                {restaurante?.nome || 'CafeControl'}
+                {restaurante?.nome || 'ChefFlow'}
               </h1>
               <p className="text-cafe-300 text-xs mt-0.5">Restaurante</p>
             </div>
