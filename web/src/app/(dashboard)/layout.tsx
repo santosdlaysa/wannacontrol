@@ -201,7 +201,7 @@ export default function DashboardLayout({
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+            <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto scrollbar-hide">
               {filteredNav.map((item) => {
                 const isActive = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
                 return (
