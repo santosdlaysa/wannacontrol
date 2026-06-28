@@ -67,7 +67,8 @@ async function request<T = unknown>(
     headers,
   });
 
-  if (response.status === 401 && path !== '/auth/refresh') {
+  const isAuthEndpoint = path === '/auth/login' || path === '/auth/login-pin' || path === '/auth/refresh';
+  if (response.status === 401 && !isAuthEndpoint) {
     if (typeof window === 'undefined') throw new ApiError('Sessao expirada', 401);
 
     if (isRefreshing) {
