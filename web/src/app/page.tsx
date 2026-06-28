@@ -178,7 +178,7 @@ export default function LandingPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
-          [
+          {[
             {
               nome: 'Inicial',
               valor: 'R$ 147',
@@ -187,8 +187,8 @@ export default function LandingPage() {
                 'Cardapio digital publico',
                 'Delivery e retirada',
                 'Confirmar e entregar pedidos',
-                'Cadastro de clientes',
-                'Cadastro de produtos',
+                'Cadastro de clientes e produtos',
+                'Relatorio basico do dia',
                 'Painel de pedidos simples',
               ],
               destaque: false,
