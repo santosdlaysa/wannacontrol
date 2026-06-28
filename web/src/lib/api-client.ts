@@ -30,6 +30,7 @@ async function tryRefreshToken(): Promise<string | null> {
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     if (data.usuario) localStorage.setItem('user', JSON.stringify(data.usuario));
+    if (data.restaurante) localStorage.setItem('restaurante', JSON.stringify(data.restaurante));
     return data.accessToken as string;
   } catch {
     return null;
@@ -40,6 +41,7 @@ function clearSessionAndRedirect() {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
+  localStorage.removeItem('restaurante');
   window.location.href = '/login';
 }
 

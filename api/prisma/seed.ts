@@ -6,63 +6,84 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
+  async function ensureGlobalUser(data: {
+    nome: string;
+    email: string;
+    senhaHash: string;
+    pin: string;
+    perfil: 'ADMIN' | 'GARCOM' | 'COZINHA' | 'CAIXA';
+  }) {
+    const existing = await prisma.usuario.findFirst({
+      where: { email: data.email, restauranteId: null },
+    });
+
+    if (existing) {
+      return prisma.usuario.update({
+        where: { id: existing.id },
+        data: {
+          nome: data.nome,
+          senhaHash: data.senhaHash,
+          pin: data.pin,
+          perfil: data.perfil,
+          ativo: true,
+        },
+      });
+    }
+
+    return prisma.usuario.create({
+      data: {
+        restauranteId: null,
+        nome: data.nome,
+        email: data.email,
+        senhaHash: data.senhaHash,
+        pin: data.pin,
+        perfil: data.perfil,
+        ativo: true,
+      },
+    });
+  }
+
   // Criar usuario admin
   const senhaHash = await bcrypt.hash('admin123', 10);
-  const admin = await prisma.usuario.upsert({
-    where: { email: 'admin@cafecontrol.com' },
-    update: {},
-    create: {
-      nome: 'Administrador',
-      email: 'admin@cafecontrol.com',
-      senhaHash,
-      pin: '000000',
-      perfil: 'ADMIN',
-    },
+  const admin = await ensureGlobalUser({
+    nome: 'Administrador',
+    email: 'admin@cafecontrol.com',
+    senhaHash,
+    pin: '000000',
+    perfil: 'ADMIN',
   });
   console.log(`Admin criado: ${admin.email}`);
 
   // Criar garcom de exemplo
   const garcomHash = await bcrypt.hash('garcom123', 10);
-  const garcom = await prisma.usuario.upsert({
-    where: { email: 'garcom@cafecontrol.com' },
-    update: {},
-    create: {
-      nome: 'João Garçom',
-      email: 'garcom@cafecontrol.com',
-      senhaHash: garcomHash,
-      pin: '111111',
-      perfil: 'GARCOM',
-    },
+  const garcom = await ensureGlobalUser({
+    nome: 'João Garçom',
+    email: 'garcom@cafecontrol.com',
+    senhaHash: garcomHash,
+    pin: '111111',
+    perfil: 'GARCOM',
   });
   console.log(`Garçom criado: ${garcom.email}`);
 
   // Criar cozinheiro de exemplo
   const cozinhaHash = await bcrypt.hash('cozinha123', 10);
-  const cozinheiro = await prisma.usuario.upsert({
-    where: { email: 'cozinha@cafecontrol.com' },
-    update: {},
-    create: {
-      nome: 'Maria Cozinha',
-      email: 'cozinha@cafecontrol.com',
-      senhaHash: cozinhaHash,
-      pin: '222222',
-      perfil: 'COZINHA',
-    },
+  const cozinheiro = await ensureGlobalUser({
+    nome: 'Maria Cozinha',
+    email: 'cozinha@cafecontrol.com',
+    senhaHash: cozinhaHash,
+    pin: '222222',
+    perfil: 'COZINHA',
   });
   console.log(`Cozinheiro criado: ${cozinheiro.email}`);
 
   // Criar caixa de exemplo
   const caixaHash = await bcrypt.hash('caixa123', 10);
-  const caixa = await prisma.usuario.upsert({
-    where: { email: 'caixa@cafecontrol.com' },
-    update: {},
-    create: {
-      nome: 'Ana Caixa',
-      email: 'caixa@cafecontrol.com',
-      senhaHash: caixaHash,
-      pin: '333333',
-      perfil: 'CAIXA',
-    },
+  const caixa = await ensureGlobalUser({
+    nome: 'Ana Caixa',
+    email: 'caixa@cafecontrol.com',
+    senhaHash: caixaHash,
+    pin: '333333',
+    perfil: 'CAIXA',
   });
   console.log(`Caixa criado: ${caixa.email}`);
 

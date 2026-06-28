@@ -2,13 +2,15 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api-client';
-import type { LoginResponse, Usuario } from '@cafecontrol/shared';
+import type { LoginResponse, Restaurante, Usuario } from '@cafecontrol/shared';
 import { Perfil } from '@cafecontrol/shared';
 
 type UserInfo = Omit<Usuario, 'pin'>;
+type RestaurantInfo = Omit<Restaurante, 'criadoEm'>;
 
 interface AuthContextType {
   user: UserInfo | null;
+  restaurante: RestaurantInfo | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, senha: string) => Promise<void>;
@@ -20,6 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [restaurante, setRestaurante] = useState<RestaurantInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -29,18 +32,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
+      localStorage.removeItem('restaurante');
     }
 
     async function restoreSession() {
       const storedUser = localStorage.getItem('user');
+      const storedRestaurant = localStorage.getItem('restaurante');
       const accessToken = localStorage.getItem('accessToken');
       const refreshToken = localStorage.getItem('refreshToken');
 
       try {
         if (storedUser && accessToken) {
           const parsedUser = JSON.parse(storedUser) as UserInfo;
+          const parsedRestaurant = storedRestaurant ? JSON.parse(storedRestaurant) as RestaurantInfo : null;
           if (isMounted) {
             setUser(parsedUser);
+            setRestaurante(parsedRestaurant);
           }
           return;
         }
@@ -57,9 +64,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem('accessToken', data.accessToken);
           localStorage.setItem('refreshToken', data.refreshToken);
           localStorage.setItem('user', JSON.stringify(data.usuario));
+          if (data.restaurante) {
+            localStorage.setItem('restaurante', JSON.stringify(data.restaurante));
+          }
 
           if (isMounted) {
             setUser(data.usuario);
+            setRestaurante((data.restaurante as RestaurantInfo) ?? null);
           }
         }
       } catch {
@@ -83,7 +94,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     localStorage.setItem('user', JSON.stringify(data.usuario));
+    if (data.restaurante) {
+      localStorage.setItem('restaurante', JSON.stringify(data.restaurante));
+    } else {
+      localStorage.removeItem('restaurante');
+    }
     setUser(data.usuario);
+    setRestaurante((data.restaurante as RestaurantInfo) ?? null);
   }, []);
 
   const loginPin = useCallback(async (pin: string) => {
@@ -91,14 +108,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     localStorage.setItem('user', JSON.stringify(data.usuario));
+    if (data.restaurante) {
+      localStorage.setItem('restaurante', JSON.stringify(data.restaurante));
+    } else {
+      localStorage.removeItem('restaurante');
+    }
     setUser(data.usuario);
+    setRestaurante((data.restaurante as RestaurantInfo) ?? null);
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('restaurante');
     setUser(null);
+    setRestaurante(null);
     window.location.href = '/login';
   }, []);
 
@@ -106,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        restaurante,
         isAuthenticated: !!user,
         isLoading,
         login,

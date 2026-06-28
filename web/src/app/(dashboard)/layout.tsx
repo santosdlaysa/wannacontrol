@@ -165,7 +165,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, restaurante, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -196,8 +196,10 @@ export default function DashboardLayout({
           <aside className="w-64 bg-cafe-900 text-white flex flex-col fixed h-full z-30">
             {/* Logo */}
             <div className="p-5 border-b border-cafe-800">
-              <h1 className="text-xl font-bold text-cafe-50">CafeControl</h1>
-              <p className="text-cafe-300 text-xs mt-0.5">Gestao de Cafeteria</p>
+              <h1 className="text-xl font-bold text-cafe-50 truncate">
+                {restaurante?.nome || 'CafeControl'}
+              </h1>
+              <p className="text-cafe-300 text-xs mt-0.5">Restaurante</p>
             </div>
 
             {/* Navigation */}

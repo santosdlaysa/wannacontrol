@@ -22,7 +22,10 @@ function generateTokens(payload: AuthPayload) {
 }
 
 export async function loginEmail(email: string, senha: string) {
-  const usuario = await prisma.usuario.findFirst({ where: { email } });
+  const usuario = await prisma.usuario.findFirst({
+    where: { email },
+    orderBy: [{ restauranteId: 'asc' }, { id: 'asc' }],
+  });
 
   if (!usuario || !usuario.ativo) {
     throw new UnauthorizedError('E-mail ou senha inválidos');
@@ -86,7 +89,13 @@ export async function refreshAccessToken(refreshToken: string) {
       perfil: usuario.perfil as any,
       restauranteId: usuario.restauranteId ?? undefined,
     };
-    return generateTokens(payload);
+    const tokens = generateTokens(payload);
+    const { senhaHash, ...usuarioSemSenha } = usuario;
+    const restaurante = usuario.restauranteId
+      ? await prisma.restaurante.findUnique({ where: { id: usuario.restauranteId } })
+      : null;
+
+    return { ...tokens, usuario: usuarioSemSenha, restaurante: restaurante ?? undefined };
   } catch {
     throw new UnauthorizedError('Refresh token inválido ou expirado');
   }
