@@ -2,12 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/providers/AuthProvider';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
+import segundoQr from '@/assets/segundo.png';
+import terceiroQr from '@/assets/terceiro.png';
+
+const PIX_ESTATICO: Record<string, { imagem: typeof segundoQr; codigo: string }> = {
+  PROFISSIONAL: {
+    imagem: segundoQr,
+    codigo: '00020126360014BR.GOV.BCB.PIX0114+55959812739125204000053039865406200.005802BR5901N6001C62070503***63040382',
+  },
+  PREMIUM: {
+    imagem: terceiroQr,
+    codigo: '00020126360014BR.GOV.BCB.PIX0114+55959812739125204000053039865406597.005802BR5901N6001C62070503***6304B8F3',
+  },
+};
 
 interface PlanoAssinatura {
   id: 'INICIAL' | 'PROFISSIONAL' | 'PREMIUM';
@@ -117,7 +131,7 @@ export default function AssinaturaPage() {
         planoId: selectedPlano.id,
         email: email.trim() || undefined,
       });
-      const url = data.initPoint || data.sandboxInitPoint;
+      const url = data.sandboxInitPoint || data.initPoint;
       if (!url) throw new Error('Checkout de cartao nao retornou link de pagamento');
       window.location.href = url;
     } catch (err: unknown) {
@@ -239,56 +253,94 @@ export default function AssinaturaPage() {
             </div>
           )}
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-            <Button onClick={gerarPix} loading={gerandoPix} disabled={!selectedPlano}>
-              Gerar Pix
-            </Button>
-            <Button variant="secondary" onClick={pagarCartao} loading={gerandoCartao} disabled={!selectedPlano}>
-              Pagar com cartao
-            </Button>
-          </div>
-
-          {pix && (
-            <div className="mt-6 border-t border-gray-100 pt-5">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-black text-gray-900">Pix gerado</h3>
-                <Badge variant={pixStatus === 'approved' ? 'green' : 'yellow'}>
-                  {statusLabel[pixStatus] || pixStatus}
-                </Badge>
-              </div>
-
+          {selectedPlano && PIX_ESTATICO[selectedPlano.id] ? (
+            <div className="mt-5 border-t border-gray-100 pt-5">
+              <h3 className="font-black text-gray-900">Pagar via Pix</h3>
               <div className="mt-4 flex justify-center rounded-lg bg-gray-50 p-4">
-                <img
-                  src={`data:image/png;base64,${pix.qrCodeBase64}`}
+                <Image
+                  src={PIX_ESTATICO[selectedPlano.id]!.imagem}
                   alt="QR Code Pix"
-                  className="h-56 w-56"
+                  width={200}
+                  height={200}
                 />
               </div>
-
               <label className="mt-4 block text-sm font-medium text-gray-700">
                 Pix copia e cola
               </label>
               <textarea
                 readOnly
-                value={pix.qrCode}
+                value={PIX_ESTATICO[selectedPlano.id]!.codigo}
                 className="mt-1 h-24 w-full rounded-lg border border-gray-300 px-3 py-2 text-xs text-gray-700 focus:outline-none"
               />
-
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="mt-3">
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    navigator.clipboard.writeText(pix.qrCode);
+                    navigator.clipboard.writeText(PIX_ESTATICO[selectedPlano.id]!.codigo);
                     toast.success('Codigo Pix copiado');
                   }}
                 >
                   Copiar codigo Pix
                 </Button>
-                <Button variant="secondary" onClick={consultarPix} loading={consultando}>
-                  Verificar pagamento
+              </div>
+              <p className="mt-3 text-xs text-gray-400">
+                Apos o pagamento, entre em contato pelo WhatsApp para ativar o plano.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                <Button onClick={gerarPix} loading={gerandoPix} disabled={!selectedPlano}>
+                  Gerar Pix
+                </Button>
+                <Button variant="secondary" onClick={pagarCartao} loading={gerandoCartao} disabled={!selectedPlano}>
+                  Pagar com cartao
                 </Button>
               </div>
-            </div>
+
+              {pix && (
+                <div className="mt-6 border-t border-gray-100 pt-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-black text-gray-900">Pix gerado</h3>
+                    <Badge variant={pixStatus === 'approved' ? 'green' : 'yellow'}>
+                      {statusLabel[pixStatus] || pixStatus}
+                    </Badge>
+                  </div>
+
+                  <div className="mt-4 flex justify-center rounded-lg bg-gray-50 p-4">
+                    <img
+                      src={`data:image/png;base64,${pix.qrCodeBase64}`}
+                      alt="QR Code Pix"
+                      className="h-56 w-56"
+                    />
+                  </div>
+
+                  <label className="mt-4 block text-sm font-medium text-gray-700">
+                    Pix copia e cola
+                  </label>
+                  <textarea
+                    readOnly
+                    value={pix.qrCode}
+                    className="mt-1 h-24 w-full rounded-lg border border-gray-300 px-3 py-2 text-xs text-gray-700 focus:outline-none"
+                  />
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        navigator.clipboard.writeText(pix.qrCode);
+                        toast.success('Codigo Pix copiado');
+                      }}
+                    >
+                      Copiar codigo Pix
+                    </Button>
+                    <Button variant="secondary" onClick={consultarPix} loading={consultando}>
+                      Verificar pagamento
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
