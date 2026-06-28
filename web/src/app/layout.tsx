@@ -18,7 +18,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'ChefFlow - Sistema de Gestao',
-  description: 'Sistema de gestao para cafeterias',
+  description: 'Sistema de Gestao para restaurantes',
 };
 
 export default function RootLayout({

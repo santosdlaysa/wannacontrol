@@ -1,4 +1,4 @@
-# ChefFlow — Sistema de Gestão para Restaurantes e Delivery
+# ChefFlow — Sistema de gestão para restaurantes e Delivery
 
 Sistema SaaS completo para restaurantes que trabalham com **atendimento em mesas**, **delivery** e **retirada**. Permite receber pedidos, enviar para a cozinha em tempo real, controlar o financeiro e acompanhar as vendas.
 

@@ -62,7 +62,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-3xl font-bold text-cafe-900">ChefFlow</h1>
-            <p className="text-cafe-500 mt-1">Sistema de Gestao para Cafeterias</p>
+            <p className="text-cafe-500 mt-1">Sistema de Gestao para restaurantes</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

@@ -77,7 +77,7 @@ export default function LoginScreen() {
               <Text style={styles.logoLight}>Café</Text>
               <Text style={styles.logoBold}>Control</Text>
             </View>
-            <Text style={styles.tagline}>Sistema de Gestao para Cafeterias</Text>
+            <Text style={styles.tagline}>Sistema de Gestao para restaurantes</Text>
           </View>
 
           {/* Opções */}
