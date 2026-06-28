@@ -62,10 +62,10 @@ export default function PedidosPage() {
   }
 
   function calcTotal(pedido: Pedido): number {
-    if (pedido.total != null) return pedido.total;
+    if (pedido.total != null) return Number(pedido.total);
     if (!pedido.itens) return 0;
     return pedido.itens.reduce(
-      (sum, item) => sum + item.precoUnitario * item.quantidade,
+      (sum, item) => sum + Number(item.precoUnitario) * item.quantidade,
       0
     );
   }
