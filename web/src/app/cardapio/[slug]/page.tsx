@@ -156,6 +156,7 @@ export default function CardapioPage() {
   const [rua, setRua] = useState('');
   const [obs, setObs] = useState('');
   const [dadosSalvos, setDadosSalvos] = useState(false);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
 
   const fetchCardapio = useCallback(async () => {
     try {
@@ -295,6 +296,49 @@ export default function CardapioPage() {
     ? (bairroSelecionado ? Number(bairroSelecionado.taxa) : (usaBairros ? 0 : Number(data?.configuracoes?.taxa_entrega ?? 0)))
     : 0;
   const total = subtotal + taxaEntrega;
+
+  async function buscarClientePorTelefone(tel: string) {
+    const digits = tel.replace(/\D/g, '');
+    if (digits.length < 10) return;
+
+    setBuscandoCliente(true);
+    try {
+      const res = await fetch(`${BASE}/public/${slug}/cliente?telefone=${encodeURIComponent(digits)}`);
+      if (!res.ok) return;
+      const cliente = await res.json() as { nome: string; telefone: string; endereco: string | null; bairro: string | null } | null;
+      if (!cliente) return;
+
+      if (cliente.nome) setNome(cliente.nome);
+
+      // Tentar encontrar o bairroId pelo nome do bairro
+      if (cliente.bairro && data?.bairros) {
+        const bairroEncontrado = data.bairros.find(
+          (b) => b.bairro.toLowerCase() === cliente.bairro!.toLowerCase()
+        );
+        if (bairroEncontrado) setBairroId(bairroEncontrado.id);
+      }
+
+      // Rua: pegar a parte antes do bairro se endereço contiver ", Bairro"
+      if (cliente.endereco) {
+        const ruaExtraida = cliente.bairro
+          ? cliente.endereco.replace(new RegExp(`,?\\s*${cliente.bairro}$`, 'i'), '').trim()
+          : cliente.endereco;
+        if (ruaExtraida) setRua(ruaExtraida);
+      }
+
+      setDadosSalvos(true);
+      localStorage.setItem(`cardapio:cliente:${slug}`, JSON.stringify({
+        nome: cliente.nome,
+        telefone: digits,
+        bairroId: data?.bairros?.find((b) => b.bairro.toLowerCase() === (cliente.bairro || '').toLowerCase())?.id ?? null,
+        rua: cliente.endereco || '',
+      }));
+    } catch {
+      // silencioso
+    } finally {
+      setBuscandoCliente(false);
+    }
+  }
 
   // ─── Submit ───────────────────────────────────────────────────────────────
 
@@ -660,13 +704,17 @@ export default function CardapioPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Telefone / WhatsApp *</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">
+                Telefone / WhatsApp *
+                {buscandoCliente && <span className="ml-2 text-amber-500 normal-case font-normal">Buscando dados...</span>}
+              </label>
               <input
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-400"
                 placeholder="(95) 99999-9999"
                 type="tel"
                 value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
+                onChange={(e) => { setTelefone(e.target.value); setDadosSalvos(false); }}
+                onBlur={(e) => buscarClientePorTelefone(e.target.value)}
               />
             </div>
             {tipo === 'DELIVERY' && usaBairros && (

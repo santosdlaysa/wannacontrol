@@ -11,6 +11,14 @@ export async function criarPedido(req: Request, res: Response) {
   res.status(201).json(pedido);
 }
 
+export async function getCliente(req: Request, res: Response) {
+  const data = await service.getClientePublico(
+    req.params.slug,
+    String(req.query.telefone || ''),
+  );
+  res.json(data);
+}
+
 export async function getStatusPedido(req: Request, res: Response) {
   const data = await service.getStatusPedidoPublico(
     req.params.slug,

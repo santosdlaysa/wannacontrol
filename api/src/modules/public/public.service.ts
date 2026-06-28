@@ -217,6 +217,25 @@ export async function criarPedidoPublico(slug: string, data: {
   return pedido;
 }
 
+export async function getClientePublico(slug: string, telefone: string) {
+  const restaurante = await prisma.restaurante.findUnique({
+    where: { slug },
+    select: { id: true, ativo: true },
+  });
+
+  if (!restaurante || !restaurante.ativo) throw new NotFoundError('Restaurante');
+
+  const telefoneNormalizado = telefone.replace(/\D/g, '');
+  if (!telefoneNormalizado) return null;
+
+  const cliente = await prisma.cliente.findFirst({
+    where: { restauranteId: restaurante.id, telefone: telefoneNormalizado },
+    select: { nome: true, telefone: true, endereco: true, bairro: true },
+  });
+
+  return cliente;
+}
+
 export async function getStatusPedidoPublico(slug: string, pedidoId: number, telefone: string) {
   const restaurante = await prisma.restaurante.findUnique({
     where: { slug },
