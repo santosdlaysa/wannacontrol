@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import prisma from '../../lib/prisma';
 import { env } from '../../config/env';
 import { NotFoundError, ValidationError } from '../../lib/errors';
+import { sendTelegram } from '../../lib/telegram';
 
 type PlanoId = 'INICIAL' | 'PROFISSIONAL' | 'PREMIUM';
 
@@ -105,6 +106,34 @@ async function getRestaurante(restauranteId: number) {
 
 export function listarPlanos() {
   return Object.values(PLANOS);
+}
+
+export async function solicitarPix(restauranteId: number, planoId: string) {
+  const [restaurante, plano] = await Promise.all([
+    getRestaurante(restauranteId),
+    Promise.resolve(getPlano(planoId)),
+  ]);
+
+  const solicitacao = await prisma.solicitacaoPix.create({
+    data: {
+      restauranteId,
+      planoId: plano.id,
+      planoNome: plano.nome,
+      valor: plano.valor,
+    },
+  });
+
+  const valorFormatado = plano.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  await sendTelegram(
+    `🔔 <b>Nova solicitação de Pix!</b>\n\n` +
+    `Restaurante: <b>${restaurante.nome}</b>\n` +
+    `Plano: <b>${plano.nome}</b> — R$ ${valorFormatado}\n` +
+    `Email: ${restaurante.email || 'não informado'}\n` +
+    `Solicitação: <b>#${solicitacao.id}</b>\n\n` +
+    `Confirme no painel da plataforma após receber o pagamento.`
+  );
+
+  return solicitacao;
 }
 
 export async function criarPagamentoPix(restauranteId: number, planoId: string, payerEmail?: string | null) {

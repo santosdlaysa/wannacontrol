@@ -27,6 +27,11 @@ export async function consultarPagamento(req: Request, res: Response) {
   res.json(result);
 }
 
+export async function solicitarPix(req: Request, res: Response) {
+  const result = await service.solicitarPix(getRestauranteId(req), req.body?.planoId);
+  res.status(201).json(result);
+}
+
 export async function receberWebhook(req: Request, res: Response) {
   // Sempre retornar 200 imediatamente para o Mercado Pago não retentar
   res.json({ received: true });

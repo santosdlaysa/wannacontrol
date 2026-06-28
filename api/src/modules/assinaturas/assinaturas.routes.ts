@@ -10,6 +10,7 @@ const router = Router();
 router.use(authMiddleware, authorize(Perfil.ADMIN, Perfil.GERENTE));
 
 router.get('/planos', controller.listarPlanos);
+router.post('/solicitar-pix', asyncHandler(controller.solicitarPix));
 router.post('/pix', asyncHandler(controller.criarPagamentoPix));
 router.post('/cartao', asyncHandler(controller.criarCheckoutCartao));
 router.get('/pagamentos/:id', asyncHandler(controller.consultarPagamento));

@@ -2,6 +2,13 @@ import bcrypt from 'bcryptjs';
 import prisma from '../../lib/prisma';
 import { ConflictError, NotFoundError } from '../../lib/errors';
 import { normalizeModules, SYSTEM_MODULES } from './admin-modules';
+import { sendTelegram } from '../../lib/telegram';
+
+const PLANO_SISTEMA_MAP: Record<string, 'BASICO' | 'PROFISSIONAL' | 'ENTERPRISE'> = {
+  INICIAL: 'BASICO',
+  PROFISSIONAL: 'PROFISSIONAL',
+  PREMIUM: 'ENTERPRISE',
+};
 
 type RestauranteModuloRow = {
   restaurante_id: number;
@@ -159,6 +166,52 @@ export async function atualizarModulos(restauranteId: number, modulosInput: stri
     restauranteId,
     modulos: Object.fromEntries(SYSTEM_MODULES.map((m) => [m, modulos.includes(m)])),
   };
+}
+
+export async function listarSolicitacoesPix() {
+  return prisma.solicitacaoPix.findMany({
+    orderBy: { criadoEm: 'desc' },
+    include: {
+      restaurante: {
+        select: { id: true, nome: true, email: true, plano: true, ativo: true },
+      },
+    },
+  });
+}
+
+export async function aprovarSolicitacaoPix(id: number) {
+  const solicitacao = await prisma.solicitacaoPix.findUnique({
+    where: { id },
+    include: { restaurante: true },
+  });
+  if (!solicitacao) throw new NotFoundError('Solicitacao');
+
+  const planoSistema = PLANO_SISTEMA_MAP[solicitacao.planoId] || 'BASICO';
+
+  await prisma.$transaction([
+    prisma.solicitacaoPix.update({ where: { id }, data: { status: 'APROVADO' } }),
+    prisma.restaurante.update({
+      where: { id: solicitacao.restauranteId },
+      data: { plano: planoSistema, ativo: true },
+    }),
+  ]);
+
+  await sendTelegram(
+    `✅ <b>Pagamento confirmado!</b>\n\n` +
+    `Restaurante: <b>${solicitacao.restaurante.nome}</b>\n` +
+    `Plano <b>${solicitacao.planoNome}</b> ativado com sucesso.`
+  );
+
+  return { ok: true };
+}
+
+export async function rejeitarSolicitacaoPix(id: number) {
+  const solicitacao = await prisma.solicitacaoPix.findUnique({ where: { id } });
+  if (!solicitacao) throw new NotFoundError('Solicitacao');
+
+  await prisma.solicitacaoPix.update({ where: { id }, data: { status: 'REJEITADO' } });
+
+  return { ok: true };
 }
 
 export { SYSTEM_MODULES };

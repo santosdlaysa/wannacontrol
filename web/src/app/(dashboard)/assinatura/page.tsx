@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
@@ -73,6 +73,7 @@ export default function AssinaturaPage() {
   const [gerandoPix, setGerandoPix] = useState(false);
   const [gerandoCartao, setGerandoCartao] = useState(false);
   const [consultando, setConsultando] = useState(false);
+  const notificadosRef = useRef<Set<string>>(new Set());
 
   const statusParam = searchParams.get('status');
 
@@ -102,6 +103,13 @@ export default function AssinaturaPage() {
       })
       .finally(() => setLoadingPlanos(false));
   }, [restaurante?.plano]);
+
+  useEffect(() => {
+    if (!selectedPlano || !PIX_ESTATICO[selectedPlano.id]) return;
+    if (notificadosRef.current.has(selectedPlano.id)) return;
+    notificadosRef.current.add(selectedPlano.id);
+    api.post('/assinaturas/solicitar-pix', { planoId: selectedPlano.id }).catch(() => {});
+  }, [selectedPlano]);
 
   async function gerarPix() {
     if (!selectedPlano) return;

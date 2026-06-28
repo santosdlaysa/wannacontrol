@@ -23,3 +23,15 @@ export async function atualizarModulos(req: Request, res: Response) {
 export async function listarModulos(_req: Request, res: Response) {
   res.json(service.SYSTEM_MODULES);
 }
+
+export async function listarSolicitacoesPix(_req: Request, res: Response) {
+  res.json(await service.listarSolicitacoesPix());
+}
+
+export async function aprovarSolicitacaoPix(req: Request, res: Response) {
+  res.json(await service.aprovarSolicitacaoPix(Number(req.params.id)));
+}
+
+export async function rejeitarSolicitacaoPix(req: Request, res: Response) {
+  res.json(await service.rejeitarSolicitacaoPix(Number(req.params.id)));
+}
