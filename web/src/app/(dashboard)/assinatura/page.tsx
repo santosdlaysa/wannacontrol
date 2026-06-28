@@ -8,10 +8,15 @@ import { useAuth } from '@/providers/AuthProvider';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
+import primeiroQr from '@/assets/pix basico.png';
 import segundoQr from '@/assets/segundo.png';
 import terceiroQr from '@/assets/terceiro.png';
 
 const PIX_ESTATICO: Record<string, { imagem: typeof segundoQr; codigo: string }> = {
+  INICIAL: {
+    imagem: primeiroQr,
+    codigo: '00020126360014BR.GOV.BCB.PIX0114+5595981273912520400005303986540575.005802BR5901N6001C62070503***630487B8',
+  },
   PROFISSIONAL: {
     imagem: segundoQr,
     codigo: '00020126360014BR.GOV.BCB.PIX0114+55959812739125204000053039865406200.005802BR5901N6001C62070503***63040382',
