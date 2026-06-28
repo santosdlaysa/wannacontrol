@@ -702,6 +702,7 @@ export default function CardapioPage() {
 
   // ─── Tela do menu ────────────────────────────────────────────────────────
 
+
   // Agrupar categorias + semCategoria agrupado por categoria string
   const todasCategorias: { id: number | 'sem'; nome: string; produtos: ProdutoPublico[] }[] = [
     ...categorias.map((c) => ({ id: c.id as number | 'sem', nome: c.nome, produtos: c.produtos })),
@@ -858,6 +859,32 @@ export default function CardapioPage() {
           </div>
         )}
       </header>
+
+      {/* Seletor de bairro para ver taxa */}
+      {usaBairros && (
+        <div className="bg-white border-b border-amber-100 sticky top-0 z-10 shadow-sm">
+          <div className="max-w-2xl mx-auto px-4 py-2.5 flex items-center gap-3">
+            <span className="text-sm text-gray-500 shrink-0">Seu bairro:</span>
+            <select
+              className="flex-1 bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
+              value={bairroId ?? ''}
+              onChange={(e) => setBairroId(e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">Selecione para ver a taxa...</option>
+              {data?.bairros?.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.bairro} — {formatBRL(Number(b.taxa))}
+                </option>
+              ))}
+            </select>
+            {bairroSelecionado && (
+              <span className="text-sm font-bold text-amber-600 shrink-0">
+                + {formatBRL(Number(bairroSelecionado.taxa))}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Products */}
       <main className="max-w-2xl mx-auto px-4 py-4 pb-32">
