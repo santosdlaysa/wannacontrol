@@ -93,7 +93,7 @@ export default function LandingPage() {
                   Agendar demonstracao
                 </a>
                 <Link
-                  href="/cardapio/cozinha-da-daika"
+                  href="/cardapio/chefflow-demo"
                   className="inline-flex justify-center rounded-lg border border-white/40 px-6 py-4 text-base font-black text-white hover:bg-white/10"
                 >
                   Ver cardapio publico
