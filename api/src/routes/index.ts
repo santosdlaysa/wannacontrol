@@ -12,6 +12,7 @@ import complementosRoutes from '../modules/complementos/complementos.routes';
 import entregadoresRoutes from '../modules/entregadores/entregadores.routes';
 import configuracoesRoutes from '../modules/configuracoes/configuracoes.routes';
 import restauranteRoutes from '../modules/restaurante/restaurante.routes';
+import adminRoutes from '../modules/admin/admin.routes';
 import publicRoutes from '../modules/public/public.routes';
 import { authMiddleware } from '../middlewares/auth';
 import { authorize } from '../middlewares/authorize';
@@ -25,6 +26,7 @@ export const router = Router();
 // Rotas publicas
 router.use('/auth', authRoutes);
 router.use('/public', publicRoutes);
+router.use('/admin', adminRoutes);
 
 // Rotas protegidas
 router.use('/usuarios', usuariosRoutes);
