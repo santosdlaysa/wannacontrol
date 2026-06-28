@@ -75,6 +75,30 @@ export async function loginPin(pin: string) {
   return { ...tokens, usuario: usuarioSemSenha, restaurante: restaurante ?? undefined };
 }
 
+export async function getDemoToken() {
+  const usuario = await prisma.usuario.findFirst({
+    where: { email: 'admin@daika.com' },
+  });
+
+  if (!usuario || !usuario.ativo) {
+    throw new NotFoundError('Usuário demo não encontrado');
+  }
+
+  const payload: AuthPayload = {
+    userId: usuario.id,
+    perfil: usuario.perfil as any,
+    restauranteId: usuario.restauranteId ?? undefined,
+  };
+  const tokens = generateTokens(payload);
+
+  const { senhaHash, ...usuarioSemSenha } = usuario;
+  const restaurante = usuario.restauranteId
+    ? await prisma.restaurante.findUnique({ where: { id: usuario.restauranteId } })
+    : null;
+
+  return { ...tokens, usuario: usuarioSemSenha, restaurante: restaurante ?? undefined };
+}
+
 export async function refreshAccessToken(refreshToken: string) {
   try {
     const decoded = jwt.verify(refreshToken, env.JWT_SECRET) as AuthPayload;

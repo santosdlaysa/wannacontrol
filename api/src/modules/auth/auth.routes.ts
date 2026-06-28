@@ -9,5 +9,6 @@ const router = Router();
 router.post('/login', validate(loginEmailSchema), asyncHandler(authController.login));
 router.post('/login-pin', validate(loginPinSchema), asyncHandler(authController.loginPin));
 router.post('/refresh', validate(refreshTokenSchema), asyncHandler(authController.refresh));
+router.get('/demo-token', asyncHandler(authController.demoToken));
 
 export default router;

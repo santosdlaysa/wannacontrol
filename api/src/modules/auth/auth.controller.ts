@@ -18,3 +18,8 @@ export async function refresh(req: Request, res: Response) {
   const tokens = await authService.refreshAccessToken(refreshToken);
   res.json(tokens);
 }
+
+export async function demoToken(_req: Request, res: Response) {
+  const result = await authService.getDemoToken();
+  res.json(result);
+}

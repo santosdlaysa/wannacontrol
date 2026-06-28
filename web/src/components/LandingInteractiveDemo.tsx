@@ -379,7 +379,7 @@ export default function LandingInteractiveDemo() {
             </h3>
             <p className="mt-3 leading-7 text-gray-600">
               {mode === 'admin'
-                ? 'Clique em qualquer item do menu lateral para navegar pelas telas do sistema. Dados reais ao vivo.'
+                ? 'Clique em qualquer item do menu lateral para navegar pelas telas. Clique em "Acessar demo ao vivo" para entrar no sistema real com dados reais.'
                 : 'O cliente abre o link do restaurante, escolhe os produtos, informa os dados e recebe o numero do pedido.'}
             </p>
 
@@ -401,10 +401,12 @@ export default function LandingInteractiveDemo() {
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
-                href={mode === 'admin' ? '/login' : `/cardapio/${SLUG}`}
+                href={mode === 'admin' ? '/demo' : `/cardapio/${SLUG}`}
+                target={mode === 'admin' ? '_blank' : undefined}
+                rel={mode === 'admin' ? 'noopener noreferrer' : undefined}
                 className="rounded-lg bg-cafe-800 px-5 py-3 text-center text-sm font-black text-white hover:bg-cafe-900"
               >
-                {mode === 'admin' ? 'Acessar painel' : 'Abrir cardapio'}
+                {mode === 'admin' ? 'Acessar demo ao vivo' : 'Abrir cardapio'}
               </Link>
               <button
                 onClick={() => setMode(mode === 'admin' ? 'cliente' : 'admin')}
@@ -436,8 +438,8 @@ export default function LandingInteractiveDemo() {
                 {/* Sidebar clicável */}
                 <aside className="w-44 shrink-0 flex flex-col" style={{ backgroundColor: '#1a0f0a' }}>
                   <div className="px-4 py-4 border-b border-white/10">
-                    <p className="text-sm font-bold text-white">CafeControl</p>
-                    <p className="text-[10px] text-white/40 mt-0.5">Gestao de Cafeteria</p>
+                    <p className="text-sm font-bold text-white">Cozinha da Daika</p>
+                    <p className="text-[10px] text-white/40 mt-0.5">Restaurante</p>
                   </div>
                   <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-hidden">
                     {NAV_ITEMS.map((item) => (
@@ -460,7 +462,7 @@ export default function LandingInteractiveDemo() {
                         A
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-white truncate">Admin</p>
+                        <p className="text-xs font-medium text-white truncate">Daika Admin</p>
                         <p className="text-[10px] text-white/40">ADMIN</p>
                       </div>
                     </div>
@@ -471,7 +473,7 @@ export default function LandingInteractiveDemo() {
                 <main className="flex-1 bg-gray-50 overflow-auto">
                   <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0">
                     <div />
-                    <span className="text-xs text-gray-500">Ola, <span className="font-medium text-gray-700">Admin</span></span>
+                    <span className="text-xs text-gray-500">Ola, <span className="font-medium text-gray-700">Daika Admin</span></span>
                   </header>
                   <div className="p-4">
                     <p className="text-sm font-bold text-gray-900 mb-0.5">{activeScreen}</p>
