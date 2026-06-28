@@ -178,20 +178,34 @@ export default function LandingPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
-          {[
+          [
             {
               nome: 'Inicial',
               valor: 'R$ 147',
-              desc: 'Cardapio digital, pedidos online, produtos, clientes e painel basico.',
-              recursos: ['Cardapio digital publico', 'Pedidos online', 'Cadastro de produtos', 'Painel de clientes'],
+              desc: 'Receba pedidos online, confirme e controle entregas no basico.',
+              recursos: [
+                'Cardapio digital publico',
+                'Delivery e retirada',
+                'Confirmar e entregar pedidos',
+                'Cadastro de clientes',
+                'Cadastro de produtos',
+                'Painel de pedidos simples',
+              ],
               destaque: false,
               cta: 'Comecar agora',
             },
             {
               nome: 'Profissional',
               valor: 'R$ 297',
-              desc: 'Pedidos, mesas, cozinha, delivery, caixa, financeiro e relatorios.',
-              recursos: ['Tudo do Inicial', 'Mesas e pedidos', 'Cozinha em tempo real', 'Delivery e retirada', 'Caixa e financeiro'],
+              desc: 'Tudo do Inicial mais mesas, cozinha em tempo real, caixa e financeiro.',
+              recursos: [
+                'Tudo do Inicial',
+                'Mesas e pedidos presenciais',
+                'Cozinha em tempo real',
+                'Caixa e sangria',
+                'Relatorio financeiro',
+                'Multiplos usuarios e perfis',
+              ],
               destaque: true,
               cta: 'Escolher Profissional',
             },
@@ -199,7 +213,14 @@ export default function LandingPage() {
               nome: 'Premium',
               valor: 'R$ 597',
               desc: 'Operacao completa com suporte prioritario e implantacao acompanhada.',
-              recursos: ['Tudo do Profissional', 'Suporte prioritario', 'Implantacao acompanhada', 'Personalizacoes leves'],
+              recursos: [
+                'Tudo do Profissional',
+                'Entregadores cadastrados',
+                'Complementos por produto',
+                'Suporte prioritario',
+                'Implantacao acompanhada',
+                'Personalizacoes leves',
+              ],
               destaque: false,
               cta: 'Falar com vendas',
             },

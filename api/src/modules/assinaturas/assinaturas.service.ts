@@ -16,26 +16,26 @@ const PLANOS: Record<PlanoId, {
   INICIAL: {
     id: 'INICIAL',
     nome: 'Inicial',
-    descricao: 'Cardapio digital, pedidos online, produtos, clientes e painel basico.',
+    descricao: 'Receba pedidos online, confirme e controle entregas no basico.',
     valor: 147,
     planoSistema: 'BASICO',
-    recursos: ['Cardapio digital', 'Pedidos online', 'Produtos e clientes', 'Painel basico'],
+    recursos: ['Cardapio digital publico', 'Delivery e retirada', 'Confirmar e entregar pedidos', 'Cadastro de clientes', 'Cadastro de produtos', 'Painel de pedidos simples'],
   },
   PROFISSIONAL: {
     id: 'PROFISSIONAL',
     nome: 'Profissional',
-    descricao: 'Pedidos, mesas, cozinha, delivery, caixa, financeiro e relatorios.',
+    descricao: 'Tudo do Inicial mais mesas, cozinha em tempo real, caixa e financeiro.',
     valor: 297,
     planoSistema: 'PROFISSIONAL',
-    recursos: ['Mesas e pedidos', 'Cozinha em tempo real', 'Delivery e retirada', 'Caixa e financeiro'],
+    recursos: ['Tudo do Inicial', 'Mesas e pedidos presenciais', 'Cozinha em tempo real', 'Caixa e sangria', 'Relatorio financeiro', 'Multiplos usuarios e perfis'],
   },
   PREMIUM: {
     id: 'PREMIUM',
     nome: 'Premium',
-    descricao: 'Operacao completa com suporte prioritario, implantacao e personalizacoes leves.',
+    descricao: 'Operacao completa com suporte prioritario e implantacao acompanhada.',
     valor: 597,
     planoSistema: 'ENTERPRISE',
-    recursos: ['Tudo do Profissional', 'Suporte prioritario', 'Implantacao acompanhada', 'Personalizacoes leves'],
+    recursos: ['Tudo do Profissional', 'Entregadores cadastrados', 'Complementos por produto', 'Suporte prioritario', 'Implantacao acompanhada', 'Personalizacoes leves'],
   },
 };
 
