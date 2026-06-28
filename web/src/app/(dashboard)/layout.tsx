@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/providers/AuthProvider';
@@ -204,50 +204,49 @@ export default function DashboardLayout({
   const { user, restaurante, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const verificouAssinatura = useRef(false);
+  // null = ainda verificando, true = tem assinatura, false = sem assinatura
+  const [assinaturaAtiva, setAssinaturaAtiva] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
       router.push('/login');
       return;
     }
 
-    if (!isLoading && isAuthenticated && pathname !== '/assinatura') {
-      // Verificacao rapida pelo cache local
-      if (!restaurante || !restaurante.ativo) {
-        router.push('/assinatura');
-        return;
-      }
+    // Verifica no backend sempre que monta (ignora cache do localStorage)
+    api.get<{ ativo: boolean; plano: string }>('/restaurante/me')
+      .then((data) => {
+        // Atualiza localStorage com valor fresco
+        const stored = localStorage.getItem('restaurante');
+        if (stored) {
+          try {
+            localStorage.setItem('restaurante', JSON.stringify({ ...JSON.parse(stored), ativo: data.ativo, plano: data.plano }));
+          } catch {}
+        }
+        setAssinaturaAtiva(data.ativo);
+        if (!data.ativo && pathname !== '/assinatura') {
+          router.push('/assinatura');
+        }
+      })
+      .catch(() => {
+        // Em caso de erro de rede, usa cache local como fallback
+        setAssinaturaAtiva(restaurante?.ativo ?? false);
+        if (!restaurante?.ativo && pathname !== '/assinatura') {
+          router.push('/assinatura');
+        }
+      });
+  }, [isLoading, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-      // Verificacao no backend uma vez por sessao
-      if (!verificouAssinatura.current) {
-        verificouAssinatura.current = true;
-        api.get<{ ativo: boolean; plano: string }>('/restaurante/me')
-          .then((data) => {
-            if (!data.ativo) {
-              const stored = localStorage.getItem('restaurante');
-              if (stored) {
-                try {
-                  localStorage.setItem('restaurante', JSON.stringify({ ...JSON.parse(stored), ativo: false }));
-                } catch {}
-              }
-              router.push('/assinatura');
-            }
-          })
-          .catch(() => {});
-      }
-    }
-  }, [isLoading, isAuthenticated, restaurante, pathname, router]);
-
-  if (isLoading) {
+  if (isLoading || assinaturaAtiva === null) {
     return <PageLoading message="Carregando sistema..." />;
   }
 
   if (!user) return null;
 
   // Sem assinatura ativa: layout minimo apenas para a pagina de assinatura
-  const semAssinatura = !restaurante?.ativo;
-  if (semAssinatura) {
+  if (!assinaturaAtiva) {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-cafe-900 text-white px-6 py-4 flex items-center justify-between">
