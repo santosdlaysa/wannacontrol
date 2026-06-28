@@ -10,3 +10,12 @@ export async function criarPedido(req: Request, res: Response) {
   const pedido = await service.criarPedidoPublico(req.params.slug, req.body);
   res.status(201).json(pedido);
 }
+
+export async function getStatusPedido(req: Request, res: Response) {
+  const data = await service.getStatusPedidoPublico(
+    req.params.slug,
+    Number(req.params.id),
+    String(req.query.telefone || ''),
+  );
+  res.json(data);
+}

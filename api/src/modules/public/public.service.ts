@@ -209,3 +209,56 @@ export async function criarPedidoPublico(slug: string, data: {
 
   return pedido;
 }
+
+export async function getStatusPedidoPublico(slug: string, pedidoId: number, telefone: string) {
+  const restaurante = await prisma.restaurante.findUnique({
+    where: { slug },
+    select: { id: true, ativo: true },
+  });
+
+  if (!restaurante || !restaurante.ativo) throw new NotFoundError('Restaurante');
+
+  const telefoneNormalizado = telefone.replace(/\D/g, '');
+  if (!telefoneNormalizado) throw new NotFoundError('Pedido');
+
+  const pedido = await prisma.pedido.findFirst({
+    where: {
+      id: pedidoId,
+      restauranteId: restaurante.id,
+      clienteTelefone: telefoneNormalizado,
+    },
+    select: {
+      id: true,
+      tipoPedido: true,
+      statusPedido: true,
+      statusEntrega: true,
+      clienteNome: true,
+      clienteTelefone: true,
+      dataCriacao: true,
+      total: true,
+      taxaEntrega: true,
+      itens: {
+        select: {
+          id: true,
+          quantidade: true,
+          precoUnitario: true,
+          statusPreparo: true,
+          produto: { select: { nome: true } },
+        },
+      },
+    },
+  });
+
+  if (!pedido) throw new NotFoundError('Pedido');
+
+  const subtotal = pedido.itens.reduce(
+    (sum, item) => sum + Number(item.precoUnitario) * item.quantidade,
+    0,
+  );
+
+  return {
+    ...pedido,
+    subtotal,
+    total: pedido.total != null ? Number(pedido.total) : subtotal + Number(pedido.taxaEntrega ?? 0),
+  };
+}

@@ -65,6 +65,52 @@ interface LastPedido {
   criadoEm: string;
 }
 
+type StatusEntregaPedido =
+  | 'RECEBIDO'
+  | 'CONFIRMADO'
+  | 'EM_PREPARO'
+  | 'PRONTO'
+  | 'SAIU_ENTREGA'
+  | 'ENTREGUE'
+  | 'CANCELADO';
+
+interface StatusPedidoPublico {
+  id: number;
+  tipoPedido: Tipo;
+  statusPedido: 'ABERTO' | 'PAGO' | 'CANCELADO';
+  statusEntrega: StatusEntregaPedido | null;
+  clienteNome: string | null;
+  clienteTelefone: string | null;
+  total: number;
+}
+
+const STATUS_LABELS: Record<StatusEntregaPedido, string> = {
+  RECEBIDO: 'Pedido recebido',
+  CONFIRMADO: 'Pedido confirmado',
+  EM_PREPARO: 'Em preparo',
+  PRONTO: 'Pronto',
+  SAIU_ENTREGA: 'Saiu para entrega',
+  ENTREGUE: 'Entregue',
+  CANCELADO: 'Cancelado',
+};
+
+const statusFlowDelivery: StatusEntregaPedido[] = [
+  'RECEBIDO',
+  'CONFIRMADO',
+  'EM_PREPARO',
+  'PRONTO',
+  'SAIU_ENTREGA',
+  'ENTREGUE',
+];
+
+const statusFlowRetirada: StatusEntregaPedido[] = [
+  'RECEBIDO',
+  'CONFIRMADO',
+  'EM_PREPARO',
+  'PRONTO',
+  'ENTREGUE',
+];
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function CardapioPage() {
@@ -79,6 +125,9 @@ export default function CardapioPage() {
   const [step, setStep] = useState<Step>('menu');
   const [pedidoId, setPedidoId] = useState<number | null>(null);
   const [lastPedido, setLastPedido] = useState<LastPedido | null>(null);
+  const [pedidoStatus, setPedidoStatus] = useState<StatusPedidoPublico | null>(null);
+  const [statusErro, setStatusErro] = useState('');
+  const [statusLoading, setStatusLoading] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
   // Checkout form
@@ -119,6 +168,32 @@ export default function CardapioPage() {
       localStorage.removeItem(storageKey);
     }
   }, [slug]);
+
+  const fetchPedidoStatus = useCallback(async () => {
+    if (!pedidoId || !telefone.trim()) return;
+
+    setStatusLoading(true);
+    try {
+      const params = new URLSearchParams({ telefone: telefone.trim() });
+      const res = await fetch(`${BASE}/public/${slug}/pedidos/${pedidoId}/status?${params}`);
+      if (!res.ok) throw new Error('Nao foi possivel carregar o status do pedido');
+      const json: StatusPedidoPublico = await res.json();
+      setPedidoStatus(json);
+      setStatusErro('');
+    } catch (e: any) {
+      setStatusErro(e.message || 'Erro ao carregar status');
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [pedidoId, slug, telefone]);
+
+  useEffect(() => {
+    if (step !== 'sucesso' || !pedidoId) return;
+
+    fetchPedidoStatus();
+    const interval = window.setInterval(fetchPedidoStatus, 10_000);
+    return () => window.clearInterval(interval);
+  }, [step, pedidoId, fetchPedidoStatus]);
 
   // ─── Cart helpers ──────────────────────────────────────────────────────────
 
@@ -219,6 +294,7 @@ export default function CardapioPage() {
       };
 
       setPedidoId(pedido.id);
+      setPedidoStatus(null);
       setLastPedido(pedidoSalvo);
       localStorage.setItem(`cardapio:last-pedido:${slug}`, JSON.stringify(pedidoSalvo));
       setCart([]);
@@ -259,6 +335,16 @@ export default function CardapioPage() {
 
   // Tela de sucesso
   if (step === 'sucesso') {
+    const currentStatus = pedidoStatus?.statusPedido === 'CANCELADO'
+      ? 'CANCELADO'
+      : pedidoStatus?.statusEntrega || 'RECEBIDO';
+    const flow = (pedidoStatus?.tipoPedido || tipo) === 'DELIVERY'
+      ? statusFlowDelivery
+      : statusFlowRetirada;
+    const currentIndex = currentStatus === 'CANCELADO'
+      ? -1
+      : flow.indexOf(currentStatus as StatusEntregaPedido);
+
     return (
       <div className="min-h-screen bg-amber-50 flex items-center justify-center p-6">
         <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-lg">
@@ -277,6 +363,60 @@ export default function CardapioPage() {
               ? 'Seu pedido foi recebido e estará a caminho em breve.'
               : 'Seu pedido foi recebido. Aguarde a confirmação para retirada.'}
           </p>
+          <div className="mb-6 rounded-2xl bg-amber-50 border border-amber-100 p-4 text-left">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-amber-700 font-bold">Status do pedido</p>
+                <p className="text-lg font-extrabold text-gray-900">
+                  {STATUS_LABELS[currentStatus as StatusEntregaPedido] || 'Aguardando atualizacao'}
+                </p>
+              </div>
+              <button
+                onClick={fetchPedidoStatus}
+                disabled={statusLoading}
+                className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-amber-700 disabled:opacity-60"
+              >
+                {statusLoading ? 'Atualizando' : 'Atualizar'}
+              </button>
+            </div>
+
+            {statusErro ? (
+              <p className="text-sm text-red-600">{statusErro}</p>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {flow.map((status, index) => {
+                    const active = index <= currentIndex;
+                    return (
+                      <div key={status} className="flex items-center gap-3">
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                          active ? 'bg-amber-500 text-white' : 'bg-white text-gray-400 border border-gray-200'
+                        }`}>
+                          {index + 1}
+                        </span>
+                        <span className={`text-sm font-medium ${active ? 'text-gray-900' : 'text-gray-400'}`}>
+                          {STATUS_LABELS[status]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {pedidoStatus && (
+                  <div className="mt-4 border-t border-amber-100 pt-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Total</span>
+                      <span className="font-bold text-gray-900">{formatBRL(Number(pedidoStatus.total))}</span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Atualiza automaticamente a cada 10 segundos.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
           {restaurante.telefone && (
             <a
               href={`https://wa.me/55${restaurante.telefone.replace(/\D/g, '')}`}
@@ -514,6 +654,7 @@ export default function CardapioPage() {
                 <button
                   onClick={() => {
                     setPedidoId(lastPedido.id);
+                    setPedidoStatus(null);
                     setNome(lastPedido.clienteNome);
                     setTelefone(lastPedido.clienteTelefone);
                     setTipo(lastPedido.tipoPedido);
