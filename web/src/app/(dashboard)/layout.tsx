@@ -7,6 +7,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { SocketProvider } from '@/providers/SocketProvider';
 import PageLoading from '@/components/ui/PageLoading';
 import { NotificacoesPedidos } from '@/components/ui/NotificacoesPedidos';
+import { PopupNovoPedido } from '@/components/ui/PopupNovoPedido';
 import { Perfil } from '@cafecontrol/shared';
 
 interface NavItem {
@@ -188,6 +189,7 @@ export default function DashboardLayout({
 
   return (
     <SocketProvider>
+      <PopupNovoPedido />
       <div className="min-h-screen bg-gray-50 flex">
         {/* Sidebar */}
         {!isKitchenFullscreen && (

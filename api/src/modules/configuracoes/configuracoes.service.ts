@@ -40,3 +40,31 @@ export async function upsertMany(restauranteId: number, configs: Record<string, 
     )
   );
 }
+
+// ─── Taxas por Bairro ────────────────────────────────────────────────────────
+
+export async function listarBairros(restauranteId: number) {
+  return prisma.taxaEntregaBairro.findMany({
+    where: { restauranteId },
+    orderBy: { bairro: 'asc' },
+  });
+}
+
+export async function criarBairro(restauranteId: number, bairro: string, taxa: number) {
+  return prisma.taxaEntregaBairro.create({
+    data: { restauranteId, bairro: bairro.trim(), taxa },
+  });
+}
+
+export async function atualizarBairro(id: number, restauranteId: number, bairro: string, taxa: number, ativo: boolean) {
+  return prisma.taxaEntregaBairro.updateMany({
+    where: { id, restauranteId },
+    data: { bairro: bairro.trim(), taxa, ativo },
+  });
+}
+
+export async function deletarBairro(id: number, restauranteId: number) {
+  return prisma.taxaEntregaBairro.deleteMany({
+    where: { id, restauranteId },
+  });
+}

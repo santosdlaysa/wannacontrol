@@ -9,28 +9,60 @@ import type { NewDeliveryOrderPayload } from '@cafecontrol/shared';
 const formatBRL = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
+// AudioContext persistente — reutilizado para evitar bloqueio de autoplay
+let _audioCtx: AudioContext | null = null;
+
+function getAudioCtx(): AudioContext | null {
+  try {
+    if (!_audioCtx) {
+      const Cls = window.AudioContext || (window as any).webkitAudioContext;
+      if (!Cls) return null;
+      _audioCtx = new Cls();
+    }
+    return _audioCtx;
+  } catch {
+    return null;
+  }
+}
+
+// Desbloqueia o AudioContext na primeira interação do usuário
+if (typeof window !== 'undefined') {
+  const unlock = () => {
+    getAudioCtx()?.resume();
+    window.removeEventListener('click', unlock);
+    window.removeEventListener('keydown', unlock);
+  };
+  window.addEventListener('click', unlock);
+  window.addEventListener('keydown', unlock);
+}
+
+function beep(ctx: AudioContext) {
+  const notes = [660, 880, 1100];
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const t = ctx.currentTime + i * 0.18;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.4, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+    osc.start(t);
+    osc.stop(t + 0.16);
+  });
+}
+
 function playSound() {
   try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-
-    // Três beeps ascendentes
-    const notes = [660, 880, 1100];
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      const start = ctx.currentTime + i * 0.18;
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.35, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.15);
-      osc.start(start);
-      osc.stop(start + 0.15);
-    });
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(() => beep(ctx)).catch(() => {});
+    } else {
+      beep(ctx);
+    }
   } catch {}
 }
 
@@ -44,14 +76,20 @@ interface NotificacaoItem {
 }
 
 export function NotificacoesPedidos() {
-  const { socket } = useSocket();
+  const { socket, isConnected } = useSocket();
   const [notificacoes, setNotificacoes] = useState<NotificacaoItem[]>([]);
   const [aberto, setAberto] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const naoLidas = notificacoes.filter((n) => !n.lida).length;
 
+  // Debug: logar estado da conexão
+  useEffect(() => {
+    console.log('[Socket] isConnected:', isConnected, '| socket:', socket?.id ?? 'null');
+  }, [isConnected, socket]);
+
   const handleNovoPedido = useCallback((payload: NewDeliveryOrderPayload) => {
+    console.log('[Notificação] Novo pedido recebido:', payload);
     playSound();
 
     const hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -91,7 +129,11 @@ export function NotificacoesPedidos() {
   }, []);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.log('[Socket] Sem socket, listener não registrado');
+      return;
+    }
+    console.log('[Socket] Registrando listener NEW_DELIVERY_ORDER no socket', socket.id);
     socket.on(SOCKET_EVENTS.NEW_DELIVERY_ORDER, handleNovoPedido);
     return () => {
       socket.off(SOCKET_EVENTS.NEW_DELIVERY_ORDER, handleNovoPedido);
@@ -132,6 +174,10 @@ export function NotificacoesPedidos() {
             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
           />
         </svg>
+        {/* Ponto de status: verde = conectado, vermelho = desconectado */}
+        <span
+          className={`absolute bottom-1 right-1 w-2 h-2 rounded-full border border-white ${isConnected ? 'bg-green-500' : 'bg-red-400'}`}
+        />
         {naoLidas > 0 && (
           <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
             {naoLidas > 9 ? '9+' : naoLidas}

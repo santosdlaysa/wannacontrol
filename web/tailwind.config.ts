@@ -6,6 +6,16 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      animation: {
+        'bounce-once': 'bounceIn 0.4s ease-out',
+      },
+      keyframes: {
+        bounceIn: {
+          '0%': { transform: 'scale(0.8)', opacity: '0' },
+          '60%': { transform: 'scale(1.05)', opacity: '1' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+      },
       colors: {
         cafe: {
           50: '#FFF8DC',

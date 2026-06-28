@@ -34,11 +34,18 @@ interface CategoriaPublica {
   produtos: ProdutoPublico[];
 }
 
+interface BairroPublico {
+  id: number;
+  bairro: string;
+  taxa: number;
+}
+
 interface CardapioData {
   restaurante: Restaurante;
   configuracoes: Record<string, string | null>;
   categorias: CategoriaPublica[];
   semCategoria: (ProdutoPublico & { categoria: string })[];
+  bairros: BairroPublico[];
 }
 
 interface CartItem {
@@ -78,7 +85,8 @@ export default function CardapioPage() {
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [tipo, setTipo] = useState<Tipo>('DELIVERY');
-  const [endereco, setEndereco] = useState('');
+  const [bairroId, setBairroId] = useState<number | null>(null);
+  const [rua, setRua] = useState('');
   const [obs, setObs] = useState('');
 
   const fetchCardapio = useCallback(async () => {
@@ -144,7 +152,12 @@ export default function CardapioPage() {
 
   const totalItens = cart.reduce((a, i) => a + i.quantidade, 0);
   const subtotal = cart.reduce((a, i) => a + Number(i.produto.preco) * i.quantidade, 0);
-  const taxaEntrega = tipo === 'DELIVERY' ? Number(data?.configuracoes?.taxa_entrega ?? 0) : 0;
+
+  const bairroSelecionado = data?.bairros?.find((b) => b.id === bairroId) ?? null;
+  const usaBairros = (data?.bairros?.length ?? 0) > 0;
+  const taxaEntrega = tipo === 'DELIVERY'
+    ? (bairroSelecionado ? Number(bairroSelecionado.taxa) : (usaBairros ? 0 : Number(data?.configuracoes?.taxa_entrega ?? 0)))
+    : 0;
   const total = subtotal + taxaEntrega;
 
   // ─── Submit ───────────────────────────────────────────────────────────────
@@ -154,7 +167,11 @@ export default function CardapioPage() {
       alert('Preencha seu nome e telefone');
       return;
     }
-    if (tipo === 'DELIVERY' && !endereco.trim()) {
+    if (tipo === 'DELIVERY' && usaBairros && !bairroId) {
+      alert('Selecione o bairro de entrega');
+      return;
+    }
+    if (tipo === 'DELIVERY' && !usaBairros && !rua.trim()) {
       alert('Preencha o endereço de entrega');
       return;
     }
@@ -162,6 +179,10 @@ export default function CardapioPage() {
       alert('Adicione pelo menos um item');
       return;
     }
+
+    const enderecoFinal = tipo === 'DELIVERY'
+      ? [rua.trim(), bairroSelecionado?.bairro].filter(Boolean).join(', ')
+      : null;
 
     setEnviando(true);
     try {
@@ -172,7 +193,8 @@ export default function CardapioPage() {
           clienteNome: nome.trim(),
           clienteTelefone: telefone.trim(),
           tipoPedido: tipo,
-          enderecoEntrega: tipo === 'DELIVERY' ? endereco.trim() : null,
+          bairroId: tipo === 'DELIVERY' ? bairroId : null,
+          enderecoEntrega: enderecoFinal,
           observacao: obs.trim() || null,
           itens: cart.map((i) => ({
             produtoId: i.produto.id,
@@ -269,7 +291,7 @@ export default function CardapioPage() {
             </a>
           )}
           <button
-            onClick={() => { setStep('menu'); setNome(''); setTelefone(''); setEndereco(''); setObs(''); }}
+            onClick={() => { setStep('menu'); setNome(''); setTelefone(''); setBairroId(null); setRua(''); setObs(''); }}
             className="block w-full text-center text-amber-600 font-medium hover:text-amber-800 transition-colors"
           >
             Fazer outro pedido
@@ -339,14 +361,33 @@ export default function CardapioPage() {
                 onChange={(e) => setTelefone(e.target.value)}
               />
             </div>
+            {tipo === 'DELIVERY' && usaBairros && (
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Bairro *</label>
+                <select
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-400 bg-white"
+                  value={bairroId ?? ''}
+                  onChange={(e) => setBairroId(e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">Selecione o bairro...</option>
+                  {data?.bairros?.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.bairro} — {formatBRL(Number(b.taxa))}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             {tipo === 'DELIVERY' && (
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Endereco de Entrega *</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">
+                  Rua / Numero / Complemento{usaBairros ? ' (opcional)' : ' *'}
+                </label>
                 <input
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-400"
-                  placeholder="Rua, numero, bairro..."
-                  value={endereco}
-                  onChange={(e) => setEndereco(e.target.value)}
+                  placeholder="Ex: Rua das Flores, 123, Apto 2"
+                  value={rua}
+                  onChange={(e) => setRua(e.target.value)}
                 />
               </div>
             )}
@@ -380,8 +421,8 @@ export default function CardapioPage() {
               </div>
               {tipo === 'DELIVERY' && (
                 <div className="flex justify-between text-sm text-gray-500">
-                  <span>Taxa de entrega</span>
-                  <span>{taxaEntrega > 0 ? formatBRL(taxaEntrega) : 'Grátis'}</span>
+                  <span>Taxa de entrega{bairroSelecionado ? ` — ${bairroSelecionado.bairro}` : ''}</span>
+                  <span>{taxaEntrega > 0 ? formatBRL(taxaEntrega) : (usaBairros && !bairroId ? '—' : 'Grátis')}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-base pt-1">

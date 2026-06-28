@@ -20,6 +20,7 @@ export async function abrirCaixa(operadorId: number, valorInicial: number, obser
     },
     include: {
       operador: { select: { id: true, nome: true } },
+      movimentacoes: { orderBy: { criadoEm: 'desc' } },
     },
   });
 }

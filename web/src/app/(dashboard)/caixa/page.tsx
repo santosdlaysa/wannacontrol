@@ -45,6 +45,13 @@ interface CaixaData {
   }>;
 }
 
+function normalizeCaixa(caixa: CaixaData): CaixaData {
+  return {
+    ...caixa,
+    movimentacoes: caixa.movimentacoes || [],
+  };
+}
+
 interface MesaComPedido extends Mesa {
   pedidoAtivo?: Pedido;
 }
@@ -86,7 +93,7 @@ export default function CaixaPage() {
   const fetchCaixaAtual = useCallback(async () => {
     try {
       const data = await api.get<CaixaData | null>('/caixa/atual');
-      setCaixaAtual(data);
+      setCaixaAtual(data ? normalizeCaixa(data) : null);
     } catch {
       setCaixaAtual(null);
     }
@@ -135,7 +142,7 @@ export default function CaixaPage() {
         valorInicial: valor,
         observacao: obsAbertura || undefined,
       });
-      setCaixaAtual(caixa);
+      setCaixaAtual(normalizeCaixa(caixa));
       setValorInicial('');
       setObsAbertura('');
       toast.success('Caixa aberto com sucesso!');
@@ -368,11 +375,11 @@ export default function CaixaPage() {
                 </div>
 
                 {/* Movimentações recentes */}
-                {caixaAtual.movimentacoes.length > 0 && (
+                {(caixaAtual.movimentacoes || []).length > 0 && (
                   <div className="mt-4 border-t border-gray-100 pt-3">
                     <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Movimentacoes</p>
                     <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {caixaAtual.movimentacoes.map((mov) => (
+                      {(caixaAtual.movimentacoes || []).map((mov) => (
                         <div key={mov.id} className="flex justify-between text-sm py-1">
                           <span className="text-gray-600">
                             <Badge variant={mov.tipo === 'SANGRIA' ? 'red' : 'green'}>

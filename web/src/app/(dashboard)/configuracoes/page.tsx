@@ -18,6 +18,13 @@ interface Configuracoes {
   [key: string]: string;
 }
 
+interface Bairro {
+  id: number;
+  bairro: string;
+  taxa: number;
+  ativo: boolean;
+}
+
 const defaultConfig: Configuracoes = {
   taxa_entrega: '0',
   tempo_preparo_medio: '30',
@@ -29,15 +36,29 @@ const defaultConfig: Configuracoes = {
   percentual_servico: '0',
 };
 
+const formatBRL = (v: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
 export default function ConfiguracoesPage() {
   const [config, setConfig] = useState<Configuracoes>(defaultConfig);
   const [isLoading, setIsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Bairros
+  const [bairros, setBairros] = useState<Bairro[]>([]);
+  const [novoBairro, setNovoBairro] = useState('');
+  const [novaTaxa, setNovaTaxa] = useState('');
+  const [adicionando, setAdicionando] = useState(false);
+  const [editando, setEditando] = useState<Bairro | null>(null);
+
   const fetchConfig = useCallback(async () => {
     try {
-      const data = await api.get<Configuracoes>('/configuracoes');
+      const [data, listaBairros] = await Promise.all([
+        api.get<Configuracoes>('/configuracoes'),
+        api.get<Bairro[]>('/configuracoes/bairros'),
+      ]);
       setConfig({ ...defaultConfig, ...data });
+      setBairros(listaBairros);
     } catch {
       toast.error('Erro ao carregar configuracoes');
     } finally {
@@ -45,9 +66,7 @@ export default function ConfiguracoesPage() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
+  useEffect(() => { fetchConfig(); }, [fetchConfig]);
 
   function setField(key: keyof Configuracoes, value: string) {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -57,11 +76,56 @@ export default function ConfiguracoesPage() {
     setSaving(true);
     try {
       await api.put('/configuracoes', config);
-      toast.success('Configuracoes salvas com sucesso');
+      toast.success('Configuracoes salvas');
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar configuracoes');
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAddBairro() {
+    if (!novoBairro.trim() || !novaTaxa) return;
+    setAdicionando(true);
+    try {
+      const criado = await api.post<Bairro>('/configuracoes/bairros', {
+        bairro: novoBairro.trim(),
+        taxa: Number(novaTaxa),
+      });
+      setBairros((prev) => [...prev, criado].sort((a, b) => a.bairro.localeCompare(b.bairro)));
+      setNovoBairro('');
+      setNovaTaxa('');
+      toast.success('Bairro adicionado');
+    } catch {
+      toast.error('Erro ao adicionar bairro');
+    } finally {
+      setAdicionando(false);
+    }
+  }
+
+  async function handleSaveBairro(b: Bairro) {
+    try {
+      await api.put(`/configuracoes/bairros/${b.id}`, {
+        bairro: b.bairro,
+        taxa: b.taxa,
+        ativo: b.ativo,
+      });
+      setBairros((prev) => prev.map((x) => (x.id === b.id ? b : x)));
+      setEditando(null);
+      toast.success('Bairro atualizado');
+    } catch {
+      toast.error('Erro ao salvar bairro');
+    }
+  }
+
+  async function handleDeleteBairro(id: number) {
+    if (!confirm('Remover este bairro?')) return;
+    try {
+      await api.delete(`/configuracoes/bairros/${id}`);
+      setBairros((prev) => prev.filter((b) => b.id !== id));
+      toast.success('Bairro removido');
+    } catch {
+      toast.error('Erro ao remover bairro');
     }
   }
 
@@ -84,7 +148,7 @@ export default function ConfiguracoesPage() {
           <h2 className="text-base font-semibold text-gray-900 mb-4">Financeiro</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Taxa de Entrega (R$)"
+              label="Taxa de Entrega Padrao (R$)"
               type="number"
               value={config.taxa_entrega}
               onChange={(e) => setField('taxa_entrega', e.target.value)}
@@ -98,6 +162,111 @@ export default function ConfiguracoesPage() {
               placeholder="10"
             />
           </div>
+          <p className="text-xs text-gray-400 mt-2">
+            A taxa padrao e usada quando nenhum bairro e selecionado pelo cliente.
+          </p>
+        </div>
+
+        {/* Secao: Taxas por Bairro */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-1">Taxas de Entrega por Bairro</h2>
+          <p className="text-xs text-gray-400 mb-4">
+            O cliente seleciona o bairro no cardapio e a taxa e calculada automaticamente.
+          </p>
+
+          {/* Adicionar bairro */}
+          <div className="flex gap-3 mb-4">
+            <input
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cafe-500"
+              placeholder="Nome do bairro"
+              value={novoBairro}
+              onChange={(e) => setNovoBairro(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddBairro()}
+            />
+            <input
+              className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cafe-500"
+              placeholder="Taxa (R$)"
+              type="number"
+              step="0.50"
+              value={novaTaxa}
+              onChange={(e) => setNovaTaxa(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddBairro()}
+            />
+            <button
+              onClick={handleAddBairro}
+              disabled={adicionando || !novoBairro.trim() || !novaTaxa}
+              className="px-4 py-2 bg-cafe-700 text-white rounded-lg text-sm font-medium hover:bg-cafe-800 disabled:opacity-50 transition-colors"
+            >
+              {adicionando ? '...' : 'Adicionar'}
+            </button>
+          </div>
+
+          {/* Lista de bairros */}
+          {bairros.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-6">
+              Nenhum bairro cadastrado. Adicione acima.
+            </p>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {bairros.map((b) => (
+                <div key={b.id} className="py-3">
+                  {editando?.id === b.id ? (
+                    <div className="flex gap-2 items-center">
+                      <input
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-cafe-500"
+                        value={editando.bairro}
+                        onChange={(e) => setEditando({ ...editando, bairro: e.target.value })}
+                      />
+                      <input
+                        className="w-24 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-cafe-500"
+                        type="number"
+                        step="0.50"
+                        value={editando.taxa}
+                        onChange={(e) => setEditando({ ...editando, taxa: Number(e.target.value) })}
+                      />
+                      <button
+                        onClick={() => handleSaveBairro(editando)}
+                        className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        onClick={() => setEditando(null)}
+                        className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className={`flex-1 text-sm font-medium ${b.ativo ? 'text-gray-800' : 'text-gray-400 line-through'}`}>
+                        {b.bairro}
+                      </span>
+                      <span className="text-sm font-semibold text-cafe-700">{formatBRL(Number(b.taxa))}</span>
+                      <button
+                        onClick={() => setEditando({ ...b })}
+                        className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleSaveBairro({ ...b, ativo: !b.ativo })}
+                        className={`text-xs px-2 py-1 ${b.ativo ? 'text-orange-600 hover:text-orange-800' : 'text-green-600 hover:text-green-800'}`}
+                      >
+                        {b.ativo ? 'Desativar' : 'Ativar'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBairro(b.id)}
+                        className="text-xs text-red-500 hover:text-red-700 px-2 py-1"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Secao: Operacao */}
@@ -178,7 +347,6 @@ export default function ConfiguracoesPage() {
           </div>
         </div>
 
-        {/* Footer save button */}
         <div className="flex justify-end">
           <Button onClick={handleSave} loading={saving}>
             Salvar Configuracoes

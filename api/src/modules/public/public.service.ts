@@ -59,13 +59,20 @@ export async function getCardapio(slug: string) {
     },
   });
 
-  return { restaurante, configuracoes: configs, categorias, semCategoria };
+  const bairros = await prisma.taxaEntregaBairro.findMany({
+    where: { restauranteId: restaurante.id, ativo: true },
+    orderBy: { bairro: 'asc' },
+    select: { id: true, bairro: true, taxa: true },
+  });
+
+  return { restaurante, configuracoes: configs, categorias, semCategoria, bairros };
 }
 
 export async function criarPedidoPublico(slug: string, data: {
   clienteNome: string;
   clienteTelefone: string;
   tipoPedido: 'DELIVERY' | 'RETIRADA';
+  bairroId?: number | null;
   enderecoEntrega?: string | null;
   observacao?: string | null;
   itens: { produtoId: number; quantidade: number; observacao?: string | null }[];
@@ -98,22 +105,39 @@ export async function criarPedidoPublico(slug: string, data: {
 
   const precoMap = new Map(produtos.map((p) => [p.id, Number(p.preco)]));
 
-  // Buscar taxa de entrega das configs
-  const taxaConfig = await prisma.configuracao.findUnique({
-    where: { restauranteId_chave: { restauranteId: restaurante.id, chave: 'taxa_entrega' } },
-  });
-  const taxaEntrega = data.tipoPedido === 'DELIVERY' ? Number(taxaConfig?.valor ?? 0) : 0;
+  // Buscar taxa de entrega: por bairro (prioritário) ou config geral
+  let taxaEntrega = 0;
+  if (data.tipoPedido === 'DELIVERY') {
+    if (data.bairroId) {
+      const bairroTaxa = await prisma.taxaEntregaBairro.findFirst({
+        where: { id: data.bairroId, restauranteId: restaurante.id, ativo: true },
+      });
+      taxaEntrega = bairroTaxa ? Number(bairroTaxa.taxa) : 0;
+    } else {
+      const taxaConfig = await prisma.configuracao.findUnique({
+        where: { restauranteId_chave: { restauranteId: restaurante.id, chave: 'taxa_entrega' } },
+      });
+      taxaEntrega = Number(taxaConfig?.valor ?? 0);
+    }
+  }
   const clienteNome = data.clienteNome.trim();
   const clienteTelefone = data.clienteTelefone.replace(/\D/g, '');
   const enderecoEntrega = data.tipoPedido === 'DELIVERY'
     ? data.enderecoEntrega?.trim() || null
     : null;
 
+  // Buscar nome do bairro para salvar no cliente
+  let bairroNome: string | null = null;
+  if (data.bairroId) {
+    const bairroObj = await prisma.taxaEntregaBairro.findFirst({
+      where: { id: data.bairroId, restauranteId: restaurante.id },
+      select: { bairro: true },
+    });
+    bairroNome = bairroObj?.bairro ?? null;
+  }
+
   const clienteExistente = await prisma.cliente.findFirst({
-    where: {
-      restauranteId: restaurante.id,
-      telefone: clienteTelefone,
-    },
+    where: { restauranteId: restaurante.id, telefone: clienteTelefone },
   });
 
   const cliente = clienteExistente
@@ -122,6 +146,7 @@ export async function criarPedidoPublico(slug: string, data: {
         data: {
           nome: clienteNome,
           endereco: enderecoEntrega ?? clienteExistente.endereco,
+          bairro: bairroNome ?? clienteExistente.bairro,
         },
       })
     : await prisma.cliente.create({
@@ -130,6 +155,7 @@ export async function criarPedidoPublico(slug: string, data: {
           nome: clienteNome,
           telefone: clienteTelefone,
           endereco: enderecoEntrega,
+          bairro: bairroNome,
         },
       });
 

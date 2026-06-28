@@ -85,18 +85,34 @@ model Restaurante {
   ativo     Boolean  @default(true)
   criadoEm DateTime @default(now()) @map("criado_em")
 
-  usuarios      Usuario[]
-  produtos      Produto[]
-  mesas         Mesa[]
-  clientes      Cliente[]
-  pedidos       Pedido[]
-  categorias    Categoria[]
-  grupos        GrupoComplemento[]
-  entregadores  Entregador[]
-  configuracoes Configuracao[]
-  caixas        Caixa[]
+  usuarios          Usuario[]
+  produtos          Produto[]
+  mesas             Mesa[]
+  clientes          Cliente[]
+  pedidos           Pedido[]
+  categorias        Categoria[]
+  grupos            GrupoComplemento[]
+  entregadores      Entregador[]
+  configuracoes     Configuracao[]
+  caixas            Caixa[]
+  taxasEntregaBairro TaxaEntregaBairro[]
+  modulos           RestauranteModulo[]
 
   @@map("restaurantes")
+}
+
+model RestauranteModulo {
+  id            Int      @id @default(autoincrement())
+  restauranteId Int      @map("restaurante_id")
+  modulo        String   @db.VarChar(50)
+  ativo         Boolean  @default(true)
+  criadoEm      DateTime @default(now()) @map("criado_em")
+  atualizadoEm  DateTime @updatedAt @map("atualizado_em")
+
+  restaurante Restaurante @relation(fields: [restauranteId], references: [id])
+
+  @@unique([restauranteId, modulo])
+  @@map("restaurante_modulos")
 }
 
 // ─── Usuarios ─────────────────────────────────────────────────────────────────
@@ -351,6 +367,21 @@ model MovimentacaoCaixa {
   caixa Caixa @relation(fields: [caixaId], references: [id])
 
   @@map("movimentacoes_caixa")
+}
+
+// ─── Taxas de Entrega por Bairro ──────────────────────────────────────────────
+
+model TaxaEntregaBairro {
+  id            Int      @id @default(autoincrement())
+  restauranteId Int      @map("restaurante_id")
+  bairro        String   @db.VarChar(100)
+  taxa          Decimal  @db.Decimal(10, 2)
+  ativo         Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+
+  restaurante Restaurante @relation(fields: [restauranteId], references: [id])
+
+  @@map("taxas_entrega_bairro")
 }
 
 // ─── Configuracoes ────────────────────────────────────────────────────────────
