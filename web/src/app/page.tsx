@@ -193,6 +193,7 @@ export default function LandingPage() {
               ],
               destaque: false,
               cta: 'Comecar agora',
+              href: '/assinatura?plano=INICIAL',
             },
             {
               nome: 'Profissional',
@@ -208,6 +209,7 @@ export default function LandingPage() {
               ],
               destaque: true,
               cta: 'Escolher Profissional',
+              href: '/assinatura?plano=PROFISSIONAL',
             },
             {
               nome: 'Premium',
@@ -225,6 +227,7 @@ export default function LandingPage() {
               ],
               destaque: false,
               cta: 'Falar com vendas',
+              href: 'https://wa.me/5595999999999?text=Quero%20o%20plano%20Premium%20do%20ChefFlow',
             },
           ].map((plano) => (
             <div
@@ -260,8 +263,8 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <a
-                href="https://wa.me/5595999999999?text=Quero%20assinar%20o%20ChefFlow%20-%20Plano%20{plano.nome}"
+              <Link
+                href={plano.href}
                 className={`mt-8 block rounded-lg py-3 text-center font-black transition-colors ${
                   plano.destaque
                     ? 'bg-white text-cafe-900 hover:bg-cafe-50'
@@ -269,7 +272,7 @@ export default function LandingPage() {
                 }`}
               >
                 {plano.cta}
-              </a>
+              </Link>
             </div>
           ))}
         </div>

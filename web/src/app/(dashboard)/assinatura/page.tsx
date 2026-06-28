@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/providers/AuthProvider';
@@ -43,6 +44,8 @@ const formatBRL = (value: number) =>
 
 export default function AssinaturaPage() {
   const { restaurante } = useAuth();
+  const searchParams = useSearchParams();
+  const planoParam = searchParams.get('plano');
   const [planos, setPlanos] = useState<PlanoAssinatura[]>([]);
   const [selectedPlano, setSelectedPlano] = useState<PlanoAssinatura | null>(null);
   const [email, setEmail] = useState(restaurante?.email || '');
@@ -57,7 +60,8 @@ export default function AssinaturaPage() {
     api.get<PlanoAssinatura[]>('/assinaturas/planos')
       .then((data) => {
         setPlanos(data);
-        setSelectedPlano(data.find((p) => p.planoSistema === restaurante?.plano) || data[1] || data[0] || null);
+        const porParam = planoParam ? data.find((p) => p.id === planoParam) : null;
+        setSelectedPlano(porParam || data.find((p) => p.planoSistema === restaurante?.plano) || data[1] || data[0] || null);
       })
       .catch((err: unknown) => {
         toast.error(err instanceof Error ? err.message : 'Erro ao carregar planos');
