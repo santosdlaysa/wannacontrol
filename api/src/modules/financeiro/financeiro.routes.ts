@@ -9,6 +9,9 @@ const router = Router();
 
 router.use(authMiddleware);
 
+// Dashboard acessivel a todos os perfis autenticados
+router.get('/dashboard', asyncHandler(financeiroController.dashboard));
+
 router.get(
   '/resumo-diario',
   authorize(Perfil.ADMIN, Perfil.GERENTE, Perfil.CAIXA),

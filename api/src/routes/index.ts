@@ -6,6 +6,7 @@ import mesasRoutes from '../modules/mesas/mesas.routes';
 import pedidosRoutes from '../modules/pedidos/pedidos.routes';
 import financeiroRoutes from '../modules/financeiro/financeiro.routes';
 import caixaRoutes from '../modules/caixa/caixa.routes';
+import clientesRoutes from '../modules/clientes/clientes.routes';
 import { authMiddleware } from '../middlewares/auth';
 import { authorize } from '../middlewares/authorize';
 import { validate } from '../middlewares/validate';
@@ -25,6 +26,7 @@ router.use('/mesas', mesasRoutes);
 router.use('/pedidos', pedidosRoutes);
 router.use('/financeiro', financeiroRoutes);
 router.use('/caixa', caixaRoutes);
+router.use('/clientes', clientesRoutes);
 
 // Rota direta para atualizar status de item (usada pela cozinha e garcom)
 router.patch(

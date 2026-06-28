@@ -25,6 +25,29 @@ export enum StatusPreparo {
   ENTREGUE = 'ENTREGUE',
 }
 
+export enum TipoPedido {
+  MESA = 'MESA',
+  DELIVERY = 'DELIVERY',
+  RETIRADA = 'RETIRADA',
+}
+
+export enum StatusEntrega {
+  RECEBIDO = 'RECEBIDO',
+  CONFIRMADO = 'CONFIRMADO',
+  EM_PREPARO = 'EM_PREPARO',
+  PRONTO = 'PRONTO',
+  SAIU_ENTREGA = 'SAIU_ENTREGA',
+  ENTREGUE = 'ENTREGUE',
+  CANCELADO = 'CANCELADO',
+}
+
+export enum FormaPagamento {
+  DINHEIRO = 'DINHEIRO',
+  CARTAO_CREDITO = 'CARTAO_CREDITO',
+  CARTAO_DEBITO = 'CARTAO_DEBITO',
+  PIX = 'PIX',
+}
+
 export const VALID_STATUS_TRANSITIONS: Record<StatusPreparo, StatusPreparo[]> = {
   [StatusPreparo.PENDENTE]: [StatusPreparo.PREPARANDO],
   [StatusPreparo.PREPARANDO]: [StatusPreparo.PRONTO],

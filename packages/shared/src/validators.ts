@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Perfil, StatusMesa, StatusPreparo } from './enums';
+import { Perfil, StatusMesa, StatusPreparo, TipoPedido, FormaPagamento } from './enums';
 
 // Auth
 export const loginEmailSchema = z.object({
@@ -59,9 +59,25 @@ export const updateMesaStatusSchema = z.object({
 
 // Pedidos
 export const createPedidoSchema = z.object({
-  mesaId: z.number().int().positive(),
+  mesaId: z.number().int().positive().optional().nullable(),
+  clienteId: z.number().int().positive().optional().nullable(),
+  tipoPedido: z.nativeEnum(TipoPedido).optional().default(TipoPedido.MESA),
   clienteNome: z.string().max(100).optional().nullable(),
   clienteTelefone: z.string().max(20).optional().nullable(),
+  enderecoEntrega: z.string().max(300).optional().nullable(),
+  taxaEntrega: z.number().min(0).optional().nullable(),
+  formaPagamento: z.nativeEnum(FormaPagamento).optional().nullable(),
+  observacao: z.string().max(500).optional().nullable(),
+});
+
+export const createClienteSchema = z.object({
+  nome: z.string().min(2).max(100),
+  telefone: z.string().min(8).max(20),
+  endereco: z.string().max(255).optional().nullable(),
+  complemento: z.string().max(100).optional().nullable(),
+  bairro: z.string().max(100).optional().nullable(),
+  cidade: z.string().max(100).optional().nullable(),
+  observacao: z.string().max(500).optional().nullable(),
 });
 
 // Itens Pedido

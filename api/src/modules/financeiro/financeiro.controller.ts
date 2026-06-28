@@ -12,3 +12,9 @@ export async function historico(req: Request, res: Response) {
   const resultado = await financeiroService.historico({ dataInicio, dataFim });
   res.json(resultado);
 }
+
+export async function dashboard(req: Request, res: Response) {
+  const data = req.query.data as string | undefined;
+  const resultado = await financeiroService.dashboard(data);
+  res.json(resultado);
+}

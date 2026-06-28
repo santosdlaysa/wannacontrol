@@ -23,7 +23,13 @@ function NavigationGuard() {
     console.log('[NAV GUARD]', { isLoading, isAuthenticated, segments: segments.join('/') });
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'pedido';
+    const inAuthGroup =
+      segments[0] === '(tabs)' ||
+      segments[0] === 'pedido' ||
+      segments[0] === 'relatorios' ||
+      segments[0] === 'caixa-screen' ||
+      segments[0] === 'produtos' ||
+      segments[0] === 'pedidos-delivery';
 
     if (!isAuthenticated && inAuthGroup) {
       console.log('[NAV GUARD] -> /login');
@@ -45,10 +51,21 @@ function NavigationGuard() {
 
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: COLORS.primary },
+          headerTintColor: COLORS.white,
+          headerTitleStyle: { fontWeight: '700', fontSize: 17 },
+          headerShown: false,
+        }}
+      >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" />
         <Stack.Screen name="pedido" options={{ headerShown: false }} />
+        <Stack.Screen name="relatorios" options={{ headerShown: true, title: 'Relatorios' }} />
+        <Stack.Screen name="caixa-screen" options={{ headerShown: true, title: 'Caixa' }} />
+        <Stack.Screen name="produtos" options={{ headerShown: true, title: 'Produtos' }} />
+        <Stack.Screen name="pedidos-delivery" options={{ headerShown: true, title: 'Pedidos Delivery' }} />
       </Stack>
     </>
   );

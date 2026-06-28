@@ -1,4 +1,4 @@
-import { Perfil, StatusMesa, StatusPedido, StatusPreparo } from './enums';
+import { Perfil, StatusMesa, StatusPedido, StatusPreparo, TipoPedido, StatusEntrega, FormaPagamento } from './enums';
 
 export interface Usuario {
   id: number;
@@ -27,18 +27,40 @@ export interface Mesa {
   status: StatusMesa;
 }
 
+export interface Cliente {
+  id: number;
+  nome: string;
+  telefone: string;
+  endereco: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  observacao: string | null;
+  criadoEm: Date;
+  pedidos?: Pedido[];
+  _count?: { pedidos: number };
+}
+
 export interface Pedido {
   id: number;
-  mesaId: number;
+  mesaId: number | null;
   garcomId: number;
+  clienteId: number | null;
+  tipoPedido: TipoPedido;
   statusPedido: StatusPedido;
+  statusEntrega: StatusEntrega | null;
+  formaPagamento: FormaPagamento | null;
   clienteNome: string | null;
   clienteTelefone: string | null;
+  enderecoEntrega: string | null;
+  taxaEntrega: number | null;
+  observacao: string | null;
   dataCriacao: Date;
   total: number | null;
   version: number;
   mesa?: Mesa;
   garcom?: Usuario;
+  cliente?: Cliente;
   itens?: ItemPedido[];
 }
 

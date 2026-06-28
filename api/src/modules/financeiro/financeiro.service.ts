@@ -84,6 +84,63 @@ export async function resumoDiario(data?: string) {
   };
 }
 
+export async function dashboard(data?: string) {
+  const diaStr = data || new Date().toISOString().split('T')[0];
+  const inicio = new Date(`${diaStr}T00:00:00.000Z`);
+  const fim = new Date(`${diaStr}T23:59:59.999Z`);
+
+  const [pedidosHoje, pedidosAbertos] = await Promise.all([
+    prisma.pedido.findMany({
+      where: { dataCriacao: { gte: inicio, lte: fim } },
+      include: { itens: true },
+    }),
+    prisma.pedido.findMany({
+      where: { statusPedido: 'ABERTO' },
+      include: {
+        itens: true,
+        mesa: true,
+      },
+    }),
+  ]);
+
+  // Faturamento do dia (apenas pagos)
+  const faturamento = pedidosHoje
+    .filter((p) => p.statusPedido === 'PAGO')
+    .reduce((sum, p) => sum + p.itens.reduce((s, i) => s + Number(i.precoUnitario) * i.quantidade, 0), 0);
+
+  // Contagens de itens em preparo / prontos
+  let emPreparo = 0;
+  let prontos = 0;
+  for (const pedido of pedidosAbertos) {
+    for (const item of pedido.itens) {
+      if (item.statusPreparo === 'PREPARANDO') emPreparo++;
+      if (item.statusPreparo === 'PRONTO') prontos++;
+    }
+  }
+
+  // Total do mes
+  const inicioMes = new Date(`${diaStr.slice(0, 7)}-01T00:00:00.000Z`);
+  const pedidosMes = await prisma.pedido.findMany({
+    where: { statusPedido: 'PAGO', dataCriacao: { gte: inicioMes } },
+    include: { itens: true },
+  });
+  const totalMes = pedidosMes.reduce(
+    (sum, p) => sum + p.itens.reduce((s, i) => s + Number(i.precoUnitario) * i.quantidade, 0),
+    0,
+  );
+
+  return {
+    data: diaStr,
+    pedidosHoje: pedidosHoje.length,
+    pedidosPagosHoje: pedidosHoje.filter((p) => p.statusPedido === 'PAGO').length,
+    pedidosAbertos: pedidosAbertos.length,
+    emPreparo,
+    prontos,
+    faturamento,
+    totalMes,
+  };
+}
+
 export async function historico(filtros: ResumoFiltros) {
   const where: any = { statusPedido: 'PAGO' };
 

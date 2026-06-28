@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusPreparo, type Pedido } from '@cafecontrol/shared';
+import { StatusPreparo, Perfil, type Pedido } from '@cafecontrol/shared';
 import { COLORS, SHADOWS } from '../../src/lib/constants';
 import { useAuth } from '../../src/providers/AuthProvider';
 import { apiClient } from '../../src/lib/api-client';
@@ -41,6 +41,11 @@ export default function TabLayout() {
   const initials = user?.nome
     ? user.nome.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
     : '?';
+
+  const isCozinha = user?.perfil === Perfil.COZINHA;
+  // Cozinha ve apenas Cozinha + Perfil; outros veem tudo exceto Cozinha isolada
+  const hideForCozinha = isCozinha ? null : undefined;
+  const hideForNonCozinha = !isCozinha ? null : undefined;
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -83,10 +88,27 @@ export default function TabLayout() {
         },
       }}
     >
+      {/* Dashboard - visivel para todos exceto COZINHA */}
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Dashboard',
+          href: hideForCozinha,
+          headerLeft: () => <BackButton />,
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.tab}>
+              <View style={[styles.indicator, focused && styles.indicatorActive]} />
+              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>Dashboard</Text>
+            </View>
+          ),
+        }}
+      />
+
       <Tabs.Screen
         name="mesas"
         options={{
           title: 'Mesas',
+          href: hideForCozinha,
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <View style={styles.tab}>
@@ -100,6 +122,7 @@ export default function TabLayout() {
         name="novo-pedido"
         options={{
           title: 'Novo Pedido',
+          href: hideForCozinha,
           headerLeft: () => <BackButton />,
           tabBarIcon: ({ focused }) => (
             <View style={styles.tab}>
@@ -109,10 +132,28 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* Cozinha - visivel para COZINHA e ADMIN/GERENTE */}
+      <Tabs.Screen
+        name="cozinha"
+        options={{
+          title: 'Cozinha',
+          href: !isCozinha && user?.perfil !== Perfil.ADMIN && user?.perfil !== Perfil.GERENTE ? null : undefined,
+          headerLeft: () => <BackButton />,
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.tab}>
+              <View style={[styles.indicator, focused && styles.indicatorActive]} />
+              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>Cozinha</Text>
+            </View>
+          ),
+        }}
+      />
+
       <Tabs.Screen
         name="alertas"
         options={{
           title: 'Alertas',
+          href: hideForCozinha,
           headerLeft: () => <BackButton />,
           tabBarIcon: ({ focused }) => (
             <View style={styles.tab}>
@@ -129,6 +170,23 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* Clientes - visivel para todos exceto COZINHA */}
+      <Tabs.Screen
+        name="clientes"
+        options={{
+          title: 'Clientes',
+          href: hideForCozinha,
+          headerLeft: () => <BackButton />,
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.tab}>
+              <View style={[styles.indicator, focused && styles.indicatorActive]} />
+              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>Clientes</Text>
+            </View>
+          ),
+        }}
+      />
+
       <Tabs.Screen
         name="perfil"
         options={{
