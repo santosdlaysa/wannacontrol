@@ -204,8 +204,8 @@ export default function DashboardLayout({
   const { user, restaurante, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  // null = ainda verificando, true = tem assinatura, false = sem assinatura
-  const [assinaturaAtiva, setAssinaturaAtiva] = useState<boolean | null>(null);
+  // Usa cache local como valor inicial para não bloquear a renderização
+  const [assinaturaAtiva, setAssinaturaAtiva] = useState<boolean>(() => restaurante?.ativo ?? false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -215,10 +215,12 @@ export default function DashboardLayout({
       return;
     }
 
-    // Verifica no backend sempre que monta (ignora cache do localStorage)
+    // Atualiza pelo cache local imediatamente
+    setAssinaturaAtiva(restaurante?.ativo ?? false);
+
+    // Verifica no backend em segundo plano para pegar valor atualizado
     api.get<{ ativo: boolean; plano: string }>('/restaurante/me')
       .then((data) => {
-        // Atualiza localStorage com valor fresco
         const stored = localStorage.getItem('restaurante');
         if (stored) {
           try {
@@ -230,16 +232,10 @@ export default function DashboardLayout({
           router.push('/assinatura');
         }
       })
-      .catch(() => {
-        // Em caso de erro de rede, usa cache local como fallback
-        setAssinaturaAtiva(restaurante?.ativo ?? false);
-        if (!restaurante?.ativo && pathname !== '/assinatura') {
-          router.push('/assinatura');
-        }
-      });
-  }, [isLoading, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+      .catch(() => {});
+  }, [isLoading, isAuthenticated, restaurante?.ativo]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (isLoading || assinaturaAtiva === null) {
+  if (isLoading) {
     return <PageLoading message="Carregando sistema..." />;
   }
 
