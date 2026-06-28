@@ -14,6 +14,8 @@ import configuracoesRoutes from '../modules/configuracoes/configuracoes.routes';
 import restauranteRoutes from '../modules/restaurante/restaurante.routes';
 import adminRoutes from '../modules/admin/admin.routes';
 import publicRoutes from '../modules/public/public.routes';
+import assinaturasRoutes from '../modules/assinaturas/assinaturas.routes';
+import * as assinaturasController from '../modules/assinaturas/assinaturas.controller';
 import { authMiddleware } from '../middlewares/auth';
 import { authorize } from '../middlewares/authorize';
 import { validate } from '../middlewares/validate';
@@ -27,6 +29,7 @@ export const router = Router();
 router.use('/auth', authRoutes);
 router.use('/public', publicRoutes);
 router.use('/admin', adminRoutes);
+router.post('/assinaturas/webhook', asyncHandler(assinaturasController.receberWebhook));
 
 // Rotas protegidas
 router.use('/usuarios', usuariosRoutes);
@@ -41,6 +44,7 @@ router.use('/categorias', categoriasRoutes);
 router.use('/complementos', complementosRoutes);
 router.use('/entregadores', entregadoresRoutes);
 router.use('/configuracoes', configuracoesRoutes);
+router.use('/assinaturas', assinaturasRoutes);
 
 // Rota direta para atualizar status de item (usada pela cozinha e garcom)
 router.patch(

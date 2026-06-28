@@ -16,4 +16,7 @@ export const env = {
   PORT: parseInt(process.env.PORT || '3333', 10),
   CORS_ORIGINS: (process.env.CORS_ORIGINS || 'http://localhost:3000').split(','),
   NODE_ENV: process.env.NODE_ENV || 'development',
+  APP_URL: process.env.APP_URL || 'http://localhost:3000',
+  MERCADO_PAGO_ACCESS_TOKEN: process.env.MERCADO_PAGO_ACCESS_TOKEN || '',
+  MERCADO_PAGO_WEBHOOK_URL: process.env.MERCADO_PAGO_WEBHOOK_URL || '',
 };

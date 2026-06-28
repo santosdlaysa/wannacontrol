@@ -99,6 +99,16 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    label: 'Assinatura',
+    href: '/assinatura',
+    roles: [Perfil.ADMIN, Perfil.GERENTE],
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2m4-6h-6m6 0v6m0-6l-8 8" />
+      </svg>
+    ),
+  },
+  {
     label: 'Clientes',
     href: '/clientes',
     roles: [Perfil.ADMIN, Perfil.GERENTE, Perfil.CAIXA, Perfil.GARCOM],
