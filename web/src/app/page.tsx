@@ -167,43 +167,93 @@ export default function LandingPage() {
       </section>
 
       <section id="planos" className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.16em] text-cafe-700">
-              Venda mais com controle
-            </p>
-            <h2 className="mt-3 text-4xl font-black tracking-normal">
-              Uma implantacao direta para o seu restaurante operar melhor.
-            </h2>
-            <p className="mt-5 leading-8 text-gray-600">
-              Ideal para quem precisa sair do improviso, receber pedidos online e
-              enxergar a operacao em tempo real.
-            </p>
-          </div>
-          <div className="rounded-lg border border-cafe-200 bg-cafe-50 p-6">
-            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <div>
-                <p className="text-sm font-black uppercase text-cafe-700">Plano sob medida</p>
-                <h3 className="mt-2 text-3xl font-black text-gray-950">
-                  Demonstre seu fluxo e receba a proposta.
-                </h3>
-              </div>
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <p className="text-sm font-black uppercase tracking-[0.16em] text-cafe-700">Planos</p>
+          <h2 className="mt-3 text-4xl font-black tracking-normal text-gray-950">
+            Escolha o plano ideal para o seu restaurante.
+          </h2>
+          <p className="mt-4 text-lg text-gray-500 leading-7">
+            Sem taxa de adesao. Cancele quando quiser. Comece em minutos.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          {[
+            {
+              nome: 'Inicial',
+              valor: 'R$ 147',
+              desc: 'Cardapio digital, pedidos online, produtos, clientes e painel basico.',
+              recursos: ['Cardapio digital publico', 'Pedidos online', 'Cadastro de produtos', 'Painel de clientes'],
+              destaque: false,
+              cta: 'Comecar agora',
+            },
+            {
+              nome: 'Profissional',
+              valor: 'R$ 297',
+              desc: 'Pedidos, mesas, cozinha, delivery, caixa, financeiro e relatorios.',
+              recursos: ['Tudo do Inicial', 'Mesas e pedidos', 'Cozinha em tempo real', 'Delivery e retirada', 'Caixa e financeiro'],
+              destaque: true,
+              cta: 'Escolher Profissional',
+            },
+            {
+              nome: 'Premium',
+              valor: 'R$ 597',
+              desc: 'Operacao completa com suporte prioritario e implantacao acompanhada.',
+              recursos: ['Tudo do Profissional', 'Suporte prioritario', 'Implantacao acompanhada', 'Personalizacoes leves'],
+              destaque: false,
+              cta: 'Falar com vendas',
+            },
+          ].map((plano) => (
+            <div
+              key={plano.nome}
+              className={`relative rounded-xl border p-7 flex flex-col ${
+                plano.destaque
+                  ? 'border-cafe-700 bg-cafe-900 text-white shadow-2xl scale-105'
+                  : 'border-gray-200 bg-white text-gray-950'
+              }`}
+            >
+              {plano.destaque && (
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-cafe-400 px-4 py-1 text-xs font-black text-cafe-900 uppercase tracking-wide">
+                  Mais popular
+                </span>
+              )}
+              <p className={`text-sm font-black uppercase tracking-widest ${plano.destaque ? 'text-cafe-300' : 'text-cafe-700'}`}>
+                {plano.nome}
+              </p>
+              <p className="mt-3 text-4xl font-black">
+                {plano.valor}
+                <span className={`text-sm font-semibold ${plano.destaque ? 'text-white/60' : 'text-gray-400'}`}>/mês</span>
+              </p>
+              <p className={`mt-3 text-sm leading-6 ${plano.destaque ? 'text-white/70' : 'text-gray-500'}`}>
+                {plano.desc}
+              </p>
+              <ul className="mt-6 space-y-2 flex-1">
+                {plano.recursos.map((r) => (
+                  <li key={r} className={`flex items-center gap-2 text-sm ${plano.destaque ? 'text-white/85' : 'text-gray-700'}`}>
+                    <svg className={`w-4 h-4 shrink-0 ${plano.destaque ? 'text-cafe-300' : 'text-cafe-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {r}
+                  </li>
+                ))}
+              </ul>
               <a
-                href="https://wa.me/5595999999999?text=Quero%20uma%20proposta%20do%20ChefFlow"
-                className="rounded-lg bg-cafe-800 px-5 py-4 text-center font-black text-white hover:bg-cafe-900"
+                href="https://wa.me/5595999999999?text=Quero%20assinar%20o%20ChefFlow%20-%20Plano%20{plano.nome}"
+                className={`mt-8 block rounded-lg py-3 text-center font-black transition-colors ${
+                  plano.destaque
+                    ? 'bg-white text-cafe-900 hover:bg-cafe-50'
+                    : 'bg-cafe-800 text-white hover:bg-cafe-900'
+                }`}
               >
-                Chamar vendas
+                {plano.cta}
               </a>
             </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              {['Treinamento rapido', 'Cardapio online', 'Suporte de implantacao'].map((item) => (
-                <div key={item} className="rounded-lg bg-white p-4 text-sm font-bold text-gray-700">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
+
+        <p className="mt-10 text-center text-sm text-gray-400">
+          Pagamento via Pix ou cartao de credito. Suporte via WhatsApp.
+        </p>
       </section>
     </main>
   );
