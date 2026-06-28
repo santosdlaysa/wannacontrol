@@ -17,11 +17,8 @@ const formatBRL = (value: number) =>
 const formatDate = (date: string | Date) =>
   new Date(date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-const STATUS_ENTREGA_FLOW = [
-  'CONFIRMADO',
-  'EM_PREPARO',
-  'SAIU_ENTREGA',
-] as const;
+const FLOW_DELIVERY = ['RECEBIDO', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_ENTREGA', 'ENTREGUE'] as const;
+const FLOW_RETIRADA = ['RECEBIDO', 'CONFIRMADO', 'EM_PREPARO', 'PRONTO', 'ENTREGUE'] as const;
 
 const STATUS_ENTREGA_LABELS: Record<string, string> = {
   RECEBIDO: 'Recebido',
@@ -145,16 +142,19 @@ export default function DeliveryPage() {
     setDetailOpen(true);
   }
 
-  function getNextStatus(current: string): string | null {
-    if (current === 'RECEBIDO') return 'CONFIRMADO';
+  function getFlow(tipoPedido?: string) {
+    return tipoPedido === 'RETIRADA' ? FLOW_RETIRADA : FLOW_DELIVERY;
+  }
 
-    const idx = STATUS_ENTREGA_FLOW.indexOf(current as typeof STATUS_ENTREGA_FLOW[number]);
-    if (idx < 0 || idx >= STATUS_ENTREGA_FLOW.length - 1) return null;
-    return STATUS_ENTREGA_FLOW[idx + 1];
+  function getNextStatus(current: string, tipoPedido?: string): string | null {
+    const flow = getFlow(tipoPedido);
+    const idx = flow.indexOf(current as typeof FLOW_DELIVERY[number]);
+    if (idx < 0 || idx >= flow.length - 1) return null;
+    return flow[idx + 1];
   }
 
   async function advanceStatus(pedido: Pedido) {
-    const next = getNextStatus(pedido.statusEntrega || '');
+    const next = getNextStatus(pedido.statusEntrega || '', pedido.tipoPedido);
     if (!next) return;
 
     if (next === 'ENTREGUE') {
@@ -282,7 +282,7 @@ export default function DeliveryPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((pedido) => {
-            const nextStatus = getNextStatus(pedido.statusEntrega || '');
+            const nextStatus = getNextStatus(pedido.statusEntrega || '', pedido.tipoPedido);
             const isAdvancing = advancingId === pedido.id;
             const isFechando = fechandoId === pedido.id;
             const isCancelling = cancellingId === pedido.id;
@@ -411,9 +411,10 @@ export default function DeliveryPage() {
             <div className="border-t pt-4">
               <p className="text-xs text-gray-400 uppercase font-semibold mb-2">Progresso</p>
               <div className="flex items-center gap-1 flex-wrap">
-                {STATUS_ENTREGA_FLOW.map((s, i) => {
-                  const current = STATUS_ENTREGA_FLOW.indexOf(
-                    (selectedPedido.statusEntrega || '') as typeof STATUS_ENTREGA_FLOW[number]
+                {getFlow(selectedPedido.tipoPedido).map((s, i) => {
+                  const flow = getFlow(selectedPedido.tipoPedido);
+                  const current = flow.indexOf(
+                    (selectedPedido.statusEntrega || '') as typeof FLOW_DELIVERY[number]
                   );
                   const done = i <= current;
                   return (
@@ -425,7 +426,7 @@ export default function DeliveryPage() {
                       >
                         {STATUS_ENTREGA_LABELS[s]}
                       </span>
-                      {i < STATUS_ENTREGA_FLOW.length - 1 && (
+                      {i < flow.length - 1 && (
                         <span className="text-gray-300 text-xs">›</span>
                       )}
                     </div>
@@ -486,13 +487,13 @@ export default function DeliveryPage() {
                 >
                   Cancelar
                 </Button>
-                {getNextStatus(selectedPedido.statusEntrega || '') && (
+                {getNextStatus(selectedPedido.statusEntrega || '', selectedPedido.tipoPedido) && (
                   <Button
                     onClick={() => advanceStatus(selectedPedido)}
                     loading={advancingId === selectedPedido.id || fechandoId === selectedPedido.id}
                   >
                     {(() => {
-                      const next = getNextStatus(selectedPedido.statusEntrega || '');
+                      const next = getNextStatus(selectedPedido.statusEntrega || '', selectedPedido.tipoPedido);
                       return next === 'ENTREGUE'
                         ? 'Finalizar & Cobrar'
                         : `Avançar → ${STATUS_ENTREGA_LABELS[next || ''] || next}`;
