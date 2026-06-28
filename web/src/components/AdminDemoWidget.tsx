@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const SLUG = 'cozinha-da-daika';
+const SLUG = 'chefflow-demo';
 const BASE = '/api/v1';
 
 const formatBRL = (v: number) =>
@@ -369,7 +369,7 @@ export default function AdminDemoWidget({ minHeight = 500 }: { minHeight?: numbe
         {/* Sidebar */}
         <aside className="w-40 shrink-0 flex flex-col" style={{ backgroundColor: '#1a0f0a' }}>
           <div className="px-3 py-3 border-b border-white/10">
-            <p className="text-xs font-bold text-white leading-tight">Cozinha da Daika</p>
+            <p className="text-xs font-bold text-white leading-tight">ChefFlow Demo</p>
             <p className="text-[10px] text-white/40 mt-0.5">Restaurante</p>
           </div>
           <nav className="flex-1 py-2 px-1.5 space-y-0.5 overflow-hidden">
@@ -396,7 +396,7 @@ export default function AdminDemoWidget({ minHeight = 500 }: { minHeight?: numbe
                 D
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-medium text-white truncate">Daika Admin</p>
+                <p className="text-[10px] font-medium text-white truncate">Admin Demo</p>
                 <p className="text-[9px] text-white/40">ADMIN</p>
               </div>
             </div>

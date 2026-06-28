@@ -63,7 +63,7 @@ export default function LandingInteractiveDemo() {
             </h3>
             <p className="mt-3 leading-7 text-gray-600">
               {mode === 'admin'
-                ? 'Clique em qualquer item do menu lateral para navegar pelas telas. Clique em "Acessar demo ao vivo" para entrar no sistema real com dados reais.'
+                ? 'Clique em qualquer item do menu lateral para navegar pelas telas. Clique em "Acessar demo ao vivo" para entrar no sistema real com conta demo.'
                 : 'O cliente abre o link do restaurante, escolhe os produtos, informa os dados e recebe o numero do pedido.'}
             </p>
 
@@ -103,10 +103,10 @@ export default function LandingInteractiveDemo() {
 
           {/* Preview */}
           {mode === 'cliente' ? (
-            <div className="flex justify-center">
-              <div className="relative w-[320px] rounded-[40px] border-[6px] border-gray-900 bg-gray-900 shadow-2xl">
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-16 h-4 bg-gray-900 rounded-full z-10" />
-                <div className="overflow-hidden rounded-[34px]" style={{ height: 560 }}>
+            <div className="flex w-full justify-center overflow-hidden">
+              <div className="relative w-full max-w-[360px] rounded-[28px] border-[4px] border-gray-900 bg-gray-900 shadow-2xl sm:max-w-[340px] sm:rounded-[40px] sm:border-[6px]">
+                <div className="absolute top-2 left-1/2 z-10 h-3 w-14 -translate-x-1/2 rounded-full bg-gray-900 sm:top-3 sm:h-4 sm:w-16" />
+                <div className="h-[620px] max-h-[72vh] min-h-[520px] overflow-hidden rounded-[24px] sm:h-[560px] sm:rounded-[34px]">
                   <iframe
                     src={`/cardapio/${SLUG}`}
                     className="w-full h-full border-0"

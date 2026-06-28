@@ -77,7 +77,7 @@ export async function loginPin(pin: string) {
 
 export async function getDemoToken() {
   const usuario = await prisma.usuario.findFirst({
-    where: { email: 'admin@daika.com' },
+    where: { email: 'demo@chefflow.com' },
   });
 
   if (!usuario || !usuario.ativo) {
