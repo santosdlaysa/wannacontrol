@@ -105,21 +105,27 @@ export default function CaixaPage() {
       setMesas(allMesas.filter(
         (m) => m.status === StatusMesa.OCUPADA || m.status === StatusMesa.AGUARDANDO_CONTA
       ));
-    } catch {}
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar mesas');
+    }
   }, []);
 
   const fetchPedidosPagos = useCallback(async () => {
     try {
       const data = await api.get<Pedido[]>('/pedidos?status=PAGO');
       setPedidosPagos(data);
-    } catch {}
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar pedidos pagos');
+    }
   }, []);
 
   const fetchHistorico = useCallback(async () => {
     try {
       const data = await api.get<CaixaData[]>('/caixa/historico');
       setHistoricoCaixas(data);
-    } catch {}
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar historico do caixa');
+    }
   }, []);
 
   useEffect(() => {

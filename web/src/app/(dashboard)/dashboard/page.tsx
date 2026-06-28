@@ -64,8 +64,8 @@ export default function DashboardPage() {
     try {
       const result = await api.get<DashboardData>('/financeiro/dashboard');
       setData(result);
-    } catch {
-      // silent
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar dados do painel');
     } finally {
       setLoading(false);
     }

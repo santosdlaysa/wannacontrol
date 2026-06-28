@@ -130,7 +130,9 @@ export default function MesasPage() {
           setProdutos(data);
           const categorias = [...new Set(data.map((p: any) => p.categoria))];
           if (categorias.length > 0) setCategoriaAtiva(categorias[0] as string);
-        } catch {}
+        } catch (err: unknown) {
+          toast.error(err instanceof Error ? err.message : 'Erro ao carregar produtos');
+        }
       }
     } catch {
       toast.error('Erro ao carregar detalhes da mesa');
