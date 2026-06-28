@@ -1,4 +1,7 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import prisma from '../../lib/prisma';
+import { env } from '../../config/env';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 import { getIO } from '../../lib/socket';
 
@@ -282,6 +285,76 @@ export async function criarPedidoPublico(slug: string, data: {
   } catch {}
 
   return pedido;
+}
+
+export async function cadastrarRestaurante(data: {
+  nomeRestaurante: string;
+  nomeResponsavel: string;
+  email: string;
+  senha: string;
+  telefone?: string | null;
+}) {
+  if (!data.nomeRestaurante?.trim()) throw new ValidationError('Nome do restaurante obrigatorio');
+  if (!data.nomeResponsavel?.trim()) throw new ValidationError('Nome do responsavel obrigatorio');
+  if (!data.email?.trim()) throw new ValidationError('E-mail obrigatorio');
+  if (!data.senha || data.senha.length < 6) throw new ValidationError('Senha deve ter pelo menos 6 caracteres');
+
+  const emailNorm = data.email.trim().toLowerCase();
+  const emailExistente = await prisma.usuario.findFirst({ where: { email: emailNorm } });
+  if (emailExistente) throw new ValidationError('E-mail ja cadastrado');
+
+  const slugBase = data.nomeRestaurante
+    .trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  let slug = slugBase;
+  let tentativa = 1;
+  while (await prisma.restaurante.findUnique({ where: { slug } })) {
+    slug = `${slugBase}-${tentativa++}`;
+  }
+
+  const senhaHash = await bcrypt.hash(data.senha, 10);
+
+  const restaurante = await prisma.restaurante.create({
+    data: {
+      nome: data.nomeRestaurante.trim(),
+      slug,
+      email: emailNorm,
+      telefone: data.telefone?.trim() || null,
+      plano: 'BASICO',
+      ativo: true,
+      usuarios: {
+        create: {
+          nome: data.nomeResponsavel.trim(),
+          email: emailNorm,
+          senhaHash,
+          perfil: 'ADMIN',
+          ativo: true,
+        },
+      },
+    },
+    include: { usuarios: true },
+  });
+
+  const usuario = restaurante.usuarios[0];
+  const payload = {
+    userId: usuario.id,
+    restauranteId: restaurante.id,
+    perfil: usuario.perfil,
+    nome: usuario.nome,
+    email: usuario.email,
+  };
+
+  const accessToken = jwt.sign(payload as object, env.JWT_SECRET, {
+    expiresIn: env.JWT_EXPIRES_IN,
+  } as jwt.SignOptions);
+
+  return {
+    accessToken,
+    usuario: payload,
+    restaurante: { id: restaurante.id, nome: restaurante.nome, slug, plano: restaurante.plano },
+  };
 }
 
 export async function getClientePublico(slug: string, telefone: string) {

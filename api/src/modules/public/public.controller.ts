@@ -40,3 +40,8 @@ export async function getHistoricoPedidos(req: Request, res: Response) {
   );
   res.json(data);
 }
+
+export async function cadastrarRestaurante(req: Request, res: Response) {
+  const data = await service.cadastrarRestaurante(req.body);
+  res.status(201).json(data);
+}

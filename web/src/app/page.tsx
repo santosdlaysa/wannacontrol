@@ -64,6 +64,12 @@ export default function LandingPage() {
               >
                 Entrar
               </Link>
+              <Link
+                href="/cadastro"
+                className="hidden sm:block rounded-lg border border-white/40 px-3 py-2 text-sm font-bold text-white hover:bg-white/10"
+              >
+                Criar conta
+              </Link>
               <a
                 href="https://wa.me/5595999999999?text=Quero%20conhecer%20o%20ChefFlow"
                 className="rounded-lg bg-white px-4 py-2 text-sm font-black text-cafe-900 hover:bg-cafe-50"
@@ -193,7 +199,7 @@ export default function LandingPage() {
               ],
               destaque: false,
               cta: 'Comecar agora',
-              href: '/login?redirect=/assinatura?plano=INICIAL',
+              href: '/cadastro?plano=INICIAL',
             },
             {
               nome: 'Profissional',
@@ -209,7 +215,7 @@ export default function LandingPage() {
               ],
               destaque: true,
               cta: 'Escolher Profissional',
-              href: '/login?redirect=/assinatura?plano=PROFISSIONAL',
+              href: '/cadastro?plano=PROFISSIONAL',
             },
             {
               nome: 'Premium',

@@ -11,5 +11,6 @@ router.get('/:slug/cliente', asyncHandler(controller.getCliente));
 router.get('/:slug/pedidos/historico', asyncHandler(controller.getHistoricoPedidos));
 router.get('/:slug/pedidos/:id/status', asyncHandler(controller.getStatusPedido));
 router.post('/:slug/pedidos', asyncHandler(controller.criarPedido));
+router.post('/cadastro', asyncHandler(controller.cadastrarRestaurante));
 
 export default router;
