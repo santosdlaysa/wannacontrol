@@ -124,10 +124,12 @@ const MOCK_DELIVERY = [
 ];
 
 const MOCK_COZINHA = [
-  { id: 1, produto: 'Frango Grelhado', pedido: '#1041 Mesa 03', status: 'PREPARANDO', tempo: '04:23' },
-  { id: 2, produto: 'Marmita Saudavel', pedido: '#1042 Delivery', status: 'PENDENTE', tempo: '01:10' },
-  { id: 3, produto: 'Lasanha de Carne', pedido: '#1041 Mesa 03', status: 'PRONTO', tempo: '12:05' },
-  { id: 4, produto: 'Strogonoff', pedido: '#1044 Mesa 07', status: 'PENDENTE', tempo: '00:45' },
+  { id: 1, produto: 'Frango Grelhado', obs: null, pedido: '#1041', origem: 'Mesa 03', status: 'PREPARANDO', tempo: '04:23' },
+  { id: 2, produto: 'Marmita Saudavel', obs: 'Sem cebola', pedido: '#1042', origem: 'Delivery', status: 'PENDENTE', tempo: '01:10' },
+  { id: 3, produto: 'Lasanha de Carne', obs: null, pedido: '#1041', origem: 'Mesa 03', status: 'PRONTO', tempo: '12:05' },
+  { id: 4, produto: 'Strogonoff', obs: 'Extra molho', pedido: '#1044', origem: 'Mesa 07', status: 'PENDENTE', tempo: '00:45' },
+  { id: 5, produto: 'Suco de Laranja', obs: null, pedido: '#1042', origem: 'Delivery', status: 'PREPARANDO', tempo: '02:30' },
+  { id: 6, produto: 'Arroz + Feijao', obs: null, pedido: '#1043', origem: 'Retirada', status: 'PRONTO', tempo: '08:15' },
 ];
 
 const MOCK_PRODUTOS = [
@@ -135,6 +137,14 @@ const MOCK_PRODUTOS = [
   { id: 2, nome: 'Lasanha de Carne', categoria: 'Marmitas', preco: 30.0, disponivel: true },
   { id: 3, nome: 'Marmita Saudavel', categoria: 'Marmitas', preco: 30.0, disponivel: true },
   { id: 4, nome: 'Arroz', categoria: 'Acompanhamentos', preco: 0.0, disponivel: true },
+];
+
+const MOCK_PEDIDOS_FIN = [
+  { id: 1042, tipo: 'Delivery', cliente: 'Ana Paula', forma: 'PIX', total: 68.9 },
+  { id: 1041, tipo: 'Mesa 03', cliente: 'Leo Garcom', forma: 'Credito', total: 124.4 },
+  { id: 1040, tipo: 'Retirada', cliente: 'Marcos Lima', forma: 'PIX', total: 42.0 },
+  { id: 1039, tipo: 'Mesa 07', cliente: 'Ana Garcom', forma: 'Debito', total: 89.5 },
+  { id: 1038, tipo: 'Delivery', cliente: 'Carla Souza', forma: 'Dinheiro', total: 55.0 },
 ];
 
 const MOCK_CLIENTES = [
@@ -369,23 +379,47 @@ function ScreenDelivery() {
   );
 }
 
+const COZINHA_COLS = [
+  { status: 'PENDENTE', label: 'Pendente', bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500', text: 'text-red-700' },
+  { status: 'PREPARANDO', label: 'Em Preparo', bg: 'bg-yellow-50', border: 'border-yellow-200', dot: 'bg-yellow-500', text: 'text-yellow-700' },
+  { status: 'PRONTO', label: 'Pronto', bg: 'bg-green-50', border: 'border-green-200', dot: 'bg-green-500', text: 'text-green-700' },
+];
+
 function ScreenCozinha() {
   return (
-    <div className="space-y-2">
-      {MOCK_COZINHA.map((item) => (
-        <div key={item.id} className="bg-white rounded-xl border border-gray-200 px-3 py-2.5 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-gray-800">{item.produto}</p>
-            <p className="text-[10px] text-gray-500 mt-0.5">{item.pedido}</p>
+    <div className="grid grid-cols-3 gap-2 h-full">
+      {COZINHA_COLS.map((col) => {
+        const items = MOCK_COZINHA.filter((i) => i.status === col.status);
+        return (
+          <div key={col.status} className={`rounded-xl border ${col.border} ${col.bg} p-2 flex flex-col gap-1.5`}>
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${col.dot}`} />
+              <p className={`text-[9px] font-black uppercase tracking-wide ${col.text}`}>{col.label}</p>
+              <span className={`ml-auto text-[9px] font-bold ${col.text} bg-white/60 rounded-full px-1.5 py-0.5`}>{items.length}</span>
+            </div>
+            {items.map((item) => (
+              <div key={item.id} className="bg-white rounded-lg border border-gray-100 p-2 shadow-sm">
+                <p className="text-[10px] font-bold text-gray-900 leading-tight">{item.produto}</p>
+                {item.obs && (
+                  <p className="text-[9px] text-orange-600 font-medium mt-0.5 leading-tight">{item.obs}</p>
+                )}
+                <div className="flex items-center justify-between mt-1.5">
+                  <div>
+                    <p className="text-[9px] font-bold text-gray-700">{item.pedido}</p>
+                    <p className="text-[9px] text-gray-400">{item.origem}</p>
+                  </div>
+                  <p className={`text-[9px] font-mono font-bold ${col.status === 'PRONTO' ? 'text-green-600' : col.status === 'PREPARANDO' ? 'text-yellow-600' : 'text-red-500'}`}>{item.tempo}</p>
+                </div>
+                {col.status !== 'PRONTO' && (
+                  <button className={`mt-1.5 w-full text-[8px] font-bold py-0.5 rounded-md ${col.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                    {col.status === 'PENDENTE' ? 'Iniciar' : 'Marcar Pronto'}
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
-          <div className="text-right">
-            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${statusPreparoColor(item.status)}`}>
-              {item.status}
-            </span>
-            <p className="text-[9px] font-mono text-gray-400 mt-0.5">{item.tempo}</p>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -448,38 +482,26 @@ function ScreenCaixa({ stats }: { stats: Stats | null }) {
 }
 
 function ScreenFinanceiro({ stats }: { stats: Stats | null }) {
-  const [tab, setTab] = useState<'resumo' | 'historico'>('resumo');
+  const [tab, setTab] = useState<'resumo' | 'pedidos'>('resumo');
+  const totalPedidos = MOCK_PEDIDOS_FIN.reduce((a, p) => a + p.total, 0);
   return (
     <>
       <div className="flex gap-1.5 mb-3">
         <TabButton active={tab === 'resumo'} onClick={() => setTab('resumo')}>Resumo</TabButton>
-        <TabButton active={tab === 'historico'} onClick={() => setTab('historico')}>Historico</TabButton>
+        <TabButton active={tab === 'pedidos'} onClick={() => setTab('pedidos')}>Pedidos</TabButton>
       </div>
       {tab === 'resumo' ? (
         <>
           <div className="grid grid-cols-2 gap-2 mb-3">
             {[
-              { label: 'Faturamento Hoje', value: formatBRL(324.8), cls: 'bg-green-50 border-green-200 text-green-700' },
-              { label: 'Pedidos pagos', value: stats?.pedidosPagos ?? '—', cls: 'bg-blue-50 border-blue-200 text-blue-700' },
-              { label: 'Ticket Medio', value: formatBRL(67.9), cls: 'bg-[#fdf6f0] border-[#e8c4a0] text-[#7a3b0f]' },
+              { label: 'Faturamento Hoje', value: formatBRL(379.8), cls: 'bg-green-50 border-green-200 text-green-700' },
+              { label: 'Pedidos pagos', value: stats?.pedidosPagos ?? 5, cls: 'bg-blue-50 border-blue-200 text-blue-700' },
+              { label: 'Ticket Medio', value: formatBRL(75.96), cls: 'bg-[#fdf6f0] border-[#e8c4a0] text-[#7a3b0f]' },
               { label: 'Total clientes', value: stats?.clientesTotal ?? '—', cls: 'bg-gray-50 border-gray-200 text-gray-700' },
             ].map(({ label, value, cls }) => (
               <div key={label} className={`rounded-xl border p-2.5 ${cls}`}>
                 <p className="text-[10px] font-medium opacity-70">{label}</p>
                 <p className="text-lg font-bold mt-0.5">{value}</p>
-              </div>
-            ))}
-          </div>
-          <SectionTitle>Top Produtos</SectionTitle>
-          <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-1.5 mb-3">
-            {[
-              { nome: 'Frango Grelhado', qtd: 14 },
-              { nome: 'Lasanha de Carne', qtd: 9 },
-              { nome: 'Marmita Saudavel', qtd: 7 },
-            ].map((p) => (
-              <div key={p.nome} className="flex justify-between text-[10px]">
-                <span className="text-gray-700 font-medium">{p.nome}</span>
-                <span className="font-bold text-gray-800">{p.qtd}x</span>
               </div>
             ))}
           </div>
@@ -498,20 +520,25 @@ function ScreenFinanceiro({ stats }: { stats: Stats | null }) {
           </div>
         </>
       ) : (
-        <div className="space-y-2">
-          {[
-            { data: '27/06', fat: formatBRL(324.8), pedidos: 5 },
-            { data: '26/06', fat: formatBRL(512.4), pedidos: 8 },
-            { data: '25/06', fat: formatBRL(289.0), pedidos: 4 },
-          ].map((d) => (
-            <div key={d.data} className="bg-white rounded-xl border border-gray-200 px-3 py-2.5 flex justify-between items-center">
-              <div>
-                <p className="text-xs font-bold text-gray-800">{d.data}</p>
-                <p className="text-[10px] text-gray-500">{d.pedidos} pedidos</p>
-              </div>
-              <p className="text-xs font-bold text-green-700">{d.fat}</p>
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="grid grid-cols-[0.45fr_0.7fr_0.9fr_0.7fr_0.6fr] gap-1 px-3 py-2 bg-gray-50 border-b border-gray-200">
+            {['#', 'Tipo', 'Cliente', 'Forma', 'Total'].map((h) => (
+              <p key={h} className="text-[9px] font-semibold text-gray-400 uppercase">{h}</p>
+            ))}
+          </div>
+          {MOCK_PEDIDOS_FIN.map((p) => (
+            <div key={p.id} className="grid grid-cols-[0.45fr_0.7fr_0.9fr_0.7fr_0.6fr] gap-1 items-center px-3 py-2 border-b border-gray-100 last:border-0">
+              <p className="text-[10px] font-bold text-gray-800">#{p.id}</p>
+              <p className="text-[9px] text-gray-600 truncate">{p.tipo}</p>
+              <p className="text-[9px] text-gray-600 truncate">{p.cliente}</p>
+              <p className="text-[9px] text-gray-500 truncate">{p.forma}</p>
+              <p className="text-[10px] font-bold text-gray-800">{formatBRL(p.total)}</p>
             </div>
           ))}
+          <div className="grid grid-cols-[0.45fr_0.7fr_0.9fr_0.7fr_0.6fr] gap-1 items-center px-3 py-2 bg-gray-50 border-t border-gray-200">
+            <p className="text-[9px] font-black text-gray-700 col-span-4">Total</p>
+            <p className="text-[10px] font-black text-green-700">{formatBRL(totalPedidos)}</p>
+          </div>
         </div>
       )}
     </>
