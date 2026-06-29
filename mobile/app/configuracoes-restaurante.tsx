@@ -76,8 +76,8 @@ export default function ConfiguracoesRestauranteScreen() {
         aceita_delivery: form.aceita_delivery,
         aceita_retirada: form.aceita_retirada,
         percentual_servico: form.percentual_servico !== '' ? Number(form.percentual_servico) : null,
-        horario_abertura: form.horario_abertura.trim() || null,
-        horario_fechamento: form.horario_fechamento.trim() || null,
+        ...(form.horario_abertura.trim() ? { horario_abertura: form.horario_abertura.trim() } : {}),
+        ...(form.horario_fechamento.trim() ? { horario_fechamento: form.horario_fechamento.trim() } : {}),
       };
       await apiClient.put('/configuracoes', body);
       Alert.alert('Sucesso', 'Configuracoes salvas com sucesso!');

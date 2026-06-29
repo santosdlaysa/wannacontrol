@@ -95,7 +95,7 @@ export async function getCardapio(slug: string) {
     where: { restauranteId: restaurante.id },
   });
 
-  const configs: Record<string, string | null> = { restaurante_aberto: 'true' };
+  const configs: Record<string, string | null> = { ...DEFAULT_CONFIGS };
   for (const c of configuracoes) configs[c.chave] = c.valor;
 
   const categorias = await prisma.categoria.findMany({

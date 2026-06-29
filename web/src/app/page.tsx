@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import LandingInteractiveDemo from '@/components/LandingInteractiveDemo';
-import AdminDemoWidget from '@/components/AdminDemoWidget';
 
 const modules = [
   {
@@ -79,7 +78,7 @@ export default function LandingPage() {
             </div>
           </header>
 
-          <div className="grid flex-1 items-center gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="flex flex-1 items-center py-14">
             <div className="max-w-3xl">
               <p className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-cafe-100">
                 Sistema para cafeterias, restaurantes e delivery
@@ -106,8 +105,6 @@ export default function LandingPage() {
                 </Link>
               </div>
             </div>
-
-            <AdminDemoWidget minHeight={460} />
           </div>
 
           <div className="grid gap-3 pb-4 sm:grid-cols-3">
