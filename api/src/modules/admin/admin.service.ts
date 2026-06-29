@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { ConflictError, NotFoundError } from '../../lib/errors';
 import { normalizeModules, SYSTEM_MODULES } from './admin-modules';
@@ -22,7 +23,7 @@ async function getModulosByRestaurante(restauranteIds: number[]) {
   const rows = await prisma.$queryRaw<RestauranteModuloRow[]>`
     SELECT restaurante_id, modulo, ativo
     FROM restaurante_modulos
-    WHERE restaurante_id = ANY(${restauranteIds})
+    WHERE restaurante_id IN (${Prisma.join(restauranteIds)})
   `;
 
   const map = new Map<number, Record<string, boolean>>();
