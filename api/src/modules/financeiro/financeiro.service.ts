@@ -122,16 +122,10 @@ export async function dashboard(data?: string, restauranteId?: number) {
 
   // Total do mes
   const inicioMes = new Date(`${diaStr.slice(0, 7)}-01T00:00:00.000Z`);
-  const [pedidosMes, caixaAberto] = await Promise.all([
-    prisma.pedido.findMany({
-      where: { ...rFilter, statusPedido: 'PAGO', dataCriacao: { gte: inicioMes } },
-      include: { itens: true },
-    }),
-    prisma.caixa.findFirst({
-      where: { ...rFilter, aberto: true },
-      orderBy: { abertoEm: 'desc' },
-    }),
-  ]);
+  const pedidosMes = await prisma.pedido.findMany({
+    where: { ...rFilter, statusPedido: 'PAGO', dataCriacao: { gte: inicioMes } },
+    include: { itens: true },
+  });
   const totalMes = pedidosMes.reduce(
     (sum, p) => sum + p.itens.reduce((s, i) => s + Number(i.precoUnitario) * i.quantidade, 0),
     0,
@@ -146,7 +140,6 @@ export async function dashboard(data?: string, restauranteId?: number) {
     prontos,
     faturamento,
     totalMes,
-    valorInicialCaixa: caixaAberto ? Number(caixaAberto.valorInicial) : null,
   };
 }
 

@@ -23,7 +23,6 @@ interface DashboardData {
   prontos: number;
   faturamento: number;
   totalMes: number;
-  valorInicialCaixa: number | null;
 }
 
 export default function DashboardScreen() {
@@ -78,19 +77,6 @@ export default function DashboardScreen() {
           <Text style={styles.greeting}>Ola, {firstName}</Text>
           <Text style={styles.date}>{today}</Text>
         </View>
-
-        {/* Valor inicial do caixa */}
-        {data?.valorInicialCaixa != null && (
-          <TouchableOpacity
-            style={styles.valorInicialCard}
-            onPress={() => router.push('/caixa-screen')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.valorInicialLabel}>Caixa aberto com</Text>
-            <Text style={styles.valorInicialValue}>{formatBRL(data.valorInicialCaixa)}</Text>
-            <Text style={styles.valorInicialSub}>Valor inicial do caixa</Text>
-          </TouchableOpacity>
-        )}
 
         {/* Cards de status em tempo real */}
         <Text style={styles.sectionTitle}>Agora</Text>
@@ -256,33 +242,6 @@ const styles = StyleSheet.create({
   faturamentoDivider: { width: 1, height: 48, backgroundColor: COLORS.border.light, marginHorizontal: SPACING.md },
   faturamentoLabel: { fontSize: 12, color: COLORS.text.tertiary, fontWeight: '600', marginBottom: 6 },
   faturamentoValue: { fontSize: 22, fontWeight: '800', color: COLORS.text.primary },
-
-  valorInicialCard: {
-    backgroundColor: COLORS.brand,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
-  },
-  valorInicialLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.75)',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  valorInicialValue: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: '#FFFFFF',
-  },
-  valorInicialSub: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 4,
-  },
 
   atalhos: {
     flexDirection: 'row',
