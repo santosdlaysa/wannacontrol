@@ -108,15 +108,13 @@ export function listarPlanos() {
   return Object.values(PLANOS);
 }
 
-export async function solicitarPix(restauranteId: number, planoId: string) {
-  const [restaurante, plano] = await Promise.all([
-    getRestaurante(restauranteId),
-    Promise.resolve(getPlano(planoId)),
-  ]);
-
+async function _criarSolicitacaoManual(
+  restaurante: { id: number; nome: string; email: string | null },
+  plano: ReturnType<typeof getPlano>,
+) {
   const solicitacao = await prisma.solicitacaoPix.create({
     data: {
-      restauranteId,
+      restauranteId: restaurante.id,
       planoId: plano.id,
       planoNome: plano.nome,
       valor: plano.valor,
@@ -125,7 +123,7 @@ export async function solicitarPix(restauranteId: number, planoId: string) {
 
   const valorFormatado = plano.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   await sendTelegram(
-    `🔔 <b>Nova solicitação de Pix!</b>\n\n` +
+    `<b>Nova solicitação de Pix!</b>\n\n` +
     `Restaurante: <b>${restaurante.nome}</b>\n` +
     `Plano: <b>${plano.nome}</b> — R$ ${valorFormatado}\n` +
     `Email: ${restaurante.email || 'não informado'}\n` +
@@ -136,45 +134,68 @@ export async function solicitarPix(restauranteId: number, planoId: string) {
   return solicitacao;
 }
 
+export async function solicitarPix(restauranteId: number, planoId: string) {
+  const [restaurante, plano] = await Promise.all([
+    getRestaurante(restauranteId),
+    Promise.resolve(getPlano(planoId)),
+  ]);
+  return _criarSolicitacaoManual(restaurante, plano);
+}
+
 export async function criarPagamentoPix(restauranteId: number, planoId: string, payerEmail?: string | null) {
   const [restaurante, plano] = await Promise.all([
     getRestaurante(restauranteId),
     Promise.resolve(getPlano(planoId)),
   ]);
 
-  const email = payerEmail || restaurante.email;
-  if (!email) throw new ValidationError('Informe um e-mail para gerar o pagamento');
+  if (env.MERCADO_PAGO_ACCESS_TOKEN) {
+    try {
+      const email = payerEmail || restaurante.email;
+      if (!email) throw new ValidationError('Informe um e-mail para gerar o pagamento');
 
-  const payment = await mercadoPagoRequest<MercadoPagoPaymentResponse>('/v1/payments', {
-    transaction_amount: plano.valor,
-    description: `Assinatura ChefFlow - Plano ${plano.nome}`,
-    payment_method_id: 'pix',
-    external_reference: `assinatura:${restaurante.id}:${plano.id}`,
-    notification_url: env.MERCADO_PAGO_WEBHOOK_URL || undefined,
-    payer: {
-      email,
-      first_name: restaurante.nome,
-    },
-    metadata: {
-      restaurante_id: restaurante.id,
-      plano_id: plano.id,
-      plano_sistema: plano.planoSistema,
-    },
-  });
+      const payment = await mercadoPagoRequest<MercadoPagoPaymentResponse>('/v1/payments', {
+        transaction_amount: plano.valor,
+        description: `Assinatura ChefFlow - Plano ${plano.nome}`,
+        payment_method_id: 'pix',
+        external_reference: `assinatura:${restaurante.id}:${plano.id}`,
+        notification_url: env.MERCADO_PAGO_WEBHOOK_URL || undefined,
+        payer: {
+          email,
+          first_name: restaurante.nome,
+        },
+        metadata: {
+          restaurante_id: restaurante.id,
+          plano_id: plano.id,
+          plano_sistema: plano.planoSistema,
+        },
+      });
 
-  const transactionData = payment.point_of_interaction?.transaction_data;
-  if (!transactionData?.qr_code || !transactionData.qr_code_base64) {
-    throw new ValidationError('Mercado Pago nao retornou o QR Code Pix');
+      const transactionData = payment.point_of_interaction?.transaction_data;
+      if (!transactionData?.qr_code || !transactionData.qr_code_base64) {
+        throw new ValidationError('Mercado Pago nao retornou o QR Code Pix');
+      }
+
+      return {
+        modo: 'automatico' as const,
+        id: payment.id,
+        status: payment.status,
+        statusDetail: payment.status_detail,
+        expiresAt: payment.date_of_expiration,
+        qrCode: transactionData.qr_code,
+        qrCodeBase64: transactionData.qr_code_base64,
+        ticketUrl: transactionData.ticket_url,
+        plano,
+      };
+    } catch (err) {
+      if (err instanceof ValidationError) throw err;
+      console.error('[Pix] Falha no Mercado Pago, usando fluxo manual:', err);
+    }
   }
 
+  const solicitacao = await _criarSolicitacaoManual(restaurante, plano);
   return {
-    id: payment.id,
-    status: payment.status,
-    statusDetail: payment.status_detail,
-    expiresAt: payment.date_of_expiration,
-    qrCode: transactionData.qr_code,
-    qrCodeBase64: transactionData.qr_code_base64,
-    ticketUrl: transactionData.ticket_url,
+    modo: 'manual' as const,
+    solicitacaoId: solicitacao.id,
     plano,
   };
 }
@@ -252,22 +273,6 @@ export async function consultarPagamento(restauranteId: number, paymentId: strin
     statusDetail: payment.status_detail,
     plano,
   };
-}
-
-export async function solicitarPix(restauranteId: number, planoId: string) {
-  const [restaurante, plano] = await Promise.all([
-    getRestaurante(restauranteId),
-    Promise.resolve(getPlano(planoId)),
-  ]);
-
-  return prisma.solicitacaoPix.create({
-    data: {
-      restauranteId: restaurante.id,
-      planoId: plano.id,
-      planoNome: plano.nome,
-      valor: plano.valor,
-    },
-  });
 }
 
 export async function processarWebhookPagamento(paymentId: string) {
