@@ -18,23 +18,27 @@ type RestauranteModuloRow = {
 };
 
 async function getModulosByRestaurante(restauranteIds: number[]) {
-  if (restauranteIds.length === 0) return new Map<number, Record<string, boolean>>();
-
-  const rows = await prisma.$queryRaw<RestauranteModuloRow[]>`
-    SELECT restaurante_id, modulo, ativo
-    FROM restaurante_modulos
-    WHERE restaurante_id IN (${Prisma.join(restauranteIds)})
-  `;
-
   const map = new Map<number, Record<string, boolean>>();
+  if (restauranteIds.length === 0) return map;
+
   for (const id of restauranteIds) {
     map.set(id, Object.fromEntries(SYSTEM_MODULES.map((modulo) => [modulo, true])));
   }
 
-  for (const row of rows) {
-    const current = map.get(row.restaurante_id) ?? {};
-    current[row.modulo] = row.ativo;
-    map.set(row.restaurante_id, current);
+  try {
+    const rows = await prisma.$queryRaw<RestauranteModuloRow[]>`
+      SELECT restaurante_id, modulo, ativo
+      FROM restaurante_modulos
+      WHERE restaurante_id IN (${Prisma.join(restauranteIds)})
+    `;
+
+    for (const row of rows) {
+      const current = map.get(row.restaurante_id) ?? {};
+      current[row.modulo] = row.ativo;
+      map.set(row.restaurante_id, current);
+    }
+  } catch {
+    // tabela pode não existir ainda — retorna defaults
   }
 
   return map;
