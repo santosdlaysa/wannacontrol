@@ -59,6 +59,12 @@ const statusLabel: Record<string, string> = {
   cancelled: 'Pagamento cancelado',
 };
 
+const ORDEM_PLANOS: Record<string, number> = {
+  BASICO: 0,
+  PROFISSIONAL: 1,
+  ENTERPRISE: 2,
+};
+
 const formatBRL = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
@@ -93,12 +99,21 @@ export default function AssinaturaPage() {
     }
   }, [statusParam]);
 
+  const planoAtualOrdem = ORDEM_PLANOS[restaurante?.plano ?? 'BASICO'] ?? 0;
+
+  const planosVisiveis = planos.filter(
+    (p) => ORDEM_PLANOS[p.planoSistema] >= planoAtualOrdem,
+  );
+
   useEffect(() => {
     api.get<PlanoAssinatura[]>('/assinaturas/planos')
       .then((data) => {
         setPlanos(data);
         const porParam = planoParam ? data.find((p) => p.id === planoParam) : null;
-        setSelectedPlano(porParam || data.find((p) => p.planoSistema === restaurante?.plano) || data[1] || data[0] || null);
+        const planoAtual = data.find((p) => p.planoSistema === restaurante?.plano);
+        const ordemAtual = ORDEM_PLANOS[restaurante?.plano ?? 'BASICO'] ?? 0;
+        const primeiroUpgrade = data.find((p) => ORDEM_PLANOS[p.planoSistema] > ordemAtual);
+        setSelectedPlano(porParam || primeiroUpgrade || planoAtual || data[0] || null);
       })
       .catch((err: unknown) => {
         toast.error(err instanceof Error ? err.message : 'Erro ao carregar planos');
@@ -195,10 +210,36 @@ export default function AssinaturaPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr] xl:items-start">
-        <div className="grid gap-4 md:grid-cols-3">
-          {planos.map((plano) => {
+        <div className={`grid gap-4 ${planosVisiveis.length === 1 ? 'md:grid-cols-1 max-w-sm' : planosVisiveis.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+          {planosVisiveis.map((plano) => {
+            const isAtual = plano.planoSistema === restaurante?.plano;
             const active = selectedPlano?.id === plano.id;
-            return (
+            return isAtual ? (
+              <div
+                key={plano.id}
+                className="rounded-lg border border-gray-300 bg-gray-50 p-5 opacity-80"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-lg font-black text-gray-950">{plano.nome}</p>
+                    <p className="mt-1 text-sm text-gray-500">{plano.descricao}</p>
+                  </div>
+                  <Badge variant="blue">Plano atual</Badge>
+                </div>
+                <p className="mt-5 text-3xl font-black text-gray-400">
+                  {formatBRL(plano.valor)}
+                  <span className="text-sm font-semibold text-gray-400">/mes</span>
+                </p>
+                <div className="mt-5 space-y-2">
+                  {plano.recursos.map((recurso) => (
+                    <p key={recurso} className="flex items-center gap-2 text-sm text-gray-500">
+                      <span className="h-2 w-2 rounded-full bg-gray-400" />
+                      {recurso}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ) : (
               <button
                 key={plano.id}
                 type="button"
@@ -239,7 +280,9 @@ export default function AssinaturaPage() {
         <div className="rounded-lg border border-gray-200 bg-white p-5">
           <h2 className="text-lg font-black text-gray-950">Checkout</h2>
           <p className="mt-1 text-sm text-gray-500">
-            O Pix mostra QR Code na tela. O cartao abre o checkout seguro.
+            {selectedPlano?.planoSistema === restaurante?.plano
+              ? 'Selecione um plano acima para fazer upgrade.'
+              : 'O Pix mostra QR Code na tela. O cartao abre o checkout seguro.'}
           </p>
 
           <div className="mt-5">
@@ -263,7 +306,7 @@ export default function AssinaturaPage() {
           )}
 
           {/* Seleção de método */}
-          {!metodoPagamento && (
+          {!metodoPagamento && selectedPlano?.planoSistema !== restaurante?.plano && (
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
               <Button onClick={handleEscolherPix} loading={gerandoPix} disabled={!selectedPlano}>
                 Pagar via Pix
