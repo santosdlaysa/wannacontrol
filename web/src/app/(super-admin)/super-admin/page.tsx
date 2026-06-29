@@ -9,7 +9,10 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 
 const formatDate = (d: string) =>
-  new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(d));
+  new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d));
+
+const formatBRL = (v: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 const PLANOS = ['BASICO', 'PROFISSIONAL', 'ENTERPRISE'] as const;
 type Plano = (typeof PLANOS)[number];
@@ -38,6 +41,16 @@ interface Restaurante {
   ativo: boolean;
   criadoEm: string;
   _count: { usuarios: number; produtos: number; pedidos: number; clientes: number; mesas: number };
+}
+
+interface SolicitacaoPix {
+  id: number;
+  planoId: string;
+  planoNome: string;
+  valor: number;
+  status: 'PENDENTE' | 'APROVADO' | 'REJEITADO';
+  criadoEm: string;
+  restaurante: { id: number; nome: string; email: string | null; plano: string; ativo: boolean };
 }
 
 interface CriarForm {
@@ -69,9 +82,15 @@ const emptyCriar: CriarForm = {
 };
 
 export default function SuperAdminPage() {
+  const [aba, setAba] = useState<'restaurantes' | 'pix'>('restaurantes');
   const [restaurantes, setRestaurantes] = useState<Restaurante[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
+
+  const [solicitacoes, setSolicitacoes] = useState<SolicitacaoPix[]>([]);
+  const [loadingPix, setLoadingPix] = useState(true);
+  const [aprovandoId, setAprovandoId] = useState<number | null>(null);
+  const [rejeitandoId, setRejeitandoId] = useState<number | null>(null);
 
   const [modalCriar, setModalCriar] = useState(false);
   const [criarForm, setCriarForm] = useState<CriarForm>(emptyCriar);
@@ -97,7 +116,47 @@ export default function SuperAdminPage() {
     }
   }, []);
 
+  const fetchSolicitacoes = useCallback(async () => {
+    setLoadingPix(true);
+    try {
+      const data = await api.get<SolicitacaoPix[]>('/admin/solicitacoes-pix');
+      setSolicitacoes(data);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao carregar solicitacoes');
+    } finally {
+      setLoadingPix(false);
+    }
+  }, []);
+
   useEffect(() => { fetchRestaurantes(); }, [fetchRestaurantes]);
+  useEffect(() => { fetchSolicitacoes(); }, [fetchSolicitacoes]);
+
+  async function aprovarPix(id: number) {
+    setAprovandoId(id);
+    try {
+      await api.patch(`/admin/solicitacoes-pix/${id}/aprovar`, {});
+      toast.success('Plano ativado com sucesso!');
+      fetchSolicitacoes();
+      fetchRestaurantes();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao aprovar');
+    } finally {
+      setAprovandoId(null);
+    }
+  }
+
+  async function rejeitarPix(id: number) {
+    setRejeitandoId(id);
+    try {
+      await api.patch(`/admin/solicitacoes-pix/${id}/rejeitar`, {});
+      toast.success('Solicitacao rejeitada');
+      fetchSolicitacoes();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao rejeitar');
+    } finally {
+      setRejeitandoId(null);
+    }
+  }
 
   async function handleCriar() {
     if (!criarForm.nome.trim() || !criarForm.slug.trim()) {
@@ -198,18 +257,110 @@ export default function SuperAdminPage() {
     enterprise: restaurantes.filter((r) => r.plano === 'ENTERPRISE').length,
   };
 
+  const pendentes = solicitacoes.filter((s) => s.status === 'PENDENTE').length;
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Painel Super Admin</h1>
           <p className="text-sm text-gray-500 mt-1">Gerencie todos os restaurantes da plataforma</p>
         </div>
-        <Button onClick={() => { setCriarForm(emptyCriar); setModalCriar(true); }}>
-          + Novo Restaurante
-        </Button>
+        {aba === 'restaurantes' && (
+          <Button onClick={() => { setCriarForm(emptyCriar); setModalCriar(true); }}>
+            + Novo Restaurante
+          </Button>
+        )}
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-gray-200 mb-6">
+        {([
+          { key: 'restaurantes', label: 'Restaurantes' },
+          { key: 'pix', label: `Solicitacoes Pix${pendentes > 0 ? ` (${pendentes})` : ''}` },
+        ] as const).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setAba(key)}
+            className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
+              aba === key
+                ? 'border-cafe-700 text-cafe-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {aba === 'pix' && (
+        <div>
+          {loadingPix ? (
+            <div className="text-center py-16 text-gray-500">Carregando...</div>
+          ) : solicitacoes.length === 0 ? (
+            <div className="text-center py-16 text-gray-400">Nenhuma solicitacao encontrada</div>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      {['#', 'Restaurante', 'Plano', 'Valor', 'Status', 'Data', 'Acoes'].map((h) => (
+                        <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {solicitacoes.map((s) => (
+                      <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3 text-gray-400 text-xs">{s.id}</td>
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-gray-900">{s.restaurante.nome}</p>
+                          {s.restaurante.email && <p className="text-xs text-gray-400">{s.restaurante.email}</p>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="font-medium text-gray-700">{s.planoNome}</span>
+                        </td>
+                        <td className="px-4 py-3 font-bold text-cafe-800">{formatBRL(s.valor)}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant={s.status === 'APROVADO' ? 'green' : s.status === 'REJEITADO' ? 'red' : 'yellow'}>
+                            {s.status === 'PENDENTE' ? 'Pendente' : s.status === 'APROVADO' ? 'Aprovado' : 'Rejeitado'}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{formatDate(s.criadoEm)}</td>
+                        <td className="px-4 py-3">
+                          {s.status === 'PENDENTE' && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => aprovarPix(s.id)}
+                                disabled={aprovandoId === s.id}
+                                className="px-3 py-1 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                              >
+                                {aprovandoId === s.id ? '...' : 'Aprovar'}
+                              </button>
+                              <button
+                                onClick={() => rejeitarPix(s.id)}
+                                disabled={rejeitandoId === s.id}
+                                className="px-3 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-semibold hover:bg-red-200 disabled:opacity-50 transition-colors"
+                              >
+                                {rejeitandoId === s.id ? '...' : 'Rejeitar'}
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {aba === 'restaurantes' && <>
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
         {[
@@ -397,6 +548,7 @@ export default function SuperAdminPage() {
 
       {/* Modal Editar */}
       <Modal
+        key="editar"
         isOpen={modalEditar}
         onClose={() => setModalEditar(false)}
         title="Editar Restaurante"
@@ -469,6 +621,7 @@ export default function SuperAdminPage() {
           </div>
         </div>
       </Modal>
+      </>}
     </div>
   );
 }

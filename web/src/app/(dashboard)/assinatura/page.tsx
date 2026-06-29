@@ -295,8 +295,8 @@ export default function AssinaturaPage() {
                   Copiar codigo Pix
                 </Button>
               </div>
-              <p className="mt-3 text-xs text-gray-400">
-                Apos o pagamento, entre em contato pelo WhatsApp para ativar o plano.
+              <p className="mt-3 text-xs text-green-600 font-medium">
+                Solicitacao enviada ao administrador. Apos confirmar o pagamento, seu plano sera ativado automaticamente.
               </p>
             </div>
           ) : (

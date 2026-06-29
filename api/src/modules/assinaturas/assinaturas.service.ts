@@ -254,6 +254,22 @@ export async function consultarPagamento(restauranteId: number, paymentId: strin
   };
 }
 
+export async function solicitarPix(restauranteId: number, planoId: string) {
+  const [restaurante, plano] = await Promise.all([
+    getRestaurante(restauranteId),
+    Promise.resolve(getPlano(planoId)),
+  ]);
+
+  return prisma.solicitacaoPix.create({
+    data: {
+      restauranteId: restaurante.id,
+      planoId: plano.id,
+      planoNome: plano.nome,
+      valor: plano.valor,
+    },
+  });
+}
+
 export async function processarWebhookPagamento(paymentId: string) {
   if (!paymentId || !env.MERCADO_PAGO_ACCESS_TOKEN) return { received: true };
 
