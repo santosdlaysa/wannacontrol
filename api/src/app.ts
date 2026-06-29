@@ -6,6 +6,8 @@ import path from 'path';
 import { env } from './config/env';
 import { errorHandler } from './middlewares/error-handler';
 import { router } from './routes';
+import { asyncHandler } from './lib/async-handler';
+import { receberWebhook } from './modules/assinaturas/assinaturas.controller';
 
 const app = express();
 
@@ -20,6 +22,9 @@ app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 // Rotas
 app.use('/api/v1', router);
+
+// Alias do webhook do Mercado Pago (suporta qualquer path configurado na variavel de ambiente)
+app.post('/api/webhooks/mercadopago', asyncHandler(receberWebhook));
 
 // Health check
 app.get('/health', (_req, res) => {
