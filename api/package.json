@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@chefflow/shared": "*",
-    "@prisma/client": "5.22.0",
+    "@prisma/client": "^7.9.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
@@ -34,7 +34,7 @@
     "@types/morgan": "^1.9.9",
     "@types/multer": "^2.1.0",
     "@types/node": "^20.14.0",
-    "prisma": "5.22.0",
+    "prisma": "^7.9.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.0"
