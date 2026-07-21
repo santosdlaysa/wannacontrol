@@ -154,7 +154,7 @@ export default function AssinaturaPage() {
         planoId: selectedPlano.id,
         email: email.trim() || undefined,
       });
-      const url = data.sandboxInitPoint || data.initPoint;
+      const url = data.initPoint || data.sandboxInitPoint;
       if (!url) throw new Error('Checkout de cartao nao retornou link de pagamento');
       window.location.href = url;
     } catch (err: unknown) {
