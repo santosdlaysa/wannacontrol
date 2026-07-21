@@ -39,6 +39,7 @@ interface Restaurante {
   endereco: string | null;
   plano: Plano;
   ativo: boolean;
+  dataVencimento: string | null;
   criadoEm: string;
   _count: { usuarios: number; produtos: number; pedidos: number; clientes: number; mesas: number };
 }
@@ -74,6 +75,7 @@ interface EditarForm {
   endereco: string;
   plano: Plano;
   ativo: boolean;
+  dataVencimento: string;
 }
 
 const emptyCriar: CriarForm = {
@@ -99,7 +101,7 @@ export default function SuperAdminPage() {
   const [modalEditar, setModalEditar] = useState(false);
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [editarForm, setEditarForm] = useState<EditarForm>({
-    nome: '', slug: '', email: '', telefone: '', cnpj: '', endereco: '', plano: 'BASICO', ativo: true,
+    nome: '', slug: '', email: '', telefone: '', cnpj: '', endereco: '', plano: 'BASICO', ativo: true, dataVencimento: '',
   });
   const [salvandoEditar, setSalvandoEditar] = useState(false);
 
@@ -198,6 +200,7 @@ export default function SuperAdminPage() {
       endereco: r.endereco ?? '',
       plano: r.plano,
       ativo: r.ativo,
+      dataVencimento: r.dataVencimento ? r.dataVencimento.slice(0, 10) : '',
     });
     setModalEditar(true);
   }
@@ -218,6 +221,9 @@ export default function SuperAdminPage() {
         endereco: editarForm.endereco.trim() || null,
         plano: editarForm.plano,
         ativo: editarForm.ativo,
+        dataVencimento: editarForm.dataVencimento
+          ? new Date(`${editarForm.dataVencimento}T23:59:59`).toISOString()
+          : null,
       });
       toast.success('Restaurante atualizado');
       setModalEditar(false);
@@ -397,7 +403,7 @@ export default function SuperAdminPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  {['#', 'Restaurante', 'Slug', 'Plano', 'Status', 'Usuarios', 'Pedidos', 'Criado em', 'Acoes'].map((h) => (
+                  {['#', 'Restaurante', 'Slug', 'Plano', 'Status', 'Vencimento', 'Usuarios', 'Pedidos', 'Criado em', 'Acoes'].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
@@ -431,6 +437,15 @@ export default function SuperAdminPage() {
                         <span className={`w-1.5 h-1.5 rounded-full ${r.ativo ? 'bg-green-500' : 'bg-red-500'}`} />
                         {togglingId === r.id ? '...' : r.ativo ? 'Ativo' : 'Inativo'}
                       </button>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {r.dataVencimento ? (
+                        <span className={`text-xs font-medium ${new Date(r.dataVencimento) < new Date() ? 'text-red-600' : 'text-gray-600'}`}>
+                          {new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(r.dataVencimento))}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{r._count.usuarios}</td>
                     <td className="px-4 py-3 text-gray-600">{r._count.pedidos}</td>
@@ -614,6 +629,17 @@ export default function SuperAdminPage() {
                 <span className="text-sm font-medium text-gray-700">Ativo</span>
               </label>
             </div>
+          </div>
+          <div>
+            <Input
+              label="Vencimento da assinatura"
+              type="date"
+              value={editarForm.dataVencimento}
+              onChange={(e) => setEditarForm((f) => ({ ...f, dataVencimento: e.target.value }))}
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Ao vencer, o restaurante é desativado automaticamente. Deixe vazio para acesso sem vencimento.
+            </p>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setModalEditar(false)}>Cancelar</Button>

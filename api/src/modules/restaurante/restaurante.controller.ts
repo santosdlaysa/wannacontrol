@@ -7,7 +7,7 @@ export async function criar(req: Request, res: Response) {
 
 export async function buscarMe(req: Request, res: Response) {
   const restauranteId = req.user!.restauranteId!;
-  res.json(await service.buscarPorId(restauranteId));
+  res.json(await service.buscarMe(restauranteId));
 }
 
 export async function atualizarMe(req: Request, res: Response) {

@@ -4,6 +4,7 @@ import prisma from '../../lib/prisma';
 import { ConflictError, NotFoundError } from '../../lib/errors';
 import { normalizeModules, SYSTEM_MODULES } from './admin-modules';
 import { sendTelegram } from '../../lib/telegram';
+import { calcularNovoVencimento } from '../../lib/assinatura';
 
 const PLANO_SISTEMA_MAP: Record<string, 'BASICO' | 'PROFISSIONAL' | 'ENTERPRISE'> = {
   INICIAL: 'BASICO',
@@ -138,6 +139,7 @@ export async function atualizarRestaurante(id: number, data: {
   endereco?: string | null;
   plano?: 'BASICO' | 'PROFISSIONAL' | 'ENTERPRISE';
   ativo?: boolean;
+  dataVencimento?: string | null;
 }) {
   const restaurante = await prisma.restaurante.findUnique({ where: { id } });
   if (!restaurante) throw new NotFoundError('Restaurante');
@@ -147,7 +149,16 @@ export async function atualizarRestaurante(id: number, data: {
     if (existing) throw new ConflictError('Slug ja esta em uso');
   }
 
-  return prisma.restaurante.update({ where: { id }, data });
+  const { dataVencimento, ...rest } = data;
+  return prisma.restaurante.update({
+    where: { id },
+    data: {
+      ...rest,
+      ...(dataVencimento !== undefined
+        ? { dataVencimento: dataVencimento ? new Date(dataVencimento) : null }
+        : {}),
+    },
+  });
 }
 
 export async function atualizarModulos(restauranteId: number, modulosInput: string[]) {
@@ -197,7 +208,11 @@ export async function aprovarSolicitacaoPix(id: number) {
     prisma.solicitacaoPix.update({ where: { id }, data: { status: 'APROVADO' } }),
     prisma.restaurante.update({
       where: { id: solicitacao.restauranteId },
-      data: { plano: planoSistema, ativo: true },
+      data: {
+        plano: planoSistema,
+        ativo: true,
+        dataVencimento: calcularNovoVencimento(solicitacao.restaurante.dataVencimento),
+      },
     }),
   ]);
 

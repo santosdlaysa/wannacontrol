@@ -18,6 +18,7 @@ import assinaturasRoutes from '../modules/assinaturas/assinaturas.routes';
 import * as assinaturasController from '../modules/assinaturas/assinaturas.controller';
 import { authMiddleware } from '../middlewares/auth';
 import { authorize } from '../middlewares/authorize';
+import { requireModulo } from '../middlewares/require-modulo';
 import { validate } from '../middlewares/validate';
 import { asyncHandler } from '../lib/async-handler';
 import { Perfil, updateItemStatusSchema } from '@chefflow/shared';
@@ -31,18 +32,18 @@ router.use('/public', publicRoutes);
 router.use('/admin', adminRoutes);
 router.post('/assinaturas/webhook', asyncHandler(assinaturasController.receberWebhook));
 
-// Rotas protegidas
-router.use('/usuarios', usuariosRoutes);
-router.use('/produtos', produtosRoutes);
-router.use('/mesas', mesasRoutes);
+// Rotas protegidas (módulos desativados no super-admin bloqueiam o acesso)
+router.use('/usuarios', authMiddleware, requireModulo('USUARIOS'), usuariosRoutes);
+router.use('/produtos', authMiddleware, requireModulo('PRODUTOS'), produtosRoutes);
+router.use('/mesas', authMiddleware, requireModulo('MESAS'), mesasRoutes);
 router.use('/pedidos', pedidosRoutes);
-router.use('/financeiro', financeiroRoutes);
-router.use('/caixa', caixaRoutes);
-router.use('/clientes', clientesRoutes);
+router.use('/financeiro', authMiddleware, requireModulo('FINANCEIRO'), financeiroRoutes);
+router.use('/caixa', authMiddleware, requireModulo('CAIXA'), caixaRoutes);
+router.use('/clientes', authMiddleware, requireModulo('CLIENTES'), clientesRoutes);
 router.use('/restaurante', restauranteRoutes);
-router.use('/categorias', categoriasRoutes);
-router.use('/complementos', complementosRoutes);
-router.use('/entregadores', entregadoresRoutes);
+router.use('/categorias', authMiddleware, requireModulo('PRODUTOS'), categoriasRoutes);
+router.use('/complementos', authMiddleware, requireModulo('COMPLEMENTOS'), complementosRoutes);
+router.use('/entregadores', authMiddleware, requireModulo('ENTREGADORES'), entregadoresRoutes);
 router.use('/configuracoes', configuracoesRoutes);
 router.use('/assinaturas', assinaturasRoutes);
 

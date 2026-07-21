@@ -20,6 +20,27 @@ function planoAtingePlano(planoAtual: string | undefined, planoMinimo: PlanoSist
   return idx >= PLANO_ORDER.indexOf(planoMinimo);
 }
 
+// Módulo do super-admin que controla cada rota (rotas sem entrada são sempre visíveis)
+const MODULO_POR_ROTA: Record<string, string> = {
+  '/mesas': 'MESAS',
+  '/cozinha': 'COZINHA',
+  '/caixa': 'CAIXA',
+  '/financeiro': 'FINANCEIRO',
+  '/produtos': 'PRODUTOS',
+  '/categorias': 'PRODUTOS',
+  '/clientes': 'CLIENTES',
+  '/usuarios': 'USUARIOS',
+  '/entregadores': 'ENTREGADORES',
+  '/complementos': 'COMPLEMENTOS',
+  '/delivery': 'DELIVERY',
+};
+
+function diasParaVencer(dataVencimento: string | null | undefined): number | null {
+  if (!dataVencimento) return null;
+  const diff = new Date(dataVencimento).getTime() - Date.now();
+  return Math.ceil(diff / (24 * 60 * 60 * 1000));
+}
+
 interface NavItem {
   label: string;
   href: string;
@@ -210,6 +231,8 @@ export default function DashboardLayout({
     if (!restaurante) return true; // super admin nao tem restaurante
     return restaurante.ativo ?? false;
   });
+  const [modulos, setModulos] = useState<Record<string, boolean> | null>(null);
+  const [dataVencimento, setDataVencimento] = useState<string | null>(null);
 
   useEffect(() => {
     if (isLoading) return;
@@ -229,7 +252,7 @@ export default function DashboardLayout({
     setAssinaturaAtiva(restaurante?.ativo ?? false);
 
     // Verifica no backend em segundo plano para pegar valor atualizado
-    api.get<{ ativo: boolean; plano: string }>('/restaurante/me')
+    api.get<{ ativo: boolean; plano: string; dataVencimento?: string | null; modulos?: Record<string, boolean> }>('/restaurante/me')
       .then((data) => {
         const stored = localStorage.getItem('restaurante');
         if (stored) {
@@ -238,6 +261,8 @@ export default function DashboardLayout({
           } catch {}
         }
         setAssinaturaAtiva(data.ativo);
+        setModulos(data.modulos ?? null);
+        setDataVencimento(data.dataVencimento ?? null);
         if (!data.ativo && pathname !== '/assinatura') {
           router.push('/assinatura');
         }
@@ -268,9 +293,16 @@ export default function DashboardLayout({
   }
 
   const planoAtual = restaurante?.plano as string | undefined;
-  const filteredNav = navItems.filter((item) =>
-    item.roles.includes(user.perfil as Perfil)
-  );
+  const filteredNav = navItems.filter((item) => {
+    if (!item.roles.includes(user.perfil as Perfil)) return false;
+    // Módulo desativado no super-admin some do menu (diferente do cadeado de plano)
+    const modulo = MODULO_POR_ROTA[item.href];
+    if (modulo && modulos && modulos[modulo] === false) return false;
+    return true;
+  });
+
+  const diasVencimento = diasParaVencer(dataVencimento);
+  const mostrarAvisoVencimento = !isSuperAdmin && diasVencimento !== null && diasVencimento <= 7 && diasVencimento >= 0;
 
   const isKitchenFullscreen = pathname === '/cozinha';
 
@@ -426,6 +458,20 @@ export default function DashboardLayout({
             </header>
           )}
 
+          {!isKitchenFullscreen && mostrarAvisoVencimento && (
+            <div className="mx-6 mt-4 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+              <p className="text-sm text-amber-800">
+                <span className="font-semibold">Sua assinatura vence {diasVencimento === 0 ? 'hoje' : diasVencimento === 1 ? 'amanhã' : `em ${diasVencimento} dias`}.</span>{' '}
+                Renove para não perder o acesso ao sistema.
+              </p>
+              <Link
+                href="/assinatura"
+                className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 transition-colors"
+              >
+                Renovar agora
+              </Link>
+            </div>
+          )}
           <div className={isKitchenFullscreen ? '' : 'p-6'}>
             {children}
           </div>

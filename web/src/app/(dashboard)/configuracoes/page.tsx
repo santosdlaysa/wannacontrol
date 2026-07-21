@@ -3,8 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
+import { useAuth } from '@/providers/AuthProvider';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import CardapioQrCode from '@/components/CardapioQrCode';
 
 interface Configuracoes {
   restaurante_aberto: string;
@@ -77,6 +79,7 @@ function isDentroHorarioFuncionamento(config: Configuracoes, now: Date) {
 }
 
 export default function ConfiguracoesPage() {
+  const { restaurante } = useAuth();
   const [config, setConfig] = useState<Configuracoes>(defaultConfig);
   const [isLoading, setIsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -214,6 +217,11 @@ export default function ConfiguracoesPage() {
       </div>
 
       <div className="space-y-6">
+        {/* Secao: Cardapio digital + QR Code */}
+        {restaurante?.slug && (
+          <CardapioQrCode slug={restaurante.slug} nomeRestaurante={restaurante.nome} />
+        )}
+
         {/* Secao: Financeiro */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Financeiro</h2>

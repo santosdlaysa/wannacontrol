@@ -4,6 +4,13 @@ import prisma from '../../lib/prisma';
 import { env } from '../../config/env';
 import { UnauthorizedError, NotFoundError } from '../../lib/errors';
 import { AuthPayload } from '@chefflow/shared';
+import { aplicarVencimento } from '../../lib/assinatura';
+
+async function getRestauranteAtualizado(restauranteId?: number | null) {
+  if (!restauranteId) return null;
+  const restaurante = await prisma.restaurante.findUnique({ where: { id: restauranteId } });
+  return restaurante ? aplicarVencimento(restaurante) : null;
+}
 
 function generateTokens(payload: AuthPayload) {
   const accessToken = jwt.sign(
@@ -45,9 +52,7 @@ export async function loginEmail(email: string, senha: string) {
 
   const { senhaHash, ...usuarioSemSenha } = usuario;
 
-  const restaurante = usuario.restauranteId
-    ? await prisma.restaurante.findUnique({ where: { id: usuario.restauranteId } })
-    : null;
+  const restaurante = await getRestauranteAtualizado(usuario.restauranteId);
 
   return { ...tokens, usuario: usuarioSemSenha, restaurante: restaurante ?? undefined };
 }
@@ -68,9 +73,7 @@ export async function loginPin(pin: string) {
 
   const { senhaHash, ...usuarioSemSenha } = usuario;
 
-  const restaurante = usuario.restauranteId
-    ? await prisma.restaurante.findUnique({ where: { id: usuario.restauranteId } })
-    : null;
+  const restaurante = await getRestauranteAtualizado(usuario.restauranteId);
 
   return { ...tokens, usuario: usuarioSemSenha, restaurante: restaurante ?? undefined };
 }
@@ -92,9 +95,7 @@ export async function getDemoToken() {
   const tokens = generateTokens(payload);
 
   const { senhaHash, ...usuarioSemSenha } = usuario;
-  const restaurante = usuario.restauranteId
-    ? await prisma.restaurante.findUnique({ where: { id: usuario.restauranteId } })
-    : null;
+  const restaurante = await getRestauranteAtualizado(usuario.restauranteId);
 
   return { ...tokens, usuario: usuarioSemSenha, restaurante: restaurante ?? undefined };
 }
@@ -115,9 +116,7 @@ export async function refreshAccessToken(refreshToken: string) {
     };
     const tokens = generateTokens(payload);
     const { senhaHash, ...usuarioSemSenha } = usuario;
-    const restaurante = usuario.restauranteId
-      ? await prisma.restaurante.findUnique({ where: { id: usuario.restauranteId } })
-      : null;
+    const restaurante = await getRestauranteAtualizado(usuario.restauranteId);
 
     return { ...tokens, usuario: usuarioSemSenha, restaurante: restaurante ?? undefined };
   } catch {

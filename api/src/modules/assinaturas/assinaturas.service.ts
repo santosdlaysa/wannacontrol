@@ -3,6 +3,7 @@ import prisma from '../../lib/prisma';
 import { env } from '../../config/env';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 import { sendTelegram } from '../../lib/telegram';
+import { ativarAssinatura } from '../../lib/assinatura';
 
 type PlanoId = 'INICIAL' | 'PROFISSIONAL' | 'PREMIUM';
 
@@ -261,10 +262,7 @@ export async function consultarPagamento(restauranteId: number, paymentId: strin
   }
 
   if (payment.status === 'approved') {
-    await prisma.restaurante.update({
-      where: { id: restauranteId },
-      data: { plano: plano.planoSistema, ativo: true },
-    });
+    await ativarAssinatura(restauranteId, plano.planoSistema);
   }
 
   return {
@@ -287,10 +285,7 @@ export async function processarWebhookPagamento(paymentId: string) {
   if (!restauranteId) return { received: true };
 
   if (payment.status === 'approved') {
-    await prisma.restaurante.update({
-      where: { id: restauranteId },
-      data: { plano: plano.planoSistema, ativo: true },
-    });
+    await ativarAssinatura(restauranteId, plano.planoSistema);
   }
 
   return {

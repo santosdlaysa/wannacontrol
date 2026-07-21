@@ -11,6 +11,7 @@ export interface Restaurante {
   endereco: string | null;
   plano: Plano;
   ativo: boolean;
+  dataVencimento?: Date | string | null;
   criadoEm: Date;
 }
 
